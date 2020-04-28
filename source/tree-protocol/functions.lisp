@@ -1,23 +1,31 @@
 (cl:in-package #:cl-grf.tree-protocol)
 
 
-(defun needs-split-p (training-state leaf)
-  (needs-split-p-with-mode (needs-split-p-mode training-state)
-                           training-state
-                           leaf))
-
-
-(defun split (training-state leaf)
-  (split-with-mode (split-mode training-state)
-                   training-state
-                   leaf))
-
-
-(defun clone-training-state (training-state new-data)
+(defun training-state-clone (training-state new-data new-target new-attribute-indexes)
   (check-type training-state fundamental-training-state)
-  (cl-ds.utils:quasi-clone training-state
-                           :training-data new-data))
+  (cl-ds.utils:quasi-clone* training-state
+    :training-data new-data
+    :attribute-indexes new-attribute-indexes
+    :target-data new-target))
 
 
 (defun force-tree (node)
   (force-tree* (lparallel:force node)))
+
+
+(defun split-candidate (training-state leaf)
+  (split-candidate* (training-parameters training-state)
+                    training-state
+                    leaf))
+
+
+(defun make-leaf (training-state)
+  (check-type training-state fundamental-training-state)
+  (make-leaf* (training-parameters training-state)
+              training-state))
+
+
+(defun split (training-state leaf)
+  (split* (training-parameters training-state)
+          training-state
+          leaf))

@@ -3,6 +3,7 @@
 
 (defpackage #:cl-grf.tree-protocol
   (:use #:cl #:cl-grf.aux-package)
+  (:nicknames #:cl-grf.tp)
   (:export
    #:depth
    #:force-tree
@@ -11,16 +12,26 @@
    #:fundamental-training-parameters
    #:fundamental-training-state
    #:fundamental-tree-node
-   #:split-with-mode
-   #:needs-split-p-with-mode
-   #:split-mode
-   #:needs-split-p-mode
    #:force-tree*
    #:leafp
    #:make-node
-   #:needs-split-p
-   #:split
    #:training-data
+   #:trials-count
+   #:training-parameters
+   #:attribute
+   #:target-data
+   #:parallel
    #:maximal-depth
+   #:attribute-value
+   #:left-node
+   #:right-node
+   #:training-state-clone
+   #:split
+   #:split*
+   #:attribute-indexes
+   #:leaf-for
+   #:make-leaf
+   #:make-leaf*
+   #:minimal-size
    #:treep
    ))
