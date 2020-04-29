@@ -9,4 +9,5 @@
    #:data-matrix
    #:data-matrix-dimensions
    #:mref
+   #:make-data-matrix
    #:data-points-count))

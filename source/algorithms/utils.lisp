@@ -150,22 +150,37 @@
                          position parallel training-state
                          attribute-index)
   (if (not parallel)
-      #1=(let ((new-state
-                 (cl-grf.tp:training-state-clone
-                  training-state
-                  (subsample-array (cl-grf.tp:training-data training-state)
-                                   length
-                                   split-array position
-                                   attribute-index)
-                  (subsample-array (cl-grf.tp:target-data training-state)
-                                   length
-                                   split-array position
-                                   attribute-index)
-                  (~>  training-state cl-grf.tp:attribute-indexes
-                       (subsample-vector attribute-index))))
-               (new-leaf (make 'scored-leaf-node :score shannon-entropy
-                                                 :support length)))
-           (setf training-state nil split-array nil) ; so it can be gced
+      #1=(let* ((new-state
+                  (cl-grf.tp:training-state-clone
+                   training-state
+                   (subsample-array (cl-grf.tp:training-data training-state)
+                                    length
+                                    split-array position
+                                    attribute-index)
+                   (subsample-array (cl-grf.tp:target-data training-state)
+                                    length
+                                    split-array position
+                                    attribute-index)
+                   (~>  training-state cl-grf.tp:attribute-indexes
+                        (subsample-vector attribute-index))))
+                (target-data (cl-grf.tp:target-data new-state))
+                (predictions (~>> target-data cl-grf.data:attributes-count
+                                  (cl-grf.data:make-data-matrix 0)))
+                (new-leaf (make 'scored-leaf-node :score shannon-entropy
+                                                  :predictions predictions
+                                                  :support length)))
+           (cl-grf.data:bind-data-matrix-dimensions
+               (data-points-count attributes-count target-data)
+             (iterate
+               (declare (type fixnum i))
+               (for i from 0 below data-points-count)
+               (iterate
+                 (for j from 0 below attributes-count)
+                 (declare (type fixnum j))
+                 (incf (cl-grf.data:mref predictions 0 j)
+                       (cl-grf.data:mref target-data i j)))))
+           (setf training-state nil
+                 split-array nil) ; so it can be gced
            (incf (cl-grf.tp:depth new-state))
            (let ((split-candidate (cl-grf.tp:split new-state new-leaf)))
              (if (null split-candidate)

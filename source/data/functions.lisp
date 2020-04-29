@@ -28,3 +28,9 @@
 (defun (setf mref) (new-value data-matrix data-point feature)
   (check-type data-matrix data-matrix)
   (setf (aref data-matrix data-point feature) new-value))
+
+
+(defun make-data-matrix (data-points-count attributes-count)
+  (make-array `(,data-points-count ,attributes-count)
+              :initial-element 0.0d0
+              :element-type 'double-float))

@@ -22,7 +22,9 @@
 
 (defclass scored-leaf-node (scored-node
                             cl-grf.tp:fundamental-leaf-node)
-  ())
+  ((%predictions :initarg :predictions
+                 :type cl-grf.data:data-matrix
+                 :accessor predictions)))
 
 
 (defclass scored-tree-node (scored-node
