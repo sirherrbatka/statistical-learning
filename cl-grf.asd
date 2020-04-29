@@ -12,6 +12,11 @@
   :serial T
   :pathname "source"
   :components ((:file "aux-package")
+               (:module "data"
+                :components ((:file "package")
+                             (:file "types")
+                             (:file "functions")
+                             (:file "macros")))
                (:module "tree-protocol"
                 :components ((:file "package")
                              (:file "generics")
@@ -28,6 +33,7 @@
                 :components ((:file "package")
                              (:file "generics")
                              (:file "types")
+                             (:file "utils")
                              (:file "methods")
                              (:file "functions")))
                ))

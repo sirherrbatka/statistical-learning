@@ -6,38 +6,39 @@
   (+ (random (- max min)) min))
 
 
-(-> data-min/max ((simple-array double-float (* *)) fixnum)
+(-> data-min/max (cl-grf.data:data-matrix fixnum)
     (values double-float double-float))
 (defun data-min/max (data attribute)
-  (declare (type (simple-array double-float (* *)) data)
+  (declare (type cl-grf.data:data-matrix data)
            (type fixnum attribute)
            (optimize (speed 3) (safety 0)))
   (iterate
     (declare (type double-float min max element)
              (type fixnum i))
-    (with min = (aref data 0 attribute))
+    (with min = (cl-grf.data:mref data 0 attribute))
     (with max = min)
-    (with length = (array-dimension data 0))
+    (with length = (cl-grf.data:data-points-count data))
     (for i from 1 below length)
-    (for element = (aref data i attribute))
+    (for element = (cl-grf.data:mref data i attribute))
     (cond ((< max element) (setf max element))
           ((> min element) (setf min element)))
     (finally (return (values min max)))))
 
 
-(-> random-test ((simple-array double-float (* *)))
+(-> random-test (cl-grf.data:data-matrix)
     (values fixnum double-float))
 (defun random-test (data)
   (declare (optimize (speed 3) (safety 0)))
   (bind ((attribute (random (array-dimension data 1)))
          ((:values min max) (data-min/max data attribute))
-         (threshold (if (= (the double-float min) (the double-float max))
+         (threshold (if (= (the double-float min)
+                           (the double-float max))
                         min
                         (random-uniform min max))))
     (values attribute threshold)))
 
 
-(-> fill-split-array ((simple-array double-float (* *))
+(-> fill-split-array (cl-grf.data:data-matrix
                       fixnum double-float
                       (simple-array boolean (*)))
     (values fixnum fixnum))
@@ -49,7 +50,7 @@
     (with true-count = 0)
     (with false-count = 0)
     (for i from 0 below (array-dimension array 0))
-    (for check = (> (aref data i attribute) threshold))
+    (for check = (> (cl-grf.data:mref data i attribute) threshold))
     (setf (aref array i) check)
     (if check (incf true-count) (incf false-count))
     (finally (return (values false-count true-count)))))
@@ -64,7 +65,7 @@
 
 
 (-> split-entropy ((simple-array boolean (*))
-                   (simple-array double-float (* *)))
+                   cl-grf.data:data-matrix)
     (values double-float double-float))
 (defun split-entropy (split-array target-data)
   (iterate
@@ -89,10 +90,10 @@
       (for right-p = (aref split-array i))
       (if right-p
           (progn
-            (incf right-sum (aref target-data i j))
+            (incf right-sum (cl-grf.data:mref target-data i j))
             (incf right-count))
           (progn
-            (incf left-sum (aref target-data i j))
+            (incf left-sum (cl-grf.data:mref target-data i j))
             (incf left-count)))
       (finally
        (unless (zerop left-count)
@@ -107,35 +108,38 @@
 
 
 (defun total-entropy (target-data)
-  (let* ((length (array-dimension target-data 0))
+  (let* ((length (cl-grf.data:data-points-count target-data))
          (split-array (make-array length :element-type 'boolean
                                          :initial-element nil)))
     (nth-value 0 (split-entropy split-array target-data))))
 
 
-(-> subsample-array ((simple-array double-float (* *))
+(-> subsample-array (cl-grf.data:data-matrix
                      fixnum (simple-array boolean (*))
                      boolean
                      fixnum)
-    (simple-array double-float (* *)))
+    cl-grf.data:data-matrix)
 (defun subsample-array (array length split-array position skipped-column)
   (declare (optimize (speed 3) (safety 0)))
-  (lret ((result (make-array `(,length ,(1- (array-dimension array 1)))
-                             :element-type 'double-float)))
-    (iterate
-      (declare (type fixnum j i))
-      (with j = 0)
-      (for i from 0 below (array-dimension array 0))
-      (when (eq position (aref split-array i))
-        (iterate
-          (declare (type fixnum k p))
-          (with p = 0)
-          (for k from 0 below (array-dimension array 1))
-          (when (eql skipped-column k)
-            (next-iteration))
-          (setf (aref result j p) (aref array i k)
-                p (1+ p)))
-        (incf j)))))
+  (cl-grf.data:bind-data-matrix-dimensions
+      (data-points-count attributes-count array)
+    (lret ((result (make-array `(,length ,(1- attributes-count))
+                               :element-type 'double-float)))
+      (iterate
+        (declare (type fixnum j i))
+        (with j = 0)
+        (for i from 0 below data-points-count)
+        (when (eq position (aref split-array i))
+          (iterate
+            (declare (type fixnum k p))
+            (with p = 0)
+            (for k from 0 below attributes-count)
+            (when (eql skipped-column k)
+              (next-iteration))
+            (setf (cl-grf.data:mref result j p)
+                  (cl-grf.data:mref array i k)
+                  p (1+ p)))
+          (incf j))))))
 
 
 (defun subsample-vector (vector skipped-position)

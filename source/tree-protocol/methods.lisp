@@ -22,7 +22,7 @@
 
 
 (defmethod (setf training-data) :around (new-value training-state)
-  (check-type new-value (simple-array double-float (* *)))
+  (check-type new-value cl-grf.data:data-matrix)
   (call-next-method new-value training-state))
 
 
@@ -69,9 +69,10 @@
          (attribute-indexes (attribute-indexes training-state))
          (maximal-depth (maximal-depth training-parameters))
          (minimal-size (minimal-size training-parameters)))
-    (declare (type (simple-array double-float (* *)) training-data)
+    (declare (type cl-grf.data:data-matrix training-data)
              (type (integer 1 *) minimal-size))
-    (if (or (< (array-dimension training-data 0) minimal-size)
+    (if (or (< (cl-grf.data:data-points-count training-data)
+               minimal-size)
             (or (emptyp attribute-indexes))
             (= depth maximal-depth))
         nil
@@ -86,18 +87,17 @@
 
 
 (defmethod leaf-for ((node fundamental-leaf-node) data index)
-  node)
+  (make-array (cl-grf.data:data-points-count data)
+              :initial-element node))
 
 
 (defmethod leaf-for ((node fundamental-tree-node) data index)
-  (declare (type (simple-array double-float (* *)) data)
+  (declare (type cl-grf.data:data-matrix data)
            (type fixnum index))
-  (let* ((attribute-index (attribute node))
+  (bind ((attribute-index (attribute node))
          (attribute-value (attribute-value node))
-         (right-p (> (aref data index attribute-index)
+         (right-p (> (cl-grf.data:mref data index attribute-index)
                      attribute-value)))
-    (declare (type fixnum attribute-index)
-             (type double-float attribute-value))
     (if right-p
         (leaf-for (right-node node) data index)
         (leaf-for (left-node node) data index))))

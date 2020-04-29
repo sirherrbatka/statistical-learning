@@ -29,3 +29,13 @@
   (split* (training-parameters training-state)
           training-state
           leaf))
+
+
+(defun leafs-for (node data)
+  (bind (((length features-count) (array-dimensions data))
+         (result (make-array length)))
+    (declare (ignore features-count))
+    (iterate
+      (for i from 0 below length)
+      (setf (aref result i) (leaf-for node data i)))
+    result))

@@ -2,11 +2,12 @@
 
 
 (defun select-features (data features)
-  (lret ((result (make-array (list (array-dimension data 0)
-                                   (length features))
+  (lret ((result (make-array (list
+                              (cl-grf.data:data-points-count data)
+                              (length features))
                              :element-type 'double-float)))
     (iterate
-      (for i from 0 below (array-dimension data 0))
+      (for i from 0 below (cl-grf.data:data-points-count data))
       (iterate
         (for k from 0 below (length features))
         (for j = (aref features k))

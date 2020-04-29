@@ -30,6 +30,7 @@
    #:split*
    #:attribute-indexes
    #:leaf-for
+   #:leafs-for
    #:make-leaf
    #:make-leaf*
    #:minimal-size
