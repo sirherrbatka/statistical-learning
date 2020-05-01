@@ -108,7 +108,6 @@
          (total-attributes-count (cl-grf.data:attributes-count train-data))
          (trees (make-array trees-count))
          (attributes (make-array trees-count)))
-
     (map-into attributes (selecting-random-attributes tree-attributes-count
                                                       total-attributes-count))
     (funcall (if parallel #'lparallel:pmap-into #'map-into)
