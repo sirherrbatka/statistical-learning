@@ -12,3 +12,23 @@
         (for k from 0 below (length features))
         (for j = (aref features k))
         (setf (aref result i k) (aref data i j))))))
+
+
+(defun select-random-attributes (tree-attributes-count
+                                 total-attributes-count)
+  (check-type tree-attributes-count positive-integer)
+  (check-type total-attributes-count positive-integer)
+  (~>> total-attributes-count
+       iota
+       shuffle
+       (take tree-attributes-count)
+       (coerce _ '(vector fixnum))))
+
+
+(defun selecting-random-attributes (tree-attributes-count
+                                    total-attributes-count)
+  (check-type tree-attributes-count positive-integer)
+  (check-type total-attributes-count positive-integer)
+  (curry #'select-random-attributes
+         tree-attributes-count
+         total-attributes-count))

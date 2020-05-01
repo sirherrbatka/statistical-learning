@@ -31,6 +31,8 @@
 
 
 (defun make-data-matrix (data-points-count attributes-count)
+  (check-type data-points-count fixnum)
+  (check-type attributes-count fixnum)
   (make-array `(,data-points-count ,attributes-count)
               :initial-element 0.0d0
               :element-type 'double-float))

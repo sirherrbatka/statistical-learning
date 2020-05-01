@@ -102,3 +102,25 @@
                  :score (~> training-state
                             cl-grf.tp:target-data
                             total-entropy)))
+
+
+(defmethod cl-grf.mp:make-model ((parameters information-gain-classification)
+                                 train-data
+                                 target-data)
+  (check-type train-data cl-grf.data:data-matrix)
+  (check-type target-data cl-grf.data:data-matrix)
+  (let* ((attributes (iterate
+                       (with attributes-count =
+                             (cl-grf.data:attributes-count train-data))
+                       (with result = (make-array attributes-count
+                                                  :element-type 'fixnum
+                                                  :initial-element 0))
+                       (for i from 0 below attributes-count)
+                       (setf (aref result i) i)
+                       (finally (return result))))
+         (state (make 'cl-grf.tp:fundamental-training-state
+                      :training-parameters parameters
+                      :attribute-indexes attributes
+                      :target-data target-data
+                      :training-data train-data)))
+    (~> state cl-grf.tp:make-leaf (cl-grf.tp:split state))))

@@ -8,6 +8,8 @@
    #:information-gain-classification
    #:support
    #:calculate-score
+   #:predictions
+   #:support
    #:score
    #:scored-tree-node
    #:scored-leaf-node))

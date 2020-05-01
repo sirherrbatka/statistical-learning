@@ -7,4 +7,6 @@
 (defgeneric (setf score) (new-value object))
 (defgeneric calculate-score (training-parameters split-array target-data))
 (defgeneric predictions (leaf))
+(defgeneric support (leaf))
+(defgeneric (setf support) (new-value leaf))
 (defgeneric (setf predictions) (new-value leaf))

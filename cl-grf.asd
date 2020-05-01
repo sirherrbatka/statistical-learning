@@ -17,12 +17,18 @@
                              (:file "types")
                              (:file "functions")
                              (:file "macros")))
+               (:module "model-protocol"
+                :components ((:file "package")
+                             (:file "generics")
+                             (:file "types")
+                             (:file "methods")))
                (:module "tree-protocol"
                 :components ((:file "package")
                              (:file "generics")
                              (:file "types")
+                             (:file "functions")
                              (:file "methods")
-                             (:file "functions")))
+                             ))
                (:module "algorithms"
                 :components ((:file "package")
                              (:file "utils")
@@ -34,6 +40,7 @@
                              (:file "generics")
                              (:file "types")
                              (:file "utils")
+                             (:file "functions")
                              (:file "methods")
-                             (:file "functions")))
+                             ))
                ))

@@ -101,3 +101,24 @@
     (if right-p
         (leaf-for (right-node node) data index)
         (leaf-for (left-node node) data index))))
+
+
+(defmethod cl-grf.mp:predict ((model fundamental-tree-node) data)
+  (check-type data cl-grf.data:data-matrix)
+  (cl-grf.data:bind-data-matrix-dimensions (data-points attributes data)
+    (iterate
+      (with result = nil)
+      (with slice = (cl-grf.data:make-data-matrix 1 attributes))
+      (for i from 0 below data-points)
+      (iterate
+        (for j from 0 below attributes)
+        (setf (cl-grf.data:mref slice 0 j) (cl-grf.data:mref data i j)))
+      (for leaf = (leaf-for model slice 0))
+      (for prediction = (cl-grf.mp:predict leaf slice))
+      (when (null result)
+        (setf result (~>> (cl-grf.data:attributes-count prediction)
+                          (cl-grf.data:make-data-matrix data-points))))
+      (iterate
+        (for j from 0 below attributes)
+        (setf (cl-grf.data:mref slice i j) (cl-grf.data:mref prediction 0 j)))
+      (finally (return result)))))

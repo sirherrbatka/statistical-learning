@@ -5,3 +5,9 @@
   (~>> data
        (leafs-for random-forest)
        (prediction-from-leafs random-forest)))
+
+
+(defun make-forest (forest-parameters
+                    train-data
+                    target-data)
+  cl-ds.utils:todo)

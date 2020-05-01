@@ -1,7 +1,7 @@
 (cl:in-package #:cl-grf.tree-protocol)
 
 
-(defclass fundamental-node ()
+(defclass fundamental-node (cl-grf.mp:fundamental-model)
   ())
 
 
@@ -22,13 +22,13 @@
 
 (defclass fundamental-training-parameters ()
   ((%maximal-depth :initarg :maximal-depth
-                   :accessor maximal-depth)
+                   :reader maximal-depth)
    (%minimal-size :initarg :minimal-size
-                  :accessor minimal-size)
+                  :reader minimal-size)
    (%trials-count :initarg :trials-count
-                  :accessor trials-count)
+                  :reader trials-count)
    (%parallel :initarg :parallel
-              :accessor parallel)))
+              :reader parallel)))
 
 
 (defclass fundamental-split-candidate ()
