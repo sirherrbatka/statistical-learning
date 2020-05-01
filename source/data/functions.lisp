@@ -63,10 +63,6 @@
         (for j from 0 below attributes-count)
         (setf (mref result i j)
               (mref data-matrix
-                    (if (null data-points)
-                        i
-                        (aref data-points i))
-                    (if (null attributes)
-                        j
-                        (aref attributes j)))))
+                    (if (null data-points) i (aref data-points i))
+                    (if (null attributes) j (aref attributes j)))))
       (finally (return result)))))
