@@ -10,4 +10,5 @@
    #:data-matrix-dimensions
    #:mref
    #:make-data-matrix
+   #:sample
    #:data-points-count))
