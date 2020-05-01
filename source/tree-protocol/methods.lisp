@@ -122,3 +122,38 @@
         (for j from 0 below attributes)
         (setf (cl-grf.data:mref slice i j) (cl-grf.data:mref prediction 0 j)))
       (finally (return result)))))
+
+
+(defmethod shared-initialize :after
+    ((instance fundamental-training-parameters)
+     slot-names
+     &rest initargs)
+  (declare (ignore slot-names initargs))
+  (let ((maximal-depth (maximal-depth instance))
+        (minimal-size (minimal-size instance))
+        (trials-count (trials-count instance)))
+    (parallel instance) ; here just to check if slot is bound
+    (unless (integerp maximal-depth)
+      (error 'type-error :expected 'integer
+                         :datum maximal-depth))
+    (unless (< 0 maximal-depth)
+      (error 'cl-ds:argument-out-of-bounds
+             :argument :maximal-depth
+             :bounds '(< 0 :maximal-depth)
+             :value maximal-depth))
+    (unless (integerp minimal-size)
+      (error 'type-error :expected 'integer
+                         :datum minimal-size))
+    (unless (<= 0 minimal-size)
+      (error 'cl-ds:argument-out-of-bounds
+             :argument :minimal-size
+             :bounds '(<= 0 :minimal-size)
+             :value minimal-size))
+    (unless (integerp trials-count)
+      (error 'type-error :expected 'integer
+                         :datum trials-count))
+    (unless (< 0 trials-count)
+      (error 'cl-ds:argument-out-of-bounds
+             :argument :trials-count
+             :bounds '(< 0 :trials-count)
+             :value trials-count))))
