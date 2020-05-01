@@ -47,26 +47,26 @@
   (check-type data-matrix data-matrix)
   (cl-ds.utils:cases ((null attributes)
                       (null data-points))
-    (let* ((attributes-count (if attributes
-                                 (length attributes)
-                                 (attributes-count data-matrix)))
-           (data-points-count (if data-points
-                                  (length data-points)
-                                  (data-points-count data-matrix)))
-           (result (make-data-matrix data-points-count attributes-count)))
-      (declare (type fixnum attributes-count data-points-count))
+    (iterate
+      (declare (type fixnum i attributes-count data-points-count))
+      (with attributes-count = (if attributes
+                                   (length attributes)
+                                   (attributes-count data-matrix)))
+      (with data-points-count = (if data-points
+                                    (length data-points)
+                                    (data-points-count data-matrix)))
+      (with result = (make-data-matrix data-points-count
+                                       attributes-count))
+      (for i from 0 below data-points-count)
       (iterate
-        (declare (type fixnum i))
-        (for i from 0 below data-points-count)
-        (iterate
-          (declare (type fixnum j))
-          (for j from 0 below attributes-count)
-          (setf (mref result i j)
-                (mref data-matrix
-                      (if (null data-points)
-                          i
-                          (aref data-points i))
-                      (if (null attributes)
-                          j
-                          (aref attributes j)))))
-        (finally (return result))))))
+        (declare (type fixnum j))
+        (for j from 0 below attributes-count)
+        (setf (mref result i j)
+              (mref data-matrix
+                    (if (null data-points)
+                        i
+                        (aref data-points i))
+                    (if (null attributes)
+                        j
+                        (aref attributes j)))))
+      (finally (return result)))))
