@@ -27,4 +27,14 @@
         :parallel nil))
 
 
-(defparameter *leaf* (cl-grf.mp:make-model *training-parameters* *data* *target*))
+(defparameter *tree* (cl-grf.mp:make-model *training-parameters* *data* *target*))
+
+(iterate
+  (with attribute-value = (cl-grf.tp:attribute-value *tree*))
+  (with result = (make-array 20))
+  (for i from 0 below 20)
+  (setf (aref result i) (list (> (aref *data* i 0)
+                                 attribute-value)
+                              (aref *target* i 0)))
+  (finally
+   (print result)))

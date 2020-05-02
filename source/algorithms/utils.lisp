@@ -117,29 +117,32 @@
 (-> subsample-array (cl-grf.data:data-matrix
                      fixnum (simple-array boolean (*))
                      boolean
-                     fixnum)
+                     (or null skipped-column))
     cl-grf.data:data-matrix)
 (defun subsample-array (array length split-array position skipped-column)
   (declare (optimize (speed 3) (safety 0)))
-  (cl-grf.data:bind-data-matrix-dimensions
-      ((data-points-count attributes-count array))
-    (lret ((result (make-array `(,length ,(1- attributes-count))
-                               :element-type 'double-float)))
-      (iterate
-        (declare (type fixnum j i))
-        (with j = 0)
-        (for i from 0 below data-points-count)
-        (when (eq position (aref split-array i))
-          (iterate
-            (declare (type fixnum k p))
-            (with p = 0)
-            (for k from 0 below attributes-count)
-            (when (eql skipped-column k)
-              (next-iteration))
-            (setf (cl-grf.data:mref result j p)
-                  (cl-grf.data:mref array i k)
-                  p (1+ p)))
-          (incf j))))))
+  (cl-ds.utils:cases ((null skipped-column))
+    (cl-grf.data:bind-data-matrix-dimensions
+        ((data-points-count attributes-count array))
+      (lret ((result (make-array `(,length ,(if (null skipped-column)
+                                                attributes-count
+                                                (1- attributes-count)))
+                                 :element-type 'double-float)))
+        (iterate
+          (declare (type fixnum j i))
+          (with j = 0)
+          (for i from 0 below data-points-count)
+          (when (eq position (aref split-array i))
+            (iterate
+              (declare (type fixnum k p))
+              (with p = 0)
+              (for k from 0 below attributes-count)
+              (when (eql skipped-column k)
+                (next-iteration))
+              (setf (cl-grf.data:mref result j p)
+                    (cl-grf.data:mref array i k)
+                    p (1+ p)))
+            (incf j)))))))
 
 
 (defun subsample-vector (vector skipped-position)
@@ -160,12 +163,12 @@
                    (subsample-array (cl-grf.tp:target-data training-state)
                                     length
                                     split-array position
-                                    attribute-index)
+                                    nil)
                    (~>  training-state cl-grf.tp:attribute-indexes
                         (subsample-vector attribute-index))))
                 (target-data (cl-grf.tp:target-data new-state))
                 (predictions (~>> target-data cl-grf.data:attributes-count
-                                  (cl-grf.data:make-data-matrix 0)))
+                                  (cl-grf.data:make-data-matrix 1)))
                 (new-leaf (make 'scored-leaf-node :score shannon-entropy
                                                   :predictions predictions
                                                   :support length)))
