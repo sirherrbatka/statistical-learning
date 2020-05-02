@@ -17,12 +17,12 @@
                      :reader tree-parameters)))
 
 
-(defclass fundamental-random-forest ()
+(defclass fundamental-random-forest (cl-grf.mp:fundamental-model)
   ((%trees :initarg :trees
            :reader trees
            :type simple-vector)
-   (%tree-attributes-count :initarg :attributes-count
-                           :reader tree-attributes-count)
+   (%target-attributes-count :initarg :target-attributes-count
+                             :reader target-attributes-count)
    (%attributes :initarg :attributes
                 :reader attributes
                 :type simple-vector)))

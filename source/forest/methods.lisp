@@ -12,6 +12,16 @@
          (tree-attributes-count (tree-attributes-count instance))
          (tree-sample-size (tree-sample-size instance))
          (tree-parameters (tree-parameters instance)))
+    (unless (integerp tree-attributes-count)
+      (error 'type-error
+             :expected-type 'integer
+             :datum tree-attributes-count))
+    (unless (< 0 tree-attributes-count array-total-size-limit)
+      (error 'cl-ds:argument-out-of-bounds
+             :value tree-attributes-count
+             :bounds `(< 0 :tree-attributes-count
+                         ,array-total-size-limit)
+             :argument :tree-attributes-count))
     (unless (typep tree-parameters
                    'cl-grf.tp:fundamental-training-parameters)
       (error 'type-error
@@ -31,16 +41,9 @@
                          :datum forest-class))
     (when (and parallel (cl-grf.tp:parallel tree-parameters))
       (error 'cl-ds:incompatible-arguments
+             :arguments '(:parallel :tree-parameters)
+             :values `(,parallel ,tree-parameters)
              :format-control "You can't request parallel creation of both the forest and the individual trees at the same time."))
-    (unless (integerp tree-attributes-count)
-      (error 'type-error :expected-type 'integer
-                         :datum tree-attributes-count))
-    (unless (< 0 tree-attributes-count array-total-size-limit)
-      (error 'cl-ds:argument-out-of-bounds
-             :value tree-attributes-count
-             :bounds `(< 0 :tree-attributes-count
-                         ,array-total-size-limit)
-             :argument :tree-attributes-count))
     (unless (integerp tree-sample-size)
       (error 'type-error :expected-type 'integer
                          :datum tree-sample-size))
@@ -70,9 +73,10 @@
                                    leafs)
   (iterate
     (declare (type fixnum i))
-    (with attributes-count = (tree-attributes-count forest))
     (with length = (length leafs))
-    (with result = (cl-grf.data:make-data-matrix length attributes-count))
+    (with target-attributes-count = (target-attributes-count forest))
+    (with result = (cl-grf.data:make-data-matrix length
+                                                 target-attributes-count))
     (for i from 0 below length)
     (for leafs-group = (aref leafs i))
     (for total-support = (reduce #'+ leafs-group
@@ -82,7 +86,7 @@
       (for predictions = (cl-grf.alg:predictions leaf))
       (for support = (cl-grf.alg:support leaf))
       (iterate
-        (for k from 0 below attributes-count)
+        (for k from 0 below target-attributes-count)
         (incf (cl-grf.data:mref result i k)
               (* (/ support total-support)
                  (cl-grf.data:mref predictions 0 k)))))
@@ -98,25 +102,33 @@
 (defmethod cl-grf.mp:make-model ((parameters random-forest-parameters)
                                  train-data
                                  target-data)
-  (check-type train-data cl-grf.data:data-matrix)
-  (check-type target-data cl-grf.data:data-matrix)
-  (let* ((tree-parameters (tree-parameters parameters))
-         (trees-count (trees-count parameters))
-         (forest-class (forest-class parameters))
-         (parallel (parallel parameters))
-         (tree-attributes-count (tree-attributes-count parameters))
-         (total-attributes-count (cl-grf.data:attributes-count train-data))
-         (trees (make-array trees-count))
-         (attributes (make-array trees-count)))
-    (map-into attributes (selecting-random-attributes tree-attributes-count
-                                                      total-attributes-count))
-    (funcall (if parallel #'lparallel:pmap-into #'map-into)
-             trees
-             (lambda (attributes)
-               (cl-grf.mp:make-model tree-parameters
-                                     train-data
-                                     target-data
-                                     ))
-             attributes))
-
-  )
+  (cl-grf.data:bind-data-matrix-dimensions
+      ((train-data-data-points train-data-attributes)
+       (target-data-data-points target-data-attributes))
+    (let* ((tree-parameters (tree-parameters parameters))
+           (trees-count (trees-count parameters))
+           (forest-class (forest-class parameters))
+           (parallel (parallel parameters))
+           (tree-attributes-count (tree-attributes-count parameters))
+           (tree-sample-size (tree-sample-size parameters))
+           (trees (make-array trees-count))
+           (attributes (make-array trees-count)))
+      (map-into attributes (selecting-random-indexes tree-attributes-count
+                                                     train-data-attributes))
+      (funcall (if parallel #'lparallel:pmap-into #'map-into)
+               trees
+               (lambda (attributes)
+                 (let ((data-points (select-random-indexes tree-sample-size
+                                                           train-data-data-points)))
+                   (cl-grf.mp:make-model tree-parameters
+                                         (cl-grf.data:sample train-data
+                                                             data-points
+                                                             attributes)
+                                         (cl-grf.data:sample target-data
+                                                             data-points
+                                                             nil))))
+               attributes)
+      (make forest-class
+            :trees trees
+            :target-attributes-count target-data-attributes
+            :attributes attributes))))

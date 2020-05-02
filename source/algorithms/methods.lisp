@@ -70,7 +70,7 @@
          (declare (type double-float difference))
          (when (< difference minimal-difference)
            (return nil))
-         (return (make 'scored-split-candidate
+         (return (make 'scored-tree-node
                        :left-node (make-simple-node
                                    optimal-array
                                    left-score
@@ -123,4 +123,4 @@
                       :attribute-indexes attributes
                       :target-data target-data
                       :training-data train-data)))
-    (~> state cl-grf.tp:make-leaf (cl-grf.tp:split state))))
+    (~>> state cl-grf.tp:make-leaf (cl-grf.tp:split state))))

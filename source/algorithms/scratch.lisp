@@ -27,15 +27,4 @@
         :parallel nil))
 
 
-(defparameter *training-state*
-  (make 'cl-grf.tp:fundamental-training-state
-        :training-parameters *training-parameters*
-        :attribute-indexes (make-array 1 :element-type 'fixnum
-                                         :initial-element 0)
-        :target-data *target*
-        :training-data *data*))
-
-
-(defparameter *leaf* (cl-grf.tp:make-leaf *training-state*))
-
-(defparameter *tree* (cl-grf.tp:split *training-state* *leaf*))
+(defparameter *leaf* (cl-grf.mp:make-model *training-parameters* *data* *target*))

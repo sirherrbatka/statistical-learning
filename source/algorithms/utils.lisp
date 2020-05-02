@@ -122,7 +122,7 @@
 (defun subsample-array (array length split-array position skipped-column)
   (declare (optimize (speed 3) (safety 0)))
   (cl-grf.data:bind-data-matrix-dimensions
-      (data-points-count attributes-count array)
+      ((data-points-count attributes-count array))
     (lret ((result (make-array `(,length ,(1- attributes-count))
                                :element-type 'double-float)))
       (iterate
@@ -170,7 +170,7 @@
                                                   :predictions predictions
                                                   :support length)))
            (cl-grf.data:bind-data-matrix-dimensions
-               (data-points-count attributes-count target-data)
+               ((data-points-count attributes-count target-data))
              (iterate
                (declare (type fixnum i))
                (for i from 0 below data-points-count)

@@ -79,13 +79,6 @@
         (call-next-method))))
 
 
-(defmethod split ((split fundamental-split-candidate))
-  (make-class 'fundamental-tree-node
-              :left-node (left-node split)
-              :right-node (right-node split)
-              :attribute (attribute split)))
-
-
 (defmethod leaf-for ((node fundamental-leaf-node) data index)
   (make-array (cl-grf.data:data-points-count data)
               :initial-element node))
@@ -105,7 +98,8 @@
 
 (defmethod cl-grf.mp:predict ((model fundamental-tree-node) data)
   (check-type data cl-grf.data:data-matrix)
-  (cl-grf.data:bind-data-matrix-dimensions (data-points attributes data)
+  (cl-grf.data:bind-data-matrix-dimensions
+      ((data-points attributes data))
     (iterate
       (with result = nil)
       (with slice = (cl-grf.data:make-data-matrix 1 attributes))
