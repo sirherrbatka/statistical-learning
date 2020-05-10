@@ -109,7 +109,7 @@
 
 (defparameter *forest-parameters*
   (make 'cl-grf.forest:random-forest-parameters
-        :trees-count 500
+        :trees-count 5000
         :forest-class 'cl-grf.forest:classification-random-forest
         :parallel t
         :tree-attributes-count 30
