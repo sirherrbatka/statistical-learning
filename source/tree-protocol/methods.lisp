@@ -80,18 +80,16 @@
 
 
 (defmethod leaf-for ((node fundamental-leaf-node) data index)
-  (make-array (cl-grf.data:data-points-count data)
-              :initial-element node))
+  node)
 
 
 (defmethod leaf-for ((node fundamental-tree-node) data index)
   (declare (type cl-grf.data:data-matrix data)
            (type fixnum index))
   (bind ((attribute-index (attribute node))
-         (attribute-value (attribute-value node))
-         (right-p (> (cl-grf.data:mref data index attribute-index)
-                     attribute-value)))
-    (if right-p
+         (attribute-value (attribute-value node)))
+    (if (> (cl-grf.data:mref data index attribute-index)
+           attribute-value)
         (leaf-for (right-node node) data index)
         (leaf-for (left-node node) data index))))
 
@@ -131,7 +129,7 @@
       (error 'type-error :expected 'integer
                          :datum maximal-depth))
     (unless (< 0 maximal-depth)
-      (error 'cl-ds:argument-out-of-bounds
+      (error 'cl-ds:argument-value-out-of-bounds
              :argument :maximal-depth
              :bounds '(< 0 :maximal-depth)
              :value maximal-depth))
@@ -139,7 +137,7 @@
       (error 'type-error :expected 'integer
                          :datum minimal-size))
     (unless (<= 0 minimal-size)
-      (error 'cl-ds:argument-out-of-bounds
+      (error 'cl-ds:argument-value-out-of-bounds
              :argument :minimal-size
              :bounds '(<= 0 :minimal-size)
              :value minimal-size))
@@ -147,7 +145,7 @@
       (error 'type-error :expected 'integer
                          :datum trials-count))
     (unless (< 0 trials-count)
-      (error 'cl-ds:argument-out-of-bounds
+      (error 'cl-ds:argument-value-out-of-bounds
              :argument :trials-count
              :bounds '(< 0 :trials-count)
              :value trials-count))))

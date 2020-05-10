@@ -19,15 +19,15 @@
 
 
 (declaim (inline mref))
-(defun mref (data-matrix data-point feature)
+(defun mref (data-matrix data-point attribute)
   (check-type data-matrix data-matrix)
-  (aref data-matrix data-point feature))
+  (aref data-matrix data-point attribute))
 
 
 (declaim (inline (setf mref)))
-(defun (setf mref) (new-value data-matrix data-point feature)
+(defun (setf mref) (new-value data-matrix data-point attribute)
   (check-type data-matrix data-matrix)
-  (setf (aref data-matrix data-point feature) new-value))
+  (setf (aref data-matrix data-point attribute) new-value))
 
 
 (defun make-data-matrix (data-points-count attributes-count)
@@ -45,16 +45,17 @@
 (defun sample (data-matrix &key data-points attributes)
   (declare (optimize (speed 3) (safety 0)))
   (check-type data-matrix data-matrix)
+  (assert (or data-points attributes))
   (cl-ds.utils:cases ((null attributes)
                       (null data-points))
     (iterate
       (declare (type fixnum i attributes-count data-points-count))
-      (with attributes-count = (if attributes
-                                   (length attributes)
-                                   (attributes-count data-matrix)))
-      (with data-points-count = (if data-points
-                                    (length data-points)
-                                    (data-points-count data-matrix)))
+      (with attributes-count = (if (null attributes)
+                                   (attributes-count data-matrix)
+                                   (length attributes)))
+      (with data-points-count = (if (null data-points)
+                                    (data-points-count data-matrix)
+                                    (length data-points)))
       (with result = (make-data-matrix data-points-count
                                        attributes-count))
       (for i from 0 below data-points-count)

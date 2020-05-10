@@ -5,8 +5,8 @@
   (:use #:cl #:cl-grf.aux-package)
   (:nicknames #:cl-grf.alg)
   (:export
-   #:information-gain-classification
    #:support
+   #:single-information-gain-classification
    #:calculate-score
    #:predictions
    #:support

@@ -12,4 +12,5 @@
    #:trees
    #:attributes
    #:forest-class
+   #:random-forest-parameters
    ))

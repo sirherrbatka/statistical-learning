@@ -7,7 +7,13 @@
 
 (defclass information-gain-classification (scored-classification)
   ((%minimal-difference :initarg :minimal-difference
-                        :accessor minimal-difference)))
+                        :reader minimal-difference)))
+
+
+(defclass single-information-gain-classification
+    (information-gain-classification)
+  ((%number-of-classes :initarg :number-of-classes
+                       :reader number-of-classes)))
 
 
 (defclass score ()

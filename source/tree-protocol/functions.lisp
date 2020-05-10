@@ -1,7 +1,10 @@
 (cl:in-package #:cl-grf.tree-protocol)
 
 
-(defun training-state-clone (training-state new-data new-target new-attribute-indexes)
+(defun training-state-clone (training-state
+                             new-data
+                             new-target
+                             new-attribute-indexes)
   (check-type training-state fundamental-training-state)
   (cl-ds.utils:quasi-clone* training-state
     :training-data new-data
@@ -32,10 +35,10 @@
 
 
 (defun leafs-for (node data)
-  (bind (((length features-count) (array-dimensions data))
-         (result (make-array length)))
-    (declare (ignore features-count))
+  (declare (optimize (debug 3)))
+  (cl-grf.data:bind-data-matrix-dimensions ((length features-count data))
     (iterate
+      (with result = (make-array length))
       (for i from 0 below length)
-      (setf (aref result i) (leaf-for node data i)))
-    result))
+      (setf (aref result i) (leaf-for node data i))
+      (finally (return result)))))

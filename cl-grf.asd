@@ -31,9 +31,9 @@
                              ))
                (:module "algorithms"
                 :components ((:file "package")
+                             (:file "types")
                              (:file "utils")
                              (:file "generics")
-                             (:file "types")
                              (:file "methods")))
                (:module "forest"
                 :components ((:file "package")
