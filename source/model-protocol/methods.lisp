@@ -4,8 +4,7 @@
 (defmethod make-model :around ((model fundamental-model)
                                train-data
                                target-data)
-  (check-type train-data cl-grf.data:data-matrix)
-  (check-type target-data cl-grf.data:data-matrix)
+  (cl-grf.data:check-data-points train-data target-data)
   (cl-grf.data:bind-data-matrix-dimensions
       ((train-data-points train-data-attributes train-data)
        (target-data-points target-data-attributes target-data))
@@ -29,9 +28,4 @@
              :value target-data
              :argument 'target-data
              :format-control "TARGET-DATA has no data-points."))
-    (unless (= train-data-points target-data-points)
-      (error 'cl-ds:incompatible-arguments
-             :arguments '(train-data target-data)
-             :values `(,train-data ,target-data)
-             :format-control "Number of data-points in the the train-data should be equal to the number of data-points in the target-data."))
     (call-next-method model train-data target-data)))

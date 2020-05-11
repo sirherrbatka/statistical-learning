@@ -22,7 +22,7 @@
 
 
 (defmethod (setf training-data) :around (new-value training-state)
-  (check-type new-value cl-grf.data:data-matrix)
+  (cl-grf.data:check-data-points new-value)
   (call-next-method new-value training-state))
 
 
@@ -95,7 +95,7 @@
 
 
 (defmethod cl-grf.mp:predict ((model fundamental-tree-node) data)
-  (check-type data cl-grf.data:data-matrix)
+  (cl-grf.data:check-data-points data)
   (cl-grf.data:bind-data-matrix-dimensions
       ((data-points attributes data))
     (iterate

@@ -16,13 +16,14 @@
                 :components ((:file "package")
                              (:file "types")
                              (:file "functions")
-                             (:file "extras")
-                             (:file "macros")))
+                             (:file "macros")
+                             (:file "extras")))
                (:module "model-protocol"
                 :components ((:file "package")
                              (:file "generics")
                              (:file "types")
-                             (:file "methods")))
+                             (:file "methods")
+                             (:file "functions")))
                (:module "tree-protocol"
                 :components ((:file "package")
                              (:file "generics")

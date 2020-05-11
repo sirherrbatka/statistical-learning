@@ -14,6 +14,7 @@
    #:select-random-indexes
    #:selecting-random-indexes
    #:cross-validation-folds
+   #:check-data-points
    #:make-data-matrix
    #:sample
    #:data-points-count))

@@ -8,4 +8,5 @@
    #:make-model
    #:fundamental-model
    #:predict
-   ))
+   #:average-performance-metric
+   #:performance-metric))

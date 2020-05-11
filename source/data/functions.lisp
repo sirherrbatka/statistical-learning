@@ -3,30 +3,30 @@
 
 (declaim (inline attributes-count))
 (defun attributes-count (data-matrix)
-  (check-type data-matrix data-matrix)
+  (check-data-points data-matrix)
   (array-dimension data-matrix 1))
 
 
 (declaim (inline data-points-count))
 (defun data-points-count (data-matrix)
-  (check-type data-matrix data-matrix)
+  (check-data-points data-matrix)
   (array-dimension data-matrix 0))
 
 
 (defun data-matrix-dimensions (data-matrix)
-  (check-type data-matrix data-matrix)
+  (check-data-points data-matrix)
   (array-dimensions data-matrix))
 
 
 (declaim (inline mref))
 (defun mref (data-matrix data-point attribute)
-  (check-type data-matrix data-matrix)
+  (check-data-points data-matrix)
   (aref data-matrix data-point attribute))
 
 
 (declaim (inline (setf mref)))
 (defun (setf mref) (new-value data-matrix data-point attribute)
-  (check-type data-matrix data-matrix)
+  (check-data-points data-matrix)
   (setf (aref data-matrix data-point attribute) new-value))
 
 
@@ -44,7 +44,7 @@
     data-matrix)
 (defun sample (data-matrix &key data-points attributes)
   (declare (optimize (speed 3) (safety 0)))
-  (check-type data-matrix data-matrix)
+  (check-data-points data-matrix)
   (assert (or data-points attributes))
   (cl-ds.utils:cases ((null attributes)
                       (null data-points))
