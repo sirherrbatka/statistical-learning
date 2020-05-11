@@ -13,6 +13,7 @@
    #:reshuffle
    #:select-random-indexes
    #:selecting-random-indexes
+   #:cross-validation-folds
    #:make-data-matrix
    #:sample
    #:data-points-count))

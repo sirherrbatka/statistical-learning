@@ -51,3 +51,26 @@
   (let ((iota (iota-vector total-count)))
     (lambda ()
       (take selected-count (reshuffle iota)))))
+
+
+(defun cross-validation-folds (data-points-count number-of-folds)
+  (let* ((indexes (~> data-points-count iota-vector reshuffle))
+         (validation-size (truncate data-points-count number-of-folds))
+         (train-size (- data-points-count validation-size)))
+    (cl-ds:xpr (:index 0)
+      (when (< index data-points-count)
+        (let ((validation (make-array validation-size :element-type 'fixnum))
+              (train (make-array train-size :element-type 'fixnum)))
+          (iterate
+            (for i from 0 below index)
+            (setf (aref train i) (aref indexes i)))
+          (iterate
+            (for j from 0 below validation-size)
+            (for i from index)
+            (setf (aref validation j) (aref indexes i)))
+          (iterate
+            (for j from index below train-size)
+            (for i from (+ index validation-size) below data-points-count)
+            (setf (aref train j) (aref indexes i)))
+          (cl-ds:send-recur (list* train validation)
+                            :index (+ index validation-size)))))))
