@@ -12,6 +12,7 @@
    #:iota-vector
    #:reshuffle
    #:select-random-indexes
+   #:selecting-random-indexes
    #:make-data-matrix
    #:sample
    #:data-points-count))

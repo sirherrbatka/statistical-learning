@@ -123,13 +123,13 @@
            (tree-sample-size (tree-sample-size parameters))
            (trees (make-array trees-count))
            (attributes (make-array trees-count)))
-      (~>> (selecting-random-indexes tree-attributes-count
-                                     train-data-attributes)
+      (~>> (cl-grf.data:selecting-random-indexes tree-attributes-count
+                                                 train-data-attributes)
            (map-into attributes))
       (funcall (if parallel #'lparallel:pmap-into #'map-into)
                trees
                (lambda (attributes)
-                 (let ((data-points (select-random-indexes
+                 (let ((data-points (cl-grf.data:select-random-indexes
                                      tree-sample-size
                                      train-data-data-points)))
                    (cl-grf.mp:make-model tree-parameters
