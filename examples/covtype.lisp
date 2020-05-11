@@ -116,6 +116,7 @@
         :tree-sample-size 200
         :tree-parameters *training-parameters*))
 
+
 (defparameter *model*
   (cl-grf.mp:make-model *forest-parameters*
                         *train-data*

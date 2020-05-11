@@ -9,6 +9,9 @@
    #:data-matrix
    #:data-matrix-dimensions
    #:mref
+   #:iota-vector
+   #:reshuffle
+   #:select-random-indexes
    #:make-data-matrix
    #:sample
    #:data-points-count))

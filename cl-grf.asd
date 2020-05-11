@@ -16,6 +16,7 @@
                 :components ((:file "package")
                              (:file "types")
                              (:file "functions")
+                             (:file "extras")
                              (:file "macros")))
                (:module "model-protocol"
                 :components ((:file "package")
@@ -41,6 +42,4 @@
                              (:file "types")
                              (:file "utils")
                              (:file "functions")
-                             (:file "methods")
-                             ))
-               ))
+                             (:file "methods")))))

@@ -65,7 +65,14 @@
 (-> vector-entropy ((simple-array double-float (*))) double-float)
 (defun vector-entropy (sums)
   (declare (optimize (speed 3) (safety 0) (debug 0)))
-  (let ((grand-total (reduce #'+ sums :initial-value 0.0d0)))
+  (let* ((length (length sums))
+         (grand-total (iterate
+                        (declare (type fixnum i)
+                                 (type double-float result))
+                        (with result = 0.0d0)
+                        (for i from 0 below length)
+                        (incf result (aref sums i))
+                        (finally (return result)))))
     (declare (type double-float grand-total))
     (if (zerop grand-total)
         0.0d0
@@ -73,7 +80,6 @@
           (declare (type fixnum length i)
                    (type double-float entropy p))
           (with entropy = 0.0d0)
-          (with length = (length sums))
           (for i from 0 below length)
           (for sum = (aref sums i))
           (when (zerop sum)
