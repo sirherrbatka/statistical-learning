@@ -70,7 +70,7 @@
 
 
 (defun accuracy (confusion-matrix)
-  (coerce (/ (total-true confusion-matrix)
+  (coerce (/ (true confusion-matrix)
              (total confusion-matrix))
           'double-float))
 
