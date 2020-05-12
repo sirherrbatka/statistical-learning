@@ -2,7 +2,7 @@
 
 
 (defmethod (setf training-parameters) :round (new-value state)
-  (check-type new-value fundamental-training-parameters)
+  (check-type new-value fundamental-tree-training-parameters)
   (call-next-method new-value state))
 
 
@@ -117,7 +117,7 @@
 
 
 (defmethod shared-initialize :after
-    ((instance fundamental-training-parameters)
+    ((instance fundamental-tree-training-parameters)
      slot-names
      &rest initargs)
   (declare (ignore slot-names initargs))

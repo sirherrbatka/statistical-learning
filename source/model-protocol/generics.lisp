@@ -5,3 +5,7 @@
 (defgeneric predict (model data))
 (defgeneric performance-metric (parameters target predictions))
 (defgeneric average-performance-metric (parameters metrics))
+(defgeneric total-positive (confusion-matrix))
+(defgeneric true-positive (confusion-matrix))
+(defgeneric total-negative (confusion-matrix))
+(defgeneric true-negative (confusion-matrix))

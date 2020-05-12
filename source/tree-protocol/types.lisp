@@ -20,7 +20,8 @@
   ())
 
 
-(defclass fundamental-training-parameters ()
+(defclass fundamental-tree-training-parameters
+    (cl-grf.mp:fundamental-model-parameters)
   ((%maximal-depth :initarg :maximal-depth
                    :reader maximal-depth)
    (%minimal-size :initarg :minimal-size

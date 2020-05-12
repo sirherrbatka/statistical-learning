@@ -8,7 +8,8 @@
   :author "Marek Kochanowicz"
   :depends-on ( :iterate       :serapeum
                 :lparallel     :cl-data-structures
-                :metabang-bind :alexandria)
+                :metabang-bind :alexandria
+                :documentation-utils-extensions)
   :serial T
   :pathname "source"
   :components ((:file "aux-package")
@@ -22,8 +23,9 @@
                 :components ((:file "package")
                              (:file "generics")
                              (:file "types")
+                             (:file "functions")
                              (:file "methods")
-                             (:file "functions")))
+                             (:file "documentation")))
                (:module "tree-protocol"
                 :components ((:file "package")
                              (:file "generics")

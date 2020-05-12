@@ -9,7 +9,7 @@
    #:force-tree
    #:fundamental-leaf-node
    #:fundamental-node
-   #:fundamental-training-parameters
+   #:fundamental-tree-training-parameters
    #:fundamental-training-state
    #:fundamental-tree-node
    #:force-tree*

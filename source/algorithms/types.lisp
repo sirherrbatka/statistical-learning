@@ -1,7 +1,7 @@
 (cl:in-package #:cl-grf.algorithms)
 
 
-(defclass scored-classification (cl-grf.tp:fundamental-training-parameters)
+(defclass scored-classification (cl-grf.tp:fundamental-tree-training-parameters)
   ())
 
 
