@@ -14,10 +14,11 @@
 
 
 (defclass confusion-matrix (fundamental-performance-metric)
-  ((%positive :initarg :total-positive
+  ((%positive :initarg :positive
               :reader positive)
-   (%true-positive :initarg :true-positive)
-   (%negative :initarg :total-negative
+   (%true-positive :initarg :positive
+                   :reader true-positive)
+   (%negative :initarg :negative
               :reader negative)
-   (%true-negative :initarg :true-negative
+   (%true-negative :initarg :negative
                    :reader true-negative)))

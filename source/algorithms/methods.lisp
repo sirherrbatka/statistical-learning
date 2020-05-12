@@ -168,3 +168,9 @@
              :value number-of-classes
              :argument :number-of-classes
              :format-control "Classification requires at least 2 classes for classification."))))
+
+
+(defmethod cl-grf.mp:performance-metric ((parameters single-information-gain-classification)
+                                         target
+                                         predictions)
+  cl-ds.utils:todo)
