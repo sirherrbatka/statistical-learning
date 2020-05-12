@@ -27,6 +27,7 @@
    #:false
    #:negative
    #:precision
+   #:f1-score
    #:accuracy
    #:reacll
    #:specificity))

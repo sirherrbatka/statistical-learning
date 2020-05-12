@@ -26,23 +26,13 @@
 
 
 (defun false-positive (confusion-matrix)
-  (- (total-positive confusion-matrix)
+  (- (positive confusion-matrix)
      (true-positive confusion-matrix)))
 
 
 (defun false-negative (confusion-matrix)
-  (- (total-negative confusion-matrix)
+  (- (negative confusion-matrix)
      (true-negative confusion-matrix)))
-
-
-(defun positive (confusion-matrix)
-  (+ (true-positive confusion-matrix)
-     (false-negative confusion-matrix)))
-
-
-(defun negative (confusion-matrix)
-  (+ (true-negative confusion-matrix)
-     (false-positive confusion-matrix)))
 
 
 (defun true (confusion-matrix)
@@ -60,9 +50,9 @@
      (negative confusion-matrix)))
 
 
-(defun precsion (confusion-matrix)
+(defun precision (confusion-matrix)
   (coerce (/ (true-positive confusion-matrix)
-             (total-positive confusion-matrix))
+             (positive confusion-matrix))
           'double-float))
 
 
@@ -82,4 +72,10 @@
 (defun accuracy (confusion-matrix)
   (coerce (/ (total-true confusion-matrix)
              (total confusion-matrix))
+          'double-float))
+
+
+(defun f1-score (confusion-matrix)
+  (coerce (/ 2 (+ (/ 1 (precision confusion-matrix))
+                  (/ 1 (recall confusion-matrix))))
           'double-float))

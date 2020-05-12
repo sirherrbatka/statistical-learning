@@ -29,3 +29,8 @@
              :argument 'target-data
              :format-control "TARGET-DATA has no data-points."))
     (call-next-method model train-data target-data)))
+
+
+(defmethod predict :around ((model fundamental-model) data)
+  (cl-grf.data:check-data-points data)
+  (call-next-method model data))
