@@ -26,6 +26,12 @@
                              (:file "functions")
                              (:file "methods")
                              (:file "documentation")))
+               (:module "performance"
+                :components ((:file "package")
+                             (:file "generics")
+                             (:file "types")
+                             (:file "functions")
+                             (:file "methods")))
                (:module "tree-protocol"
                 :components ((:file "package")
                              (:file "generics")
