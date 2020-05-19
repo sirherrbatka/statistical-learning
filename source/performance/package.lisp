@@ -4,28 +4,16 @@
 (defpackage #:cl-grf.performance
   (:use #:cl #:cl-grf.aux-package)
   (:export
-   #:average-performance-metric
-   #:fundamental-model-parameters
-   #:fundamental-performance-metric
-   #:performance-metric
-   #:confusion-matrix
-   #:total
-   #:false-negative
-   #:false-positive
-   #:true-positive
-   #:false-positive
-   #:positive
-   #:ositive
-   #:egative
-   #:negative
-   #:positive
-   #:true
-   #:false
-   #:negative
-   #:precision
-   #:f1-score
    #:accuracy
-   #:reacll
-   #:specificity
+   #:at-confusion-matrix
+   #:average-performance-metric
    #:cross-validation
+   #:f1-score
+   #:fundamental-model-parameters
+   #:make-confusion-matrix
+   #:performance-metric
+   #:precision
+   #:recall
+   #:specificity
+   #:two-class-confusion-matrix-from-general-confusion-matrix
    ))

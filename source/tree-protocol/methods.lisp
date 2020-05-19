@@ -10,26 +10,17 @@
   (apply #'make node-class arguments))
 
 
-(defmethod (setf maximal-depth) :around (new-value
+(defmethod (setf maximal-depth) :before (new-value
                                          training-parameters)
-  (check-type new-value (integer 1 *))
-  (call-next-method new-value training-parameters))
+  (check-type new-value (integer 1 *)))
 
 
-(defmethod (setf depth) :around (new-value training-parameters)
-  (check-type new-value (integer 0 *))
-  (call-next-method new-value training-parameters))
+(defmethod (setf depth) :before (new-value training-parameters)
+  (check-type new-value (integer 0 *)))
 
 
-(defmethod (setf training-data) :around (new-value training-state)
-  (cl-grf.data:check-data-points new-value)
-  (call-next-method new-value training-state))
-
-
-(defmethod (setf minimal-size) :around (new-value
-                                        training-parameters)
-  (check-type new-value positive-integer)
-  (call-next-method new-value training-parameters))
+(defmethod (setf training-data) :before (new-value training-state)
+  (cl-grf.data:check-data-points new-value))
 
 
 (defmethod treep ((node fundamental-tree-node))
@@ -72,9 +63,9 @@
     (declare (type cl-grf.data:data-matrix training-data)
              (type (integer 1 *) minimal-size))
     (if (or (< (cl-grf.data:data-points-count training-data)
-               minimal-size)
-            (or (emptyp attribute-indexes))
-            (= depth maximal-depth))
+               (* 2 minimal-size))
+            (emptyp attribute-indexes)
+            (>= depth maximal-depth))
         nil
         (call-next-method))))
 
@@ -94,7 +85,10 @@
         (leaf-for (left-node node) data index))))
 
 
-(defmethod cl-grf.mp:predict ((model fundamental-tree-node) data)
+(defmethod cl-grf.mp:predict ((model fundamental-tree-node) data
+                              &optional parallel)
+  (declare (ignore parallel))
+  ;; TODO should be able to work in parallel
   (cl-grf.data:check-data-points data)
   (cl-grf.data:bind-data-matrix-dimensions
       ((data-points attributes data))

@@ -7,11 +7,17 @@
      &rest initargs)
   (declare (ignore initargs slot-names))
   (let* ((trees-count (trees-count instance))
+         (tree-batch-size (tree-batch-size instance))
          (forest-class (forest-class instance))
          (parallel (parallel instance))
          (tree-attributes-count (tree-attributes-count instance))
-         (tree-sample-size (tree-sample-size instance))
+         (tree-sample-rate (tree-sample-rate instance))
          (tree-parameters (tree-parameters instance)))
+    (unless (< 0 tree-sample-rate 1.0)
+      (error 'cl-ds:argument-value-out-of-bounds
+             :value tree-sample-rate
+             :bounds '(< 0 tree-sample-rate 1.0)
+             :argument :tree-sample-rate))
     (unless (integerp tree-attributes-count)
       (error 'type-error
              :expected-type 'integer
@@ -23,13 +29,18 @@
                          ,array-total-size-limit)
              :argument :tree-attributes-count))
     (unless (typep tree-parameters
-                   'cl-grf.tp:fundamental-training-parameters)
+                   'cl-grf.mp:fundamental-model-parameters)
       (error 'type-error
-             :expected-type 'cl-grf.tp:fundamental-training-parameters
+             :expected-type 'cl-grf.mp:fundamental-model-parameters
              :datum tree-parameters))
     (unless (integerp trees-count)
       (error 'type-error :expected-type 'integer
                          :datum trees-count))
+    (unless (integerp (/ trees-count tree-batch-size))
+      (error 'cl-ds:incompatible-arguments
+             :format-control ":TREES-COUNT is supposed to be multiple of :TREE-BATCH-SIZE"
+             :parameters '(:tree-batch-size :trees-count)
+             :values (list tree-batch-size trees-count)))
     (unless (< 0 trees-count array-total-size-limit)
       (error 'cl-ds:argument-value-out-of-bounds
              :value trees-count
@@ -43,105 +54,99 @@
       (error 'cl-ds:incompatible-arguments
              :arguments '(:parallel :tree-parameters)
              :values `(,parallel ,tree-parameters)
-             :format-control "You can't request parallel creation of both the forest and the individual trees at the same time."))
-    (unless (integerp tree-sample-size)
-      (error 'type-error :expected-type 'integer
-                         :datum tree-sample-size))
-    (unless (< 0 tree-sample-size array-total-size-limit)
-      (error 'cl-ds:argument-value-out-of-bounds
-             :value tree-sample-size
-             :bounds `(< 0 :tree-sample-size
-                         ,array-total-size-limit)
-             :argument :tree-sample-size))))
+             :format-control "You can't request parallel creation of both the forest and the individual trees at the same time."))))
 
 
 (defmethod leafs-for ((forest fundamental-random-forest)
                       data
                       &optional parallel)
   (check-type data cl-grf.data:data-matrix)
-  (funcall (if parallel
-               #'lparallel:pmap
-               #'map)
-           'vector
-           (lambda (tree features)
-             (~>> (cl-grf.data:sample data :attributes features)
-                  (cl-grf.tp:leafs-for tree)))
-           (trees forest)
-           (attributes forest)))
+  (leafs-for* (trees forest)
+              (attributes forest)
+              data
+              parallel))
 
 
 (defmethod predictions-from-leafs ((forest classification-random-forest)
-                                   leafs)
-  (iterate
-    (declare (type fixnum i))
-    (with trees-count = (length leafs))
-    (with length = (~> leafs first-elt length))
-    (with results = (make-array length :initial-element nil))
-    (for i from 0 below length)
-    (for total-support = (total-support leafs i))
-    (iterate
-      (for leaf-group in-vector leafs)
-      (for leaf = (aref leaf-group i))
-      (for predictions = (cl-grf.alg:predictions leaf))
-      (for data-points-count = (cl-grf.data:data-points-count predictions))
-      (for attributes-count = (cl-grf.data:attributes-count predictions))
-      (for result = (ensure (aref results i)
-                      (cl-grf.data:make-data-matrix data-points-count
-                                                    attributes-count)))
-      (for support = (cl-grf.alg:support leaf))
-      (iterate
-        (for k from 0 below (array-total-size predictions))
-        (incf (row-major-aref result k)
-              (/ (row-major-aref predictions k)
-                 support))))
-    (for result = (aref results i))
-    (iterate
-      (for k from 0 below (array-total-size result))
-      (setf (row-major-aref result k)
-            (/ (row-major-aref result k)
-               trees-count)))
-    (finally (return results))))
+                                   leafs
+                                   &optional parallel)
+  (classification-predictions-from-leafs* leafs
+                                          parallel))
 
 
 (defmethod cl-grf.mp:predict ((random-forest fundamental-random-forest)
-                              data)
+                              data
+                              &optional parallel)
   (check-type data cl-grf.data:data-matrix)
-  (predict random-forest data))
+  (predict random-forest data parallel))
 
 
 (defmethod cl-grf.mp:make-model ((parameters random-forest-parameters)
                                  train-data
-                                 target-data)
+                                 target-data
+                                 &optional weights)
   (cl-grf.data:bind-data-matrix-dimensions
       ((train-data-data-points train-data-attributes train-data)
        (target-data-data-points target-data-attributes target-data))
-    (let* ((tree-parameters (tree-parameters parameters))
+    (bind ((tree-batch-size (tree-batch-size parameters))
            (trees-count (trees-count parameters))
            (forest-class (forest-class parameters))
            (parallel (parallel parameters))
            (tree-attributes-count (tree-attributes-count parameters))
-           (tree-sample-size (tree-sample-size parameters))
            (trees (make-array trees-count))
-           (attributes (make-array trees-count)))
+           (attributes (make-array trees-count))
+           (sums nil)
+           (predictions nil)
+           ((:flet array-view (array &key (from 0) (to trees-count)))
+            (make-array (min trees-count (- to from))
+                        :displaced-index-offset (min trees-count from)
+                        :displaced-to array)))
+      (when (null weights)
+        (setf weights (cl-grf.data:make-data-matrix train-data-data-points 1
+                                                    1.0d0)))
       (~>> (cl-grf.data:selecting-random-indexes tree-attributes-count
                                                  train-data-attributes)
            (map-into attributes))
-      (funcall (if parallel #'lparallel:pmap-into #'map-into)
-               trees
-               (lambda (attributes)
-                 (let ((data-points (cl-grf.data:select-random-indexes
-                                     tree-sample-size
-                                     train-data-data-points)))
-                   (cl-grf.mp:make-model tree-parameters
-                                         (cl-grf.data:sample
-                                          train-data
-                                          :data-points data-points
-                                          :attributes attributes)
-                                         (cl-grf.data:sample
-                                          target-data
-                                          :data-points data-points))))
-               attributes)
+      (fit-tree-batch trees attributes 0 parameters
+                      train-data target-data weights)
+      (iterate
+        (for index from tree-batch-size
+             below trees-count
+             by tree-batch-size)
+        (for base from (1+ (truncate trees-count tree-batch-size)) downto 0)
+        (for prev-trees = (array-view trees
+                                      :from (- index tree-batch-size)
+                                      :to index))
+        (for prev-attributes = (array-view attributes
+                                           :from (- index tree-batch-size)
+                                           :to index))
+        (for leafs = (leafs-for* prev-trees
+                                 prev-attributes
+                                 train-data
+                                 parallel))
+        (setf sums (classification-sums-from-leafs* leafs parallel sums))
+        (ensure predictions (map 'vector #'copy-array sums))
+        (classification-predictions-from-sums* sums
+                                               index
+                                               predictions)
+        (calculate-weights predictions target-data base weights)
+        (fit-tree-batch trees attributes index parameters
+                        train-data target-data weights))
       (make forest-class
             :trees trees
             :target-attributes-count target-data-attributes
             :attributes attributes))))
+
+
+(defmethod cl-grf.performance:performance-metric ((parameters random-forest-parameters)
+                                                  target
+                                                  predictions)
+  (cl-grf.performance:performance-metric (tree-parameters parameters)
+                                         target
+                                         predictions))
+
+
+(defmethod cl-grf.performance:average-performance-metric ((parameters random-forest-parameters)
+                                                          metrics)
+  (cl-grf.performance:average-performance-metric (tree-parameters parameters)
+                                                 metrics))

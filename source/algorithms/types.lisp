@@ -5,13 +5,13 @@
   ())
 
 
-(defclass information-gain-classification (scored-classification)
+(defclass impurity-classification (scored-classification)
   ((%minimal-difference :initarg :minimal-difference
                         :reader minimal-difference)))
 
 
-(defclass single-information-gain-classification
-    (information-gain-classification)
+(defclass single-impurity-classification
+    (impurity-classification)
   ((%number-of-classes :initarg :number-of-classes
                        :reader number-of-classes)))
 

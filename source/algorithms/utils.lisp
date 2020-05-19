@@ -62,8 +62,8 @@
       (- (* probability (the double-float (log probability))))))
 
 
-(-> vector-entropy ((simple-array double-float (*))) double-float)
-(defun vector-entropy (sums)
+(-> vector-impurity ((simple-array double-float (*))) double-float)
+(defun vector-impurity (sums)
   (declare (optimize (speed 3) (safety 0) (debug 0)))
   (let* ((length (length sums))
          (grand-total (iterate
@@ -78,22 +78,22 @@
         0.0d0
         (iterate
           (declare (type fixnum length i)
-                   (type double-float entropy p))
-          (with entropy = 0.0d0)
+                   (type double-float impurity p))
+          (with impurity = 0.0d0)
           (for i from 0 below length)
           (for sum = (aref sums i))
           (when (zerop sum)
             (next-iteration))
           (for p = (/ sum grand-total))
-          (decf entropy (* p (the double-float (log p))))
-          (finally (return entropy))))))
+          (incf impurity (* p p))
+          (finally (return (- 1.0d0 impurity)))))))
 
 
-(-> split-entropy (single-information-gain-classification
+(-> split-impurity (single-impurity-classification
                    (simple-array boolean (*))
                    cl-grf.data:data-matrix)
     (values double-float double-float))
-(defun split-entropy (parameters split-array target-data)
+(defun split-impurity (parameters split-array target-data)
   (iterate
     (declare (type fixnum length i)
              (type (simple-array double-float (*))
@@ -111,17 +111,18 @@
     (for right-p = (aref split-array i))
     (for target = (truncate (cl-grf.data:mref target-data i 0)))
     (if right-p
-        (incf (aref right-sums target))
-        (incf (aref left-sums target)))
-    (finally (return (values (vector-entropy left-sums)
-                             (vector-entropy right-sums))))))
+        (incf (aref right-sums target) 1.0d0)
+        (incf (aref left-sums target) 1.0d0))
+    (finally
+     (return (values (vector-impurity left-sums)
+                     (vector-impurity right-sums))))))
 
 
-(defun total-entropy (parameters target-data)
+(defun total-impurity (parameters target-data)
   (let* ((length (cl-grf.data:data-points-count target-data))
          (split-array (make-array length :element-type 'boolean
                                          :initial-element nil)))
-    (nth-value 0 (split-entropy parameters split-array target-data))))
+    (nth-value 0 (split-impurity parameters split-array target-data))))
 
 
 (-> subsample-array (cl-grf.data:data-matrix
@@ -152,7 +153,8 @@
               (setf (cl-grf.data:mref result j p)
                     (cl-grf.data:mref array i k)
                     p (1+ p)))
-            (incf j)))))))
+            (incf j))
+          (finally (assert (= j length))))))))
 
 
 (defun subsample-vector (vector skipped-position)
@@ -185,7 +187,7 @@
 
 
 (defmethod make-simple-node*
-    ((parameters single-information-gain-classification)
+    ((parameters single-impurity-classification)
      split-array
      shannon-entropy
      length
@@ -194,11 +196,10 @@
      training-state
      attribute-index)
   (if (not parallel)
-      #1=(let* ((number-of-classes (number-of-classes parameters))
-                (old-target-data (cl-grf.tp:target-data training-state))
-                (new-attributes (~>  training-state
+      #1=(let* ((new-attributes (~>  training-state
                                      cl-grf.tp:attribute-indexes
                                      (subsample-vector attribute-index)))
+                (old-target-data (cl-grf.tp:target-data training-state))
                 (new-state
                   (cl-grf.tp:training-state-clone
                    training-state
@@ -209,23 +210,8 @@
                                     length split-array
                                     position nil)
                    new-attributes))
-                (predictions (cl-grf.data:make-data-matrix
-                              1 number-of-classes))
-                (new-leaf (make 'scored-leaf-node
-                                :score shannon-entropy
-                                :predictions predictions
-                                :support length)))
-           (iterate
-             (declare (type fixnum i))
-             (for i from 0 below (length split-array))
-             (unless (eq position (aref split-array i))
-               (next-iteration))
-             (for prediction = (truncate (cl-grf.data:mref old-target-data
-                                                           i 0)))
-             (incf (cl-grf.data:mref predictions 0 prediction)
-                   1.0d0))
+                (new-leaf (cl-grf.tp:make-leaf new-state)))
            (setf training-state nil
-                 old-target-data nil
                  split-array nil) ; so it can be gced
            (incf (cl-grf.tp:depth new-state))
            (let ((split-candidate (cl-grf.tp:split new-state new-leaf)))
@@ -233,3 +219,11 @@
                  new-leaf
                  split-candidate)))
       (lparallel:future #1#)))
+
+
+(defun sum-matrices (matrix result)
+  (iterate
+    (for i from 0 below (array-total-size matrix))
+    (incf (row-major-aref result i)
+          (row-major-aref matrix i)))
+  result)

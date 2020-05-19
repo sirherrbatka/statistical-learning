@@ -5,34 +5,35 @@
   (:use #:cl #:cl-grf.aux-package)
   (:nicknames #:cl-grf.tp)
   (:export
+   #:attribute
+   #:attribute-indexes
+   #:attribute-value
    #:depth
    #:force-tree
+   #:force-tree*
    #:fundamental-leaf-node
    #:fundamental-node
-   #:fundamental-tree-training-parameters
    #:fundamental-training-state
    #:fundamental-tree-node
-   #:force-tree*
-   #:leafp
-   #:make-node
-   #:training-data
-   #:trials-count
-   #:training-parameters
-   #:attribute
-   #:target-data
-   #:parallel
-   #:maximal-depth
-   #:attribute-value
-   #:left-node
-   #:right-node
-   #:training-state-clone
-   #:split
-   #:split*
-   #:attribute-indexes
+   #:fundamental-tree-training-parameters
    #:leaf-for
+   #:leafp
    #:leafs-for
+   #:left-node
    #:make-leaf
    #:make-leaf*
+   #:make-node
+   #:maximal-depth
    #:minimal-size
+   #:parallel
+   #:right-node
+   #:split
+   #:split*
+   #:target-data
+   #:training-data
+   #:training-parameters
+   #:training-state-clone
    #:treep
+   #:trials-count
+   #:weights
    ))

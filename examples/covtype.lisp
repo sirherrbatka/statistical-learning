@@ -1,12 +1,12 @@
-(cl:in-package #:cl-user)
+(ql:quickload :cl-grf)
+(ql:quickload :vellum)
 
+(cl:in-package #:cl-user)
 
 (defpackage #:covtype-example
   (:use #:cl #:cl-grf.aux-package))
 
 (in-package #:covtype-example)
-
-(ql:quickload :vellum)
 
 (defparameter *data*
   (~> (vellum:copy-from :csv (~>> (asdf:system-source-directory :cl-grf)
@@ -15,9 +15,9 @@
       (vellum:to-table :columns '((:alias elevation :type integer)
                                   (:alias aspect :type integer)
                                   (:alias slope :type integer)
-                                  (:alias Horizontal_Distance_To_Hydrology :type integer)
-                                  (:alias Vertical_Distance_To_Hydrology :type integer)
-                                  (:alias Horizontal_Distance_To_Roadways :type integer)
+                                  (:alias Horizontal_Distance_To_Hydrology :type number)
+                                  (:alias Vertical_Distance_To_Hydrology :type number)
+                                  (:alias Horizontal_Distance_To_Roadways :type number)
                                   (:alias Hillshade_9am :type integer)
                                   (:alias Hillshade_Noon :type integer)
                                   (:alias Hillshade_3pm :type integer)
@@ -66,65 +66,73 @@
                                   (:alias Soil_Type_38 :type integer)
                                   (:alias Soil_Type_39 :type integer)
                                   (:alias Soil_Type_40 :type integer)
-                                  (:alias Cover_Type :type integer)))))
+                                  (:alias Cover_Type :type integer))
+                       :body (vellum:body (cover_type horizontal_distance_to_roadways)
+                               (decf cover_type)))))
+
+
+(defparameter *cover-types* ; 7
+  (vellum:with-table (*data*)
+    (bind (((min . max) (cl-ds.alg:extrema *data* #'< :key
+                                           (vellum:brr cover_type))))
+      (assert (zerop min))
+      (1+ (- max min)))))
+
+
+(defparameter *class-weights*
+  (vellum:with-table (*data*)
+    (~> (cl-ds.alg:frequency *data* :key (vellum:brr cover_type) :normalize t)
+        cl-ds.alg:to-vector
+        (sort _ #'< :key #'car)
+        (cl-ds.utils:transform #'cdr _))))
 
 
 (defparameter *train-data*
   (vellum:as-matrix (vellum:select *data*
-                      ;; :rows '(:take-to 500)
                       :columns '(:take-to soil_type_40))
                     'double-float))
 
 
-(defparameter *cover-types*
-  (vellum:with-table (*data*)
-    (bind (((min . max) (cl-ds.alg:extrema *data* #'< :key
-                                           (vellum:brr cover_type))))
-      (assert (= min 1))
-      (assert (= max 7))
-      (1+ (- max min)))))
-
-
 (defparameter *target-data*
   (vellum:as-matrix (vellum:select *data*
-                      ;; :rows '(:take-to 500)
-                      :columns '(:v cover_type)
-                      )
+                      :columns '(:v cover_type))
                     'double-float))
-
-(iterate
-  (for i from 0 below (cl-grf.data:data-points-count *target-data*))
-  (decf (cl-grf.data:mref *target-data* i 0)))
 
 
 (defparameter *training-parameters*
-  (make 'cl-grf.algorithms:single-information-gain-classification
-        :maximal-depth 16
-        :minimal-difference 0.0000000000000001d0
+  (make 'cl-grf.algorithms:single-impurity-classification
+        :maximal-depth 20
+        :minimal-difference 0.00001d0
         :number-of-classes *cover-types*
-        :minimal-size 5
-        :trials-count 5000
+        :minimal-size 10
+        :trials-count 250
         :parallel nil))
 
 
 (defparameter *forest-parameters*
   (make 'cl-grf.forest:random-forest-parameters
-        :trees-count 5000
+        :trees-count 150
         :forest-class 'cl-grf.forest:classification-random-forest
         :parallel t
-        :tree-attributes-count 30
-        :tree-sample-size 200
+        :tree-batch-size 10
+        :tree-attributes-count 50
+        :tree-sample-rate 0.1
         :tree-parameters *training-parameters*))
 
 
-(defparameter *model*
-  (cl-grf.mp:make-model *forest-parameters*
-                        *train-data*
-                        *target-data*))
+(defparameter *model* (cl-grf.mp:make-model *forest-parameters*
+                                            *train-data*
+                                            *target-data*))
 
-(defparameter *predictions*
-  (cl-grf.mp:predict *model*
-                     (~> (vellum:select *data*
-                           :columns '(:take-to soil_type_40)
-                           :rows '(:take-to 5))
-                         (vellum:as-matrix 'double-float))))
+
+(defparameter *predictions* (cl-grf.mp:predict *model* *train-data* t))
+
+
+(defparameter *confusion-matrix*
+  (cl-grf.performance:performance-metric *forest-parameters*
+                                         *target-data*
+                                         *predictions*))
+
+
+(print *confusion-matrix*)
+(print (cl-grf.performance:accuracy *confusion-matrix*)) 0.81

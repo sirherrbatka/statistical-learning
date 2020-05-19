@@ -6,7 +6,7 @@
   (:nicknames #:cl-grf.alg)
   (:export
    #:support
-   #:single-information-gain-classification
+   #:single-impurity-classification
    #:calculate-score
    #:predictions
    #:support

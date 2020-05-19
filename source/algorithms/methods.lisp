@@ -1,10 +1,10 @@
 (cl:in-package #:cl-grf.algorithms)
 
 
-(defmethod calculate-score ((training-parameters single-information-gain-classification)
+(defmethod calculate-score ((training-parameters single-impurity-classification)
                             split-array
                             target-data)
-  (split-entropy training-parameters split-array target-data))
+  (split-impurity training-parameters split-array target-data))
 
 
 (defmethod cl-grf.tp:split* :around
@@ -27,6 +27,7 @@
          (trials-count (cl-grf.tp:trials-count training-parameters))
          (minimal-difference (minimal-difference training-parameters))
          (score (score leaf))
+         (minimal-size (cl-grf.tp:minimal-size training-parameters))
          (parallel (cl-grf.tp:parallel training-parameters))
          (target-data (cl-grf.tp:target-data training-state)))
     (declare (type fixnum trials-count)
@@ -65,7 +66,9 @@
                                               target-data))
       (for split-score = (+ (* (/ left-length data-size) left-score)
                             (* (/ right-length data-size) right-score)))
-      (when (< split-score minimal-score)
+      (when (and (< split-score minimal-score)
+                 (>= left-length minimal-size)
+                 (>= right-length minimal-size))
         (setf minimal-score split-score
               optimal-threshold threshold
               optimal-attribute attribute
@@ -75,9 +78,8 @@
               minimal-right-score right-score)
         (rotatef split-array optimal-array))
       (finally
-       ;; there is potential for numerical errors so we are going to use absolute value
-       (let ((difference (abs (- (the double-float score)
-                                 (the double-float minimal-score)))))
+       (let ((difference (- (the double-float score)
+                            (the double-float minimal-score))))
          (declare (type double-float difference))
          (when (< difference minimal-difference)
            (return nil))
@@ -107,19 +109,32 @@
 
 
 
-(defmethod cl-grf.tp:make-leaf* ((training-parameters information-gain-classification)
+(defmethod cl-grf.tp:make-leaf* ((training-parameters impurity-classification)
                                  training-state)
-  (make-instance 'scored-leaf-node
-                 :score (~>> training-state
-                             cl-grf.tp:target-data
-                             (total-entropy training-parameters))))
+  (declare (optimize (speed 3)))
+  (let* ((target-data (cl-grf.tp:target-data training-state))
+         (number-of-classes (number-of-classes training-parameters))
+         (data-points-count (cl-grf.data:data-points-count target-data))
+         (predictions (cl-grf.data:make-data-matrix 1 number-of-classes)))
+    (declare (type fixnum number-of-classes data-points-count)
+             (type cl-grf.data:data-matrix target-data predictions))
+    (iterate
+      (declare (type fixnum i index))
+      (for i from 0 below data-points-count)
+      (for index = (truncate (cl-grf.data:mref target-data i 0)))
+      (incf (cl-grf.data:mref predictions 0 index)))
+    (make-instance 'scored-leaf-node
+                   :support (cl-grf.data:data-points-count target-data)
+                   :predictions predictions
+                   :score (total-impurity training-parameters
+                                          target-data))))
 
 
-(defmethod cl-grf.mp:make-model ((parameters information-gain-classification)
+(defmethod cl-grf.mp:make-model ((parameters impurity-classification)
                                  train-data
-                                 target-data)
-  (check-type train-data cl-grf.data:data-matrix)
-  (check-type target-data cl-grf.data:data-matrix)
+                                 target-data
+                                 &optional weights)
+  (declare (ignore weights))
   (let* ((attributes (iterate
                        (with attributes-count =
                              (cl-grf.data:attributes-count train-data))
@@ -133,11 +148,15 @@
                       :training-parameters parameters
                       :attribute-indexes attributes
                       :target-data target-data
-                      :training-data train-data)))
-    (~>> state cl-grf.tp:make-leaf (cl-grf.tp:split state))))
+                      :training-data train-data))
+         (leaf (cl-grf.tp:make-leaf state))
+         (tree (cl-grf.tp:split state leaf)))
+    (if (null tree)
+        leaf
+        tree)))
 
 
-(defmethod shared-initialize :after ((parameters information-gain-classification)
+(defmethod shared-initialize :after ((parameters impurity-classification)
                                      slot-names
                                      &rest initargs)
   (declare (ignore slot-names initargs))
@@ -150,14 +169,15 @@
       (error 'cl-ds:argument-value-out-of-bounds
              :argument :minimal-difference
              :value minimal-difference
-             :format-control "Minimal difference in the information-gain-classification must not be negative."))))
+             :format-control "Minimal difference in the impurity-classification must not be negative."))))
 
 
-(defmethod shared-initialize :after ((parameters single-information-gain-classification)
+(defmethod shared-initialize :after ((parameters single-impurity-classification)
                                      slot-names
                                      &rest initargs)
   (declare (ignore slot-names initargs))
   (let ((number-of-classes (number-of-classes parameters)))
+    ;; TODO should also check class weights
     (unless (integerp number-of-classes)
       (error 'type-error
              :expected-type 'integer
@@ -170,7 +190,37 @@
              :format-control "Classification requires at least 2 classes for classification."))))
 
 
-(defmethod cl-grf.mp:performance-metric ((parameters single-information-gain-classification)
-                                         target
-                                         predictions)
-  cl-ds.utils:todo)
+(defmethod cl-grf.performance:performance-metric
+    ((parameters single-impurity-classification)
+     target
+     predictions)
+  (bind ((number-of-classes (the fixnum (number-of-classes parameters)))
+         (data-points-count (cl-grf.data:data-points-count target))
+         ((:flet prediction (prediction))
+          (declare (optimize (speed 3) (safety 0)))
+          (cl-grf.data:check-data-points prediction)
+          (iterate
+            (declare (type fixnum i))
+            (for i from 0 below number-of-classes)
+            (finding i maximizing (cl-grf.data:mref prediction 0 i))))
+         (result (cl-grf.performance:make-confusion-matrix number-of-classes)))
+    (iterate
+      (declare (type fixnum i)
+               (optimize (speed 3)))
+      (for i from 0 below data-points-count)
+      (for expected = (truncate (cl-grf.data:mref target i 0)))
+      (for predicted = (prediction (aref predictions i)))
+      (incf (cl-grf.performance:at-confusion-matrix
+             result expected predicted)))
+    result))
+
+
+(defmethod cl-grf.performance:average-performance-metric ((parameters impurity-classification)
+                                                          metrics)
+  (iterate
+    (with result = (~> parameters number-of-classes
+                       cl-grf.performance:make-confusion-matrix))
+    (for i from 0 below (length metrics))
+    (for confusion-matrix = (aref metrics i))
+    (sum-matrices confusion-matrix result)
+    (finally (return result))))

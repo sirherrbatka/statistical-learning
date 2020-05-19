@@ -15,10 +15,13 @@
   :components ((:file "aux-package")
                (:module "data"
                 :components ((:file "package")
+                             (:file "macros")
                              (:file "types")
                              (:file "functions")
-                             (:file "macros")
                              (:file "extras")))
+               (:module "random"
+                :components ((:file "package")
+                             (:file "discrete-distribution")))
                (:module "model-protocol"
                 :components ((:file "package")
                              (:file "generics")
@@ -30,8 +33,10 @@
                 :components ((:file "package")
                              (:file "generics")
                              (:file "types")
+                             (:file "methods")
                              (:file "functions")
-                             (:file "methods")))
+                             (:file "documentation")
+                             ))
                (:module "tree-protocol"
                 :components ((:file "package")
                              (:file "generics")

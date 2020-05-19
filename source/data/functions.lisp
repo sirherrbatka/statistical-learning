@@ -30,11 +30,13 @@
   (setf (aref data-matrix data-point attribute) new-value))
 
 
-(defun make-data-matrix (data-points-count attributes-count)
+(defun make-data-matrix (data-points-count attributes-count &optional (initial-element 0.0d0))
   (check-type data-points-count fixnum)
   (check-type attributes-count fixnum)
+  (assert (> attributes-count 0))
+  (assert (> data-points-count 0))
   (make-array `(,data-points-count ,attributes-count)
-              :initial-element 0.0d0
+              :initial-element initial-element
               :element-type 'double-float))
 
 

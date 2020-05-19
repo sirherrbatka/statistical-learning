@@ -7,4 +7,5 @@
   (:export
    #:make-model
    #:fundamental-model
+   #:fundamental-model-parameters
    #:predict))

@@ -9,6 +9,8 @@
    #:leafs-for
    #:predict
    #:predictions-from-leafs
+   #:tree-batch-size
+   #:tree-sample-rate
    #:trees
    #:attributes
    #:forest-class
