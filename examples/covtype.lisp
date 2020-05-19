@@ -70,14 +70,12 @@
                        :body (vellum:body (cover_type horizontal_distance_to_roadways)
                                (decf cover_type)))))
 
-
 (defparameter *cover-types* ; 7
   (vellum:with-table (*data*)
     (bind (((min . max) (cl-ds.alg:extrema *data* #'< :key
                                            (vellum:brr cover_type))))
       (assert (zerop min))
       (1+ (- max min)))))
-
 
 (defparameter *class-weights*
   (vellum:with-table (*data*)
@@ -86,18 +84,15 @@
         (sort _ #'< :key #'car)
         (cl-ds.utils:transform #'cdr _))))
 
-
 (defparameter *train-data*
   (vellum:as-matrix (vellum:select *data*
                       :columns '(:take-to soil_type_40))
                     'double-float))
 
-
 (defparameter *target-data*
   (vellum:as-matrix (vellum:select *data*
                       :columns '(:v cover_type))
                     'double-float))
-
 
 (defparameter *training-parameters*
   (make 'cl-grf.algorithms:single-impurity-classification
@@ -107,7 +102,6 @@
         :minimal-size 10
         :trials-count 250
         :parallel nil))
-
 
 (defparameter *forest-parameters*
   (make 'cl-grf.forest:random-forest-parameters
@@ -119,20 +113,12 @@
         :tree-sample-rate 0.1
         :tree-parameters *training-parameters*))
 
-
-(defparameter *model* (cl-grf.mp:make-model *forest-parameters*
-                                            *train-data*
-                                            *target-data*))
-
-
-(defparameter *predictions* (cl-grf.mp:predict *model* *train-data* t))
-
-
 (defparameter *confusion-matrix*
-  (cl-grf.performance:performance-metric *forest-parameters*
-                                         *target-data*
-                                         *predictions*))
-
+  (cl-grf.performance:cross-validation *forest-parameters*
+                                       4
+                                       *train-data*
+                                       *target-data*
+                                       t))
 
 (print *confusion-matrix*)
-(print (cl-grf.performance:accuracy *confusion-matrix*)) 0.81
+(print (cl-grf.performance:accuracy *confusion-matrix*)) ; 0.8074394332647175d0

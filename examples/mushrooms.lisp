@@ -83,7 +83,6 @@
               ("p" 1.0d0)
               ("e" 0.0d0))))))
 
-
 (defparameter *training-parameters*
   (make 'cl-grf.algorithms:single-impurity-classification
         :maximal-depth 8
@@ -92,7 +91,6 @@
         :minimal-size 10
         :trials-count 80
         :parallel nil))
-
 
 (defparameter *forest-parameters*
   (make 'cl-grf.forest:random-forest-parameters
@@ -104,13 +102,11 @@
         :tree-sample-rate 0.2
         :tree-parameters *training-parameters*))
 
-
 (defparameter *confusion-matrix*
   (cl-grf.performance:cross-validation *forest-parameters*
                                        4
                                        *train-data*
                                        *target-data*
                                        t))
-
 
 (print (cl-grf.performance:accuracy *confusion-matrix*)) ; 1.0
