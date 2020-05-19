@@ -120,5 +120,4 @@
                                        *target-data*
                                        t))
 
-(print *confusion-matrix*)
 (print (cl-grf.performance:accuracy *confusion-matrix*)) ; 0.8074394332647175d0
