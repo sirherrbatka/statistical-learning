@@ -85,14 +85,14 @@
         (cl-ds.utils:transform #'cdr _))))
 
 (defparameter *train-data*
-  (vellum:as-matrix (vellum:select *data*
+  (vellum:to-matrix (vellum:select *data*
                       :columns '(:take-to soil_type_40))
-                    'double-float))
+                    :element-type 'double-float))
 
 (defparameter *target-data*
-  (vellum:as-matrix (vellum:select *data*
+  (vellum:to-matrix (vellum:select *data*
                       :columns '(:v cover_type))
-                    'double-float))
+                    :element-type 'double-float))
 
 (defparameter *training-parameters*
   (make 'cl-grf.algorithms:single-impurity-classification
