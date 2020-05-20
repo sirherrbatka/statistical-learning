@@ -96,7 +96,7 @@
 
 (defparameter *training-parameters*
   (make 'cl-grf.algorithms:single-impurity-classification
-        :maximal-depth 20
+        :maximal-depth 25
         :minimal-difference 0.00001d0
         :number-of-classes *cover-types*
         :minimal-size 10
@@ -120,4 +120,4 @@
                                        *target-data*
                                        t))
 
-(print (cl-grf.performance:accuracy *confusion-matrix*)) ; 0.8200364192133726d0
+(print (cl-grf.performance:accuracy *confusion-matrix*)) ; 0.8238797133277798d0
