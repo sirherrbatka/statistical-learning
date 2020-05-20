@@ -70,19 +70,17 @@
         (call-next-method))))
 
 
-(defmethod leaf-for ((node fundamental-leaf-node) data index)
-  node)
-
-
-(defmethod leaf-for ((node fundamental-tree-node) data index)
+(defun leaf-for (node data value)
   (declare (type cl-grf.data:data-matrix data)
            (type fixnum index))
-  (bind ((attribute-index (attribute node))
-         (attribute-value (attribute-value node)))
-    (if (> (cl-grf.data:mref data index attribute-index)
-           attribute-value)
-        (leaf-for (right-node node) data index)
-        (leaf-for (left-node node) data index))))
+  (if (typep node 'fundamental-leaf-node)
+      node
+      (bind ((attribute-index (attribute node))
+             (attribute-value (attribute-value node)))
+        (if (> (cl-grf.data:mref data index attribute-index)
+               attribute-value)
+            (leaf-for (right-node node) data index)
+            (leaf-for (left-node node) data index)))))
 
 
 (defmethod cl-grf.mp:predict ((model fundamental-tree-node) data

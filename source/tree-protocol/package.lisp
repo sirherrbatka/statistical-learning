@@ -16,7 +16,6 @@
    #:fundamental-training-state
    #:fundamental-tree-node
    #:fundamental-tree-training-parameters
-   #:leaf-for
    #:leafp
    #:leafs-for
    #:left-node
