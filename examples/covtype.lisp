@@ -77,13 +77,6 @@
       (assert (zerop min))
       (1+ (- max min)))))
 
-(defparameter *class-weights*
-  (vellum:with-table (*data*)
-    (~> (cl-ds.alg:frequency *data* :key (vellum:brr cover_type) :normalize t)
-        cl-ds.alg:to-vector
-        (sort _ #'< :key #'car)
-        (cl-ds.utils:transform #'cdr _))))
-
 (defparameter *train-data*
   (vellum:to-matrix (vellum:select *data*
                       :columns '(:take-to soil_type_40))

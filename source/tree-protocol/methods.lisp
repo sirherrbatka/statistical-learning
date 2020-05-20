@@ -70,7 +70,7 @@
         (call-next-method))))
 
 
-(defun leaf-for (node data value)
+(defun leaf-for (node data index)
   (declare (type cl-grf.data:data-matrix data)
            (type fixnum index))
   (if (typep node 'fundamental-leaf-node)
