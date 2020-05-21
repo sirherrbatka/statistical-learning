@@ -60,15 +60,16 @@
       (for (values left-length right-length) = (fill-split-array
                                                 training-data attribute
                                                 threshold split-array))
+      (when (or (< left-length minimal-size)
+                (< right-length minimal-size))
+        (next-iteration))
       (for (values left-score right-score) = (calculate-score
                                               training-parameters
                                               split-array
                                               target-data))
       (for split-score = (+ (* (/ left-length data-size) left-score)
                             (* (/ right-length data-size) right-score)))
-      (when (and (< split-score minimal-score)
-                 (>= left-length minimal-size)
-                 (>= right-length minimal-size))
+      (when (< split-score minimal-score)
         (setf minimal-score split-score
               optimal-threshold threshold
               optimal-attribute attribute

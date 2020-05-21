@@ -33,7 +33,7 @@
   (bind ((attribute (~> data cl-grf.data:attributes-count random))
          ((:values min max) (data-min/max data attribute))
          (threshold (random-uniform min max)))
-    (values attribute threshold)))
+    (values attribute (if (= threshold max) min threshold))))
 
 
 (-> fill-split-array (cl-grf.data:data-matrix

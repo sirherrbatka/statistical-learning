@@ -93,7 +93,7 @@
         :minimal-difference 0.00001d0
         :number-of-classes *cover-types*
         :minimal-size 10
-        :trials-count 250
+        :trials-count 50
         :parallel nil))
 
 (defparameter *forest-parameters*
@@ -113,4 +113,4 @@
                                        *target-data*
                                        t))
 
-(print (cl-grf.performance:accuracy *confusion-matrix*)) ; 0.8238797133277798d0
+(print (cl-grf.performance:accuracy *confusion-matrix*)) ; 0.8159814255127261d0
