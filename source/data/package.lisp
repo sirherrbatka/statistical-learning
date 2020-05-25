@@ -12,6 +12,7 @@
    #:iota-vector
    #:reshuffle
    #:select-random-indexes
+   #:selecting-random-attributes
    #:selecting-random-indexes
    #:cross-validation-folds
    #:check-data-points

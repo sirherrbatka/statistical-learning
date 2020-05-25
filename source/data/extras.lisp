@@ -53,6 +53,14 @@
       (take selected-count (reshuffle iota)))))
 
 
+(-> selecting-random-attributes (fixnum fixnum)
+    (-> () (simple-array fixnum (*))))
+(defun selecting-random-attributes (selected-count total-count)
+  (let ((iota (iota-vector total-count)))
+    (lambda ()
+      (take (random-in-range 1 selected-count) (reshuffle iota)))))
+
+
 (defun cross-validation-folds (data-points-count number-of-folds)
   (let* ((indexes (~> data-points-count iota-vector reshuffle))
          (validation-size (truncate data-points-count number-of-folds))
