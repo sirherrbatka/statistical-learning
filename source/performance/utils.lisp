@@ -36,6 +36,7 @@
                 permutated-errors
                 errors)
       (for mean-change = (mean error-differences))
-      (for sd = (alexandria:standard-deviation error-differences))
-      (setf (aref result i) (if (zerop sd) -1.0d0 (/ mean-change sd)))
+      (for sd = (alexandria:standard-deviation error-differences :biased nil))
+      (for feature-importance = (if (zerop sd) 0.0d0 (/ mean-change sd)))
+      (setf (aref result i) feature-importance)
       (finally (return result)))))
