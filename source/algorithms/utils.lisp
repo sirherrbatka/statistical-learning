@@ -62,16 +62,16 @@
       (- (* probability (the double-float (log probability))))))
 
 
-(-> vector-impurity ((simple-array double-float (*))) double-float)
+(-> vector-impurity ((simple-array double-float *)) double-float)
 (defun vector-impurity (sums)
   (declare (optimize (speed 3) (safety 0) (debug 0)))
-  (let* ((length (length sums))
+  (let* ((length (array-total-size sums))
          (grand-total (iterate
                         (declare (type fixnum i)
                                  (type double-float result))
                         (with result = 0.0d0)
                         (for i from 0 below length)
-                        (incf result (aref sums i))
+                        (incf result (row-major-aref sums i))
                         (finally (return result)))))
     (declare (type double-float grand-total))
     (if (zerop grand-total)
@@ -81,7 +81,7 @@
                    (type double-float impurity p))
           (with impurity = 0.0d0)
           (for i from 0 below length)
-          (for sum = (aref sums i))
+          (for sum = (row-major-aref sums i))
           (when (zerop sum)
             (next-iteration))
           (for p = (/ sum grand-total))

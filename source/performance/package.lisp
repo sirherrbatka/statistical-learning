@@ -5,6 +5,7 @@
   (:use #:cl #:cl-grf.aux-package)
   (:export
    #:accuracy
+   #:attributes-importance
    #:at-confusion-matrix
    #:average-performance-metric
    #:cross-validation
@@ -14,6 +15,7 @@
    #:performance-metric
    #:precision
    #:recall
+   #:errors
    #:specificity
    #:two-class-confusion-matrix-from-general-confusion-matrix
    ))

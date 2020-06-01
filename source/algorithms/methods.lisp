@@ -225,3 +225,24 @@
     (for confusion-matrix = (aref metrics i))
     (sum-matrices confusion-matrix result)
     (finally (return result))))
+
+
+
+(defmethod cl-grf.performance:errors ((parameters impurity-classification)
+                                      target
+                                      predictions)
+  (declare (optimize (speed 3) (safety 0))
+           (type simple-vector predictions)
+           (type cl-grf.data:data-matrix target))
+  (let* ((data-points-count (cl-grf.data:data-points-count target))
+         (result (make-array data-points-count :element-type 'double-float)))
+    (declare (type (simple-array double-float (*)) result))
+    (iterate
+      (declare (type fixnum i))
+      (for i from 0 below data-points-count)
+      (for expected = (truncate (cl-grf.data:mref target i 0)))
+      (for predicted = (aref predictions i))
+      (setf (aref result i) (- 1.0d0 (cl-grf.data:mref predicted
+                                                       0
+                                                       expected)))
+      (finally (return result)))))

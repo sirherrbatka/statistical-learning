@@ -15,4 +15,5 @@
    #:attributes
    #:forest-class
    #:random-forest-parameters
+   #:attribute-importance
    ))

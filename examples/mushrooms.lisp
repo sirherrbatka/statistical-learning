@@ -110,3 +110,9 @@
                                        t))
 
 (print (cl-grf.performance:accuracy *confusion-matrix*)) ; 1.0
+
+(print (cl-grf.performance:attributes-importance *forest-parameters*
+                                                 4
+                                                 *train-data*
+                                                 *target-data*
+                                                 t))

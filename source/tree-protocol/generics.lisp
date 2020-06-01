@@ -27,5 +27,3 @@
 (defgeneric attribute-indexes (training-state))
 (defgeneric (setf attribute-indexes) (new-value training-state))
 (defgeneric make-leaf* (training-parameters training-state))
-(defgeneric weights (state))
-(defgeneric (setf weights) (new-value state))

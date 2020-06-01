@@ -150,3 +150,11 @@
                                                           metrics)
   (cl-grf.performance:average-performance-metric (tree-parameters parameters)
                                                  metrics))
+
+
+(defmethod cl-grf.performance:errors ((parameters random-forest-parameters)
+                                      target
+                                      predictions)
+  (cl-grf.performance:errors (tree-parameters parameters)
+                             target
+                             predictions))

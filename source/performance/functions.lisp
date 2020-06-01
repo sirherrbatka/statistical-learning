@@ -30,6 +30,42 @@
       (average-performance-metric model-parameters _)))
 
 
+(defun attributes-importance (model-parameters number-of-folds
+                              train-data target-data &optional parallel)
+  (cl-grf.data:check-data-points train-data target-data)
+  (~> train-data
+      cl-grf.data:data-points-count
+      (cl-grf.data:cross-validation-folds number-of-folds)
+      (cl-ds.alg:on-each
+       (lambda (train.test)
+         (bind (((train . test) train.test)
+                (train-train-data (cl-grf.data:sample train-data
+                                                       :data-points train))
+                (train-target-data (cl-grf.data:sample target-data
+                                                       :data-points train))
+                (model (cl-grf.mp:make-model model-parameters
+                                             train-train-data
+                                             train-target-data))
+                (test-target-data (cl-grf.data:sample target-data
+                                                      :data-points test))
+                (test-train-data (cl-grf.data:sample train-data
+                                                     :data-points test))
+                (test-predictions (cl-grf.mp:predict model
+                                                     test-train-data
+                                                     parallel))
+                (errors (errors model-parameters
+                                test-target-data
+                                test-predictions)))
+           (calculate-features-importance-from-permutations model
+                                                            model-parameters
+                                                            errors
+                                                            test-train-data
+                                                            test-target-data
+                                                            parallel))))
+      cl-ds.alg:array-elementwise
+      cl-ds.math:average))
+
+
 (defun make-confusion-matrix (number-of-classes)
   (make-array (list number-of-classes number-of-classes)
               :element-type 'fixnum))

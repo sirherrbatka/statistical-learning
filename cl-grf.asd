@@ -34,6 +34,7 @@
                              (:file "generics")
                              (:file "types")
                              (:file "methods")
+                             (:file "utils")
                              (:file "functions")
                              (:file "documentation")
                              ))

@@ -42,3 +42,16 @@
       (for i from 0 below length)
       (setf (aref result i) (leaf-for node data i))
       (finally (return result)))))
+
+
+(defun visit-nodes (tree-node function
+                    &key (filter-function (constantly t)))
+  (check-type tree-node fundamental-node)
+  (labels ((impl (node &optional parent)
+             (when (funcall filter-function node)
+               (funcall function node parent))
+             (when (treep node)
+               (impl (left-node node) node)
+               (impl (right-node node) node))))
+    (impl tree-node)
+    tree-node))
