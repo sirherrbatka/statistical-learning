@@ -25,8 +25,8 @@
                              :element-type 'double-float)))
     (iterate
       (with indexes = (~> test-train-data
-                         cl-grf.data:data-points-count
-                         cl-grf.data:iota-vector))
+                          cl-grf.data:data-points-count
+                          cl-grf.data:iota-vector))
       (for i from 0 below attributes-count)
       (for permutated = (permutate-attribute test-train-data i indexes))
       (for predictions = (cl-grf.mp:predict model permutated parallel))

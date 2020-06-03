@@ -22,7 +22,7 @@
     ((training-parameters scored-classification)
      training-state
      leaf)
-  (declare (optimize (speed 3)))
+  (declare (optimize (speed 3) (safety 0)))
   (bind ((training-data (cl-grf.tp:training-data training-state))
          (trials-count (cl-grf.tp:trials-count training-parameters))
          (minimal-difference (minimal-difference training-parameters))
@@ -152,9 +152,7 @@
                       :training-data train-data))
          (leaf (cl-grf.tp:make-leaf state))
          (tree (cl-grf.tp:split state leaf)))
-    (if (null tree)
-        leaf
-        tree)))
+    (if (null tree) leaf tree)))
 
 
 (defmethod shared-initialize :after ((parameters impurity-classification)
@@ -178,7 +176,6 @@
                                      &rest initargs)
   (declare (ignore slot-names initargs))
   (let ((number-of-classes (number-of-classes parameters)))
-    ;; TODO should also check class weights
     (unless (integerp number-of-classes)
       (error 'type-error
              :expected-type 'integer
