@@ -52,10 +52,4 @@
                                        *target-data*
                                        nil))
 
-(print *mean-error*) ; 1.0
-
-(print (cl-grf.performance:attributes-importance *forest-parameters*
-                                                 4
-                                                 *train-data*
-                                                 *target-data*
-                                                 t))
+(print *mean-error*) ; 18.8 (squared error, root equal 4.33…)
