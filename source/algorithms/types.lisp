@@ -1,19 +1,27 @@
 (cl:in-package #:cl-grf.algorithms)
 
 
-(defclass scored-classification (cl-grf.tp:fundamental-tree-training-parameters)
+(defclass scored-training (cl-grf.tp:fundamental-tree-training-parameters)
+  ((%minimal-difference :initarg :minimal-difference
+                        :reader minimal-difference)))
+
+
+(defclass scored-classification (scored-training)
   ())
 
 
 (defclass impurity-classification (scored-classification)
-  ((%minimal-difference :initarg :minimal-difference
-                        :reader minimal-difference)))
+  ())
 
 
 (defclass single-impurity-classification
     (impurity-classification)
   ((%number-of-classes :initarg :number-of-classes
                        :reader number-of-classes)))
+
+
+(defclass regression (scored-training)
+  ())
 
 
 (defclass score ()

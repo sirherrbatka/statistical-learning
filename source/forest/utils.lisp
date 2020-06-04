@@ -73,12 +73,15 @@
             attributes))
 
 
-(-> calculate-weights (simple-vector
-                       cl-grf.data:data-matrix fixnum
-                       &optional (or null (cl-grf.data:data-matrix)))
-    cl-grf.data:data-matrix)
-(defun calculate-weights (predictions target base &optional result)
-  (declare (optimize (speed 3) (safety 0)))
+(defgeneric calculate-weights (parameters predictions target base &optional result))
+
+
+(defmethod calculate-weights ((parameters classification-random-forest-parameters)
+                              predictions target base &optional result)
+  (declare (optimize (speed 3) (safety 0))
+           (type simple-vector predictions)
+           (type cl-grf.data:data-matrix target)
+           (type fixnum base))
   (bind ((length (length predictions)))
     (ensure result
       (cl-grf.data:make-data-matrix length 1))
@@ -91,6 +94,25 @@
                                           (truncate expected)))
       (setf (cl-grf.data:mref result i 0) (- (log (max prediction double-float-epsilon)
                                                   base))))
+    result))
+
+
+(defmethod calculate-weights ((parameters regression-random-forest-parameters)
+                              predictions target base &optional result)
+  (declare (optimize (speed 3) (safety 2))
+           (type (simple-array double-float (*)) predictions)
+           (type cl-grf.data:data-matrix target)
+           (type fixnum base))
+  (bind ((length (length predictions)))
+    (ensure result
+      (cl-grf.data:make-data-matrix length 1))
+    (iterate
+      (declare (type fixnum i))
+      (for i from 0 below length)
+      (for expected = (cl-grf.data:mref target i 0))
+      (for prediction = (aref predictions i))
+      (for error = (- expected prediction))
+      (setf (cl-grf.data:mref result i 0) (* error error)))
     result))
 
 

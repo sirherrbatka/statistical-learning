@@ -8,6 +8,7 @@
    #:support
    #:single-impurity-classification
    #:calculate-score
+   #:regression
    #:predictions
    #:support
    #:score

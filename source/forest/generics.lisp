@@ -13,3 +13,5 @@
 (defgeneric tree-sample-rate (parameters))
 (defgeneric tree-batch-size (parameters))
 (defgeneric attributes-importance (forest training-data target-data))
+(defgeneric weights-calculator (training-parameters parallel weights
+                                train-data target-data))

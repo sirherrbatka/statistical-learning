@@ -74,11 +74,107 @@
                                           parallel))
 
 
+(defmethod predictions-from-leafs ((forest regression-random-forest)
+                                   leafs
+                                   &optional parallel)
+  (declare (type simple-vector leafs))
+  (bind ((trees-count (length leafs))
+         ((:flet prediction (index))
+          (declare (type fixnum index)
+                   (optimize (speed 3) (safety 0)))
+          (iterate
+            (declare (type fixnum i)
+                     (type simple-vector sub)
+                     (type double-float sum predictions))
+            (with sum = 0.0d0)
+            (for i from 0 below trees-count)
+            (for sub = (aref leafs i))
+            (for predictions = (cl-grf.alg:predictions (aref sub index)))
+            (incf sum predictions)
+            (finally (return (/ sum trees-count))))))
+    (funcall (if parallel #'lparallel:pmap #'map)
+             '(vector double-float)
+             #'prediction
+             (cl-grf.data:iota-vector (~> leafs first-elt length)))))
+
+
 (defmethod cl-grf.mp:predict ((random-forest fundamental-random-forest)
                               data
                               &optional parallel)
   (check-type data cl-grf.data:data-matrix)
   (predict random-forest data parallel))
+
+
+(defmethod weights-calculator
+    ((training-parameters classification-random-forest-parameters)
+     parallel
+     weights
+     train-data
+     target-data)
+  (let ((sums nil) (predictions nil))
+    (lambda (prev-trees prev-attributes index base)
+      (let* ((leafs (leafs-for* prev-trees
+                                prev-attributes
+                                train-data
+                                parallel)))
+        (setf sums (classification-sums-from-leafs* leafs parallel sums))
+        (ensure predictions (map 'vector #'copy-array sums))
+        (classification-predictions-from-sums* sums
+                                               index
+                                               predictions)
+        (calculate-weights training-parameters predictions target-data base weights)
+        weights))))
+
+
+(defmethod weights-calculator
+    ((training-parameters regression-random-forest-parameters)
+     parallel
+     weights
+     train-data
+     target-data)
+  (let* ((data-points-count (cl-grf.data:data-points-count train-data)))
+    (lambda (prev-trees prev-attributes index base)
+      (declare (ignore base)
+               (optimize (debug 3) (safety 3)))
+      (let* ((leafs (leafs-for* prev-trees
+                                prev-attributes
+                                train-data
+                                parallel)))
+        (iterate
+          (declare (type fixnum i trees-count))
+          (with trees-count = (min index (length leafs)))
+          (for i from 0 below data-points-count)
+          (iterate
+            (declare (type fixnum j))
+            (for j from 0 below trees-count)
+            (for leaf = (~> leafs (aref j) (aref i)))
+            (sum (cl-grf.alg:predictions leaf) into sum)
+            (finally (let* ((avg (/ sum trees-count))
+                            (e (- avg (cl-grf.data:mref target-data i 0)))
+                            (sqe (* e e)))
+                       (setf (cl-grf.data:mref weights i 0) sqe)))))
+        weights))))
+
+
+(defmethod weights-calculator ((training-parameters regression-random-forest-parameters)
+                               parallel
+                               weights
+                               train-data
+                               target-data)
+  (let ((sums nil)
+        (predictions nil))
+    (lambda (prev-trees prev-attributes index base)
+      (let* ((leafs (leafs-for* prev-trees
+                                prev-attributes
+                                train-data
+                                parallel)))
+        (setf sums (classification-sums-from-leafs* leafs parallel sums))
+        (ensure predictions (map 'vector #'copy-array sums))
+        (classification-predictions-from-sums* sums
+                                               index
+                                               predictions)
+        (calculate-weights training-parameters predictions target-data base weights)
+        weights))))
 
 
 (defmethod cl-grf.mp:make-model ((parameters random-forest-parameters)
@@ -95,8 +191,7 @@
            (tree-attributes-count (tree-attributes-count parameters))
            (trees (make-array trees-count))
            (attributes (make-array trees-count))
-           (sums nil)
-           (predictions nil)
+           (weights-calculator nil)
            ((:flet array-view (array &key (from 0) (to trees-count)))
             (make-array (min trees-count (- to from))
                         :displaced-index-offset (min trees-count from)
@@ -104,6 +199,8 @@
       (when (null weights)
         (setf weights (cl-grf.data:make-data-matrix train-data-data-points 1
                                                     1.0d0)))
+      (setf weights-calculator (weights-calculator parameters parallel weights
+                                                   train-data target-data))
       (~>> (cl-grf.data:selecting-random-indexes tree-attributes-count
                                                  train-data-attributes)
            (map-into attributes))
@@ -124,12 +221,7 @@
                                  prev-attributes
                                  train-data
                                  parallel))
-        (setf sums (classification-sums-from-leafs* leafs parallel sums))
-        (ensure predictions (map 'vector #'copy-array sums))
-        (classification-predictions-from-sums* sums
-                                               index
-                                               predictions)
-        (calculate-weights predictions target-data base weights)
+        (funcall weights-calculator prev-trees prev-attributes index base)
         (fit-tree-batch trees attributes index parameters
                         train-data target-data weights))
       (make forest-class
@@ -158,3 +250,11 @@
   (cl-grf.performance:errors (tree-parameters parameters)
                              target
                              predictions))
+
+
+(defmethod forest-class ((parameters classification-random-forest-parameters))
+  'classification-random-forest)
+
+
+(defmethod forest-class ((parameters regression-random-forest-parameters))
+  'regression-random-forest)

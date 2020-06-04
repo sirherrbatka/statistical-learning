@@ -19,7 +19,7 @@
 
 
 (defmethod cl-grf.tp:split*
-    ((training-parameters scored-classification)
+    ((training-parameters scored-training)
      training-state
      leaf)
   (declare (optimize (speed 3) (safety 0)))
@@ -131,7 +131,31 @@
                                           target-data))))
 
 
-(defmethod cl-grf.mp:make-model ((parameters impurity-classification)
+(defmethod cl-grf.tp:make-leaf* ((training-parameters regression)
+                                 training-state)
+  (declare (optimize (speed 3)))
+  (let* ((target-data (cl-grf.tp:target-data training-state))
+         (data-points-count (cl-grf.data:data-points-count target-data)))
+    (declare (type fixnum data-points-count))
+    (iterate
+      (declare (type fixnum i)
+               (type double-float sum))
+      (with sum = 0.0d0)
+      (for i from 0 below data-points-count)
+      (incf sum (cl-grf.data:mref target-data i 0))
+      (finally (return (make-instance
+                        'scored-leaf-node
+                        :support (cl-grf.data:data-points-count target-data)
+                        :predictions (/ sum data-points-count)
+                        :score (~> (make-array data-points-count
+                                               :initial-element nil
+                                               :element-type 'boolean)
+                                   (calculate-score training-parameters
+                                                    _
+                                                    target-data))))))))
+
+
+(defmethod cl-grf.mp:make-model ((parameters scored-training)
                                  train-data
                                  target-data
                                  &optional weights)
@@ -224,7 +248,6 @@
     (finally (return result))))
 
 
-
 (defmethod cl-grf.performance:errors ((parameters impurity-classification)
                                       target
                                       predictions)
@@ -243,3 +266,34 @@
                                                        0
                                                        expected)))
       (finally (return result)))))
+
+
+(defmethod cl-grf.performance:errors ((parameters regression)
+                                      target
+                                      predictions)
+  (iterate
+    (with result = (make-array (length predictions)
+                               :element-type 'double-float
+                               :initial-element 0.0d0))
+    (for i from 0 below (length predictions))
+    (for er = (- (cl-grf.data:mref target i 0)
+                 (aref predictions i)))
+    (setf (aref result i) (* er er))
+    (finally (return result))))
+
+
+(defmethod cl-grf.performance:performance-metric ((parameters regression)
+                                                  target
+                                                  predictions)
+  (iterate
+    (with count = (length predictions))
+    (for i from 0 below (length predictions))
+    (for er = (- (cl-grf.data:mref target i 0)
+                 (aref predictions i)))
+    (sum (* er er) into result)
+    (finally (return (/ result count)))))
+
+
+(defmethod cl-grf.performance:average-performance-metric ((parameters regression)
+                                                          metrics)
+  (mean metrics))
