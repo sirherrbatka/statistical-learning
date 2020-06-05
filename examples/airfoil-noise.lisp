@@ -30,19 +30,19 @@
 
 (defparameter *training-parameters*
   (make 'cl-grf.algorithms:regression
-        :maximal-depth 5
+        :maximal-depth 4
         :minimal-difference 0.0001d0
-        :minimal-size 10
-        :trials-count 80
+        :minimal-size 5
+        :trials-count 50
         :parallel nil))
 
 (defparameter *forest-parameters*
   (make 'cl-grf.forest:regression-random-forest-parameters
         :trees-count 200
-        :parallel nil
-        :tree-batch-size 10
-        :tree-attributes-count 40
-        :tree-sample-rate 0.2
+        :parallel t
+        :tree-batch-size 5
+        :tree-attributes-count 4
+        :tree-sample-rate 0.5
         :tree-parameters *training-parameters*))
 
 (defparameter *mean-error*
@@ -50,6 +50,6 @@
                                        4
                                        *train-data*
                                        *target-data*
-                                       nil))
+                                       t))
 
-(print *mean-error*) ; 18.8 (squared error, root equal 4.33…)
+(print *mean-error*) ; 18.0 (squared error, root equal 4.24…)

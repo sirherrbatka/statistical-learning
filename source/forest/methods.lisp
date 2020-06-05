@@ -150,9 +150,8 @@
             (for leaf = (~> leafs (aref j) (aref i)))
             (sum (cl-grf.alg:predictions leaf) into sum)
             (finally (let* ((avg (/ sum trees-count))
-                            (e (- avg (cl-grf.data:mref target-data i 0)))
-                            (sqe (* e e)))
-                       (setf (cl-grf.data:mref weights i 0) sqe)))))
+                            (e (- avg (cl-grf.data:mref target-data i 0))))
+                       (setf (cl-grf.data:mref weights i 0) (abs e))))))
         weights))))
 
 
