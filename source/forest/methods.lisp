@@ -95,7 +95,7 @@
     (funcall (if parallel #'lparallel:pmap #'map)
              '(vector double-float)
              #'prediction
-             (cl-grf.data:iota-vector (~> leafs first-elt length)))))
+             (~> leafs first-elt length cl-grf.data:iota-vector))))
 
 
 (defmethod cl-grf.mp:predict ((random-forest fundamental-random-forest)
