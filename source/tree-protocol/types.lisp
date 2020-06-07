@@ -59,13 +59,7 @@
   (:default-initargs :depth 0))
 
 
-(defclass fundamental-tree ()
-  ())
-
-
-(defclass decision-tree (fundamental-tree)
-  ())
-
-
-(defclass regression-tree (fundamental-tree)
-  ())
+(defclass tree-model (cl-grf.mp:fundamental-model)
+  ((%root :initarg :root
+          :writer write-root
+          :reader root)))

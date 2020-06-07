@@ -12,8 +12,11 @@
     :target-data new-target))
 
 
-(defun force-tree (node)
-  (force-tree* (lparallel:force node)))
+(defun force-tree (model)
+  (let ((root (root model)))
+    (write-root (force-tree* (lparallel:force root))
+                model)
+    model))
 
 
 (defun split-candidate (training-state leaf)
@@ -34,17 +37,22 @@
           leaf))
 
 
-(defun leafs-for (node data)
-  (declare (optimize (debug 3)))
+(defun leafs-for* (node data)
+  (declare (optimize (speed 3)))
   (cl-grf.data:bind-data-matrix-dimensions ((length features-count data))
     (iterate
+      (declare (type fixnum i))
       (with result = (make-array length))
       (for i from 0 below length)
       (setf (aref result i) (leaf-for node data i))
       (finally (return result)))))
 
 
-(defun visit-nodes (tree-node function
+(defun leafs-for (model data)
+  (leafs-for* (root model) data))
+
+
+(defun visit-nodes* (tree-node function
                     &key (filter-function (constantly t)))
   (check-type tree-node fundamental-node)
   (labels ((impl (node &optional parent)
@@ -55,3 +63,7 @@
                (impl (right-node node) node))))
     (impl tree-node)
     tree-node))
+
+
+(defun visit-nodes (model function &key (filter-function (constantly t)))
+  (visit-nodes* (root model) function :filter-function filter-function))

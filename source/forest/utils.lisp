@@ -61,7 +61,6 @@
 
 
 (defun leafs-for* (trees attributes data &optional parallel)
-
   (funcall (if parallel
                #'lparallel:pmap
                #'map)

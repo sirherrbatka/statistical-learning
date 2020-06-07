@@ -34,4 +34,5 @@
    #:training-state-clone
    #:treep
    #:trials-count
+   #:tree-model
    #:visit-nodes))

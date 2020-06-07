@@ -6,6 +6,7 @@
   (:nicknames #:cl-grf.mp)
   (:export
    #:make-model
+   #:parameters
    #:fundamental-model
    #:fundamental-model-parameters
    #:predict))

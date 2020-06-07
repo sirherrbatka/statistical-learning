@@ -225,6 +225,7 @@
                         train-data target-data weights))
       (make forest-class
             :trees trees
+            :parameters parameters
             :target-attributes-count target-data-attributes
             :attributes attributes))))
 

@@ -6,6 +6,7 @@
   (:export
    #:accuracy
    #:attributes-importance
+   #:attributes-importance*
    #:at-confusion-matrix
    #:average-performance-metric
    #:cross-validation

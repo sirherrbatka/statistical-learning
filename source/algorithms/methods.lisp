@@ -176,7 +176,9 @@
                       :training-data train-data))
          (leaf (cl-grf.tp:make-leaf state))
          (tree (cl-grf.tp:split state leaf)))
-    (if (null tree) leaf tree)))
+    (make 'cl-grf.tp:tree-model
+          :parameters parameters
+          :root (if (null tree) leaf tree))))
 
 
 (defmethod shared-initialize :after ((parameters impurity-classification)

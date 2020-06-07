@@ -3,3 +3,4 @@
 
 (defgeneric make-model (parameters train-data target-data &optional weights))
 (defgeneric predict (model data &optional parallel))
+(defgeneric parameters (model))
