@@ -141,3 +141,10 @@
              :argument :trials-count
              :bounds '(< 0 :trials-count)
              :value trials-count))))
+
+
+(defmethod initialize-instance :after ((object tree-model)
+                                       &rest initargs)
+  (declare (ignore initargs))
+  (force-tree object)
+  object)
