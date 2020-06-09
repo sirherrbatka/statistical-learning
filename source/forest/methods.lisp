@@ -57,62 +57,26 @@
              :format-control "You can't request parallel creation of both the forest and the individual trees at the same time."))))
 
 
-(defmethod leafs-for ((forest fundamental-random-forest)
-                      data
-                      &optional parallel)
-  (check-type data cl-grf.data:data-matrix)
-  (leafs-for* (trees forest)
-              (attributes forest)
-              data
-              parallel))
-
-
-(defun predictions-from-leafs (random-forest leafs &optional parallel)
-  (~> random-forest
-      cl-grf.mp:parameters
-      tree-parameters
-      (predictions-from-leafs* leafs
-                               (trees random-forest)
-                               parallel)))
-
-
-(defmethod predictions-from-leafs* ((tree-parameters cl-grf.alg:classification)
-                                    leafs
-                                    trees
-                                    &optional parallel)
-  (classification-predictions-from-leafs* leafs parallel))
-
-
-(defmethod predictions-from-leafs* ((tree-parameters cl-grf.alg:regression)
-                                    leafs
-                                    trees
-                                    &optional parallel)
-  (declare (type simple-vector leafs))
-  (bind ((trees-count (length leafs))
-         ((:flet prediction (index))
-          (declare (type fixnum index)
-                   (optimize (speed 3) (safety 0)))
-          (iterate
-            (declare (type fixnum i)
-                     (type simple-vector sub)
-                     (type double-float sum predictions))
-            (with sum = 0.0d0)
-            (for i from 0 below trees-count)
-            (for sub = (aref leafs i))
-            (for predictions = (cl-grf.alg:predictions (aref sub index)))
-            (incf sum predictions)
-            (finally (return (/ sum trees-count))))))
-    (funcall (if parallel #'lparallel:pmap #'map)
-             '(vector double-float)
-             #'prediction
-             (~> leafs first-elt length cl-grf.data:iota-vector))))
+(defun trees-predict (tree-parameters trees data parallel)
+  (iterate
+    (with state = nil)
+    (for tree in-vector trees)
+    (setf state (cl-grf.tp:contribute-predictions tree-parameters
+                                                  tree
+                                                  data
+                                                  state
+                                                  parallel))
+    (finally (return (cl-grf.tp:extract-predictions state)))))
 
 
 (defmethod cl-grf.mp:predict ((random-forest fundamental-random-forest)
                               data
                               &optional parallel)
   (check-type data cl-grf.data:data-matrix)
-  (predict random-forest data parallel))
+  (let* ((trees (trees random-forest))
+         (parameters (cl-grf.mp:parameters random-forest))
+         (tree-parameters (tree-parameters parameters)))
+    (trees-predict tree-parameters trees data parallel)))
 
 
 (defmethod weights-calculator
@@ -121,19 +85,14 @@
      weights
      train-data
      target-data)
-  (let ((sums nil) (predictions nil))
-    (lambda (prev-trees prev-attributes index base)
-      (let* ((leafs (leafs-for* prev-trees
-                                prev-attributes
-                                train-data
-                                parallel)))
-        (setf sums (classification-sums-from-leafs* leafs parallel sums))
-        (ensure predictions (map 'vector #'copy-array sums))
-        (classification-predictions-from-sums* sums
-                                               index
-                                               predictions)
-        (calculate-weights training-parameters predictions target-data base weights)
-        weights))))
+  (let ((tree-parameters (tree-parameters training-parameters)))
+    (lambda (prev-trees base)
+      (let ((predictions (trees-predict tree-parameters
+                                        prev-trees
+                                        train-data
+                                        parallel)))
+        (calculate-weights training-parameters predictions target-data base weights))
+      weights)))
 
 
 (defmethod weights-calculator
@@ -142,54 +101,28 @@
      weights
      train-data
      target-data)
-  (let* ((data-points-count (cl-grf.data:data-points-count train-data)))
-    (lambda (prev-trees prev-attributes index base)
-      (declare (ignore base)
-               (optimize (debug 3) (safety 3)))
-      (let* ((leafs (leafs-for* prev-trees
-                                prev-attributes
-                                train-data
-                                parallel)))
-        (iterate
-          (declare (type fixnum i trees-count))
-          (with trees-count = (min index (length leafs)))
-          (for i from 0 below data-points-count)
-          (iterate
-            (declare (type fixnum j))
-            (for j from 0 below trees-count)
-            (for leaf = (~> leafs (aref j) (aref i)))
-            (sum (cl-grf.alg:predictions leaf) into sum)
-            (finally (let* ((avg (/ sum trees-count))
-                            (e (- avg (cl-grf.data:mref target-data i 0))))
-                       (setf (cl-grf.data:mref weights i 0) (abs e))))))
-        weights))))
-
-
-(defmethod weights-calculator ((training-parameters regression-random-forest-parameters)
-                               parallel
-                               weights
-                               train-data
-                               target-data)
-  (let ((sums nil)
-        (predictions nil))
-    (lambda (prev-trees prev-attributes index base)
-      (let* ((leafs (leafs-for* prev-trees
-                                prev-attributes
-                                train-data
-                                parallel)))
-        (setf sums (classification-sums-from-leafs* leafs parallel sums))
-        (ensure predictions (map 'vector #'copy-array sums))
-        (classification-predictions-from-sums* sums
-                                               index
-                                               predictions)
-        (calculate-weights training-parameters predictions target-data base weights)
-        weights))))
+  (let ((data-points-count (cl-grf.data:data-points-count train-data))
+        (tree-parameters (tree-parameters training-parameters)))
+    (declare (type fixnum data-points-count))
+    (lambda (prev-trees base)
+      (declare (ignore base))
+      (iterate
+        (declare (type fixnum i))
+        (with predictions = (trees-predict tree-parameters
+                                           prev-trees
+                                           train-data
+                                           parallel))
+        (for i from 0 below data-points-count)
+        (setf (cl-grf.data:mref weights i 0)
+              (abs (- (cl-grf.data:mref predictions i 0)
+                      (cl-grf.data:mref target-data i 0)))))
+      weights)))
 
 
 (defmethod cl-grf.mp:make-model ((parameters random-forest-parameters)
                                  train-data
                                  target-data
-                                 &optional weights)
+                                 &key weights)
   (cl-grf.data:bind-data-matrix-dimensions
       ((train-data-data-points train-data-attributes train-data)
        (target-data-data-points target-data-attributes target-data))
@@ -220,17 +153,9 @@
              below trees-count
              by tree-batch-size)
         (for base from (1+ (truncate trees-count tree-batch-size)) downto 0)
-        (for prev-trees = (array-view trees
-                                      :from (- index tree-batch-size)
-                                      :to index))
-        (for prev-attributes = (array-view attributes
-                                           :from (- index tree-batch-size)
-                                           :to index))
-        (for leafs = (leafs-for* prev-trees
-                                 prev-attributes
-                                 train-data
-                                 parallel))
-        (funcall weights-calculator prev-trees prev-attributes index base)
+        (for prev-trees = (array-view trees :from 0 :to index))
+        (for prev-attributes = (array-view attributes :from 0 :to index))
+        (funcall weights-calculator prev-trees base)
         (fit-tree-batch trees attributes index parameters
                         train-data target-data weights))
       (make forest-class

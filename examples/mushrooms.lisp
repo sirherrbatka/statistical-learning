@@ -8,7 +8,7 @@
 
 (cl:in-package #:mushrooms-example)
 
-(defparameter *data*
+(defvar *data*
   (~> (vellum:copy-from :csv (~>> (asdf:system-source-directory :cl-grf)
                                   (merge-pathnames "examples/mushrooms.data"))
                         :header nil)
@@ -96,10 +96,11 @@
   (make 'cl-grf.forest:classification-random-forest-parameters
         :trees-count 200
         :parallel t
-        :tree-batch-size 10
-        :tree-attributes-count 40
+        :tree-batch-size 5
+        :tree-attributes-count 35
         :tree-sample-rate 0.2
         :tree-parameters *training-parameters*))
+
 
 (defparameter *confusion-matrix*
   (cl-grf.performance:cross-validation *forest-parameters*

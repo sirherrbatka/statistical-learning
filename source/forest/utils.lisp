@@ -7,89 +7,24 @@
     (sum (cl-grf.alg:support (aref l index)))))
 
 
-(defun classification-sums-from-leafs* (leafs parallel &optional results)
-  (bind ((length (~> leafs first-elt length))
-         (effective-results (or results
-                                (make-array length
-                                            :initial-element nil)))
-         ((:flet prediction (i))
-          (declare (type fixnum i))
-          (iterate
-            (with result = (aref effective-results i))
-            (for leaf-group in-vector leafs)
-            (for leaf = (aref leaf-group i))
-            (for predictions = (cl-grf.alg:predictions leaf))
-            (for data-points-count = (cl-grf.data:data-points-count
-                                      predictions))
-            (for attributes-count = (cl-grf.data:attributes-count predictions))
-            (ensure result
-              (cl-grf.data:make-data-matrix data-points-count
-                                            attributes-count))
-            (for support = (cl-grf.alg:support leaf))
-            (iterate
-              (for k from 0 below (array-total-size predictions))
-              (incf (row-major-aref result k)
-                    (/ (row-major-aref predictions k)
-                       support)))
-            (finally (return result)))))
-    (funcall (if parallel #'lparallel:pmap-into #'map-into)
-             effective-results
-             #'prediction
-             (cl-grf.data:iota-vector length))
-    effective-results))
-
-
-(defun classification-predictions-from-sums* (sums trees-count results)
-  (iterate
-    (with length = (length sums))
-    (for i from 0 below length)
-    (for sum = (aref sums i))
-    (for result = (aref results i))
-    (iterate
-      (for k from 0 below (array-total-size result))
-      (setf (row-major-aref result k)
-            (/ (row-major-aref sum k)
-               trees-count)))
-    (finally (return results))))
-
-
-(defun classification-predictions-from-leafs* (leafs &optional parallel)
-  (let ((sums (classification-sums-from-leafs* leafs parallel)))
-    (classification-predictions-from-sums* sums
-                                           (length leafs)
-                                           sums)))
-
-
-(defun leafs-for* (trees attributes data &optional parallel)
-  (funcall (if parallel
-               #'lparallel:pmap
-               #'map)
-           'vector
-           (lambda (tree features)
-             (~>> (cl-grf.data:sample data :attributes features)
-                  (cl-grf.tp:leafs-for tree)))
-            trees
-            attributes))
-
-
 (defgeneric calculate-weights (parameters predictions target base &optional result))
 
 
 (defmethod calculate-weights ((parameters classification-random-forest-parameters)
                               predictions target base &optional result)
   (declare (optimize (speed 3) (safety 0))
-           (type simple-vector predictions)
-           (type cl-grf.data:data-matrix target)
+           (type cl-grf.data:data-matrix target predictions)
            (type fixnum base))
-  (bind ((length (length predictions)))
+  (cl-grf.data:bind-data-matrix-dimensions ((length classes predictions)
+                                            (data-points attributes target))
     (ensure result
       (cl-grf.data:make-data-matrix length 1))
     (iterate
       (declare (type fixnum i))
       (for i from 0 below length)
       (for expected = (cl-grf.data:mref target i 0))
-      (for prediction = (cl-grf.data:mref (aref predictions i)
-                                          0
+      (for prediction = (cl-grf.data:mref predictions
+                                          i
                                           (truncate expected)))
       (setf (cl-grf.data:mref result i 0) (- (log (max prediction double-float-epsilon)
                                                   base))))
@@ -99,20 +34,20 @@
 (defmethod calculate-weights ((parameters regression-random-forest-parameters)
                               predictions target base &optional result)
   (declare (optimize (speed 3) (safety 2))
-           (type (simple-array double-float (*)) predictions)
-           (type cl-grf.data:data-matrix target)
+           (type cl-grf.data:data-matrix target predictions)
            (type fixnum base))
-  (bind ((length (length predictions)))
+  (cl-grf.data:bind-data-matrix-dimensions ((length classes predictions)
+                                            (data-points attributes target))
     (ensure result
       (cl-grf.data:make-data-matrix length 1))
     (iterate
       (declare (type fixnum i))
       (for i from 0 below length)
       (for expected = (cl-grf.data:mref target i 0))
-      (for prediction = (aref predictions i))
+      (for prediction = (cl-grf.data:mref predictions i 0))
       (for error = (- expected prediction))
-      (setf (cl-grf.data:mref result i 0) (* error error)))
-    result))
+      (setf (cl-grf.data:mref result i 0) (* error error))))
+  result)
 
 
 (-> fit-tree-batch (simple-vector
@@ -157,12 +92,12 @@
                                             distribution)))
                       (train (cl-grf.data:sample
                               train-data
-                              :data-points sample
-                              :attributes attributes))
+                              :data-points sample))
                       (target (cl-grf.data:sample
                                target-data
                                :data-points sample)))
                  (cl-grf.mp:make-model tree-parameters
                                        train
-                                       target)))
+                                       target
+                                       :attributes attributes)))
              (array-view all-attributes))))

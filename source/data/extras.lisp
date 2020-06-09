@@ -17,7 +17,7 @@
   (iterate
     (declare (type fixnum length i))
     (with length = (length vector))
-    (for i from (1- length) above 0)
+    (for i from (1- length) downto 0)
     (rotatef (aref vector i)
              (aref vector (+ i (random (- length i)))))
     (finally (return vector))))

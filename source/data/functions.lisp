@@ -30,6 +30,8 @@
   (setf (aref data-matrix data-point attribute) new-value))
 
 
+(-> make-data-matrix (fixnum fixnum &optional double-float)
+    data-matrix)
 (defun make-data-matrix (data-points-count attributes-count &optional (initial-element 0.0d0))
   (check-type data-points-count fixnum)
   (check-type attributes-count fixnum)
@@ -69,3 +71,16 @@
                     (if (null data-points) i (aref data-points i))
                     (if (null attributes) j (aref attributes j)))))
       (finally (return result)))))
+
+
+(declaim (inline map-data-matrix))
+(defun map-data-matrix (function data-matrix)
+  (declare (optimize (speed 3) (safety 0)))
+  (check-type data-matrix cl-grf.data:data-matrix)
+  (lret ((result (make-data-matrix (data-points-count data-matrix)
+                                   (attributes-count data-matrix))))
+    (iterate
+      (declare (type fixnum i))
+      (for i from 0 below (array-total-size data-matrix))
+      (setf (row-major-aref result i)
+            (funcall function (row-major-aref data-matrix i))))))

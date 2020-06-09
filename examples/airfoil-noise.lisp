@@ -8,7 +8,7 @@
 
 (cl:in-package #:airfoil-noise-example)
 
-(defparameter *data*
+(defvar *data*
   (~> (vellum:copy-from :csv (~>> (asdf:system-source-directory :cl-grf)
                                   (merge-pathnames "examples/airfoil_self_noise.dat"))
                         :header nil
@@ -20,11 +20,11 @@
                                   (:alias displacement :type float)
                                   (:alias sound :type float)))))
 
-(defparameter *train-data*
+(defvar *train-data*
   (vellum:to-matrix (vellum:select *data* :columns '(:take-to displacement))
                     :element-type 'double-float))
 
-(defparameter *target-data*
+(defvar *target-data*
   (vellum:to-matrix (vellum:select *data* :columns '(:v sound))
                     :element-type 'double-float))
 
@@ -33,16 +33,16 @@
         :maximal-depth 4
         :minimal-difference 0.0001d0
         :minimal-size 5
-        :trials-count 50
+        :trials-count 15
         :parallel nil))
 
 (defparameter *forest-parameters*
   (make 'cl-grf.forest:regression-random-forest-parameters
-        :trees-count 200
+        :trees-count 500
         :parallel t
         :tree-batch-size 5
-        :tree-attributes-count 4
-        :tree-sample-rate 0.5
+        :tree-attributes-count 5
+        :tree-sample-rate 0.2
         :tree-parameters *training-parameters*))
 
 (defparameter *mean-error*
@@ -52,4 +52,4 @@
                                        *target-data*
                                        t))
 
-(print *mean-error*) ; 18.0 (squared error, root equal 4.24…)
+(print *mean-error*) ; 17.34 (squared error, root equal 4.16…)

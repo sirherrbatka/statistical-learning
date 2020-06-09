@@ -1,7 +1,7 @@
 (cl:in-package #:cl-grf.tree-protocol)
 
 
-(defclass fundamental-node (cl-grf.mp:fundamental-model)
+(defclass fundamental-node ()
   ())
 
 

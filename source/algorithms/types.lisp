@@ -28,6 +28,10 @@
   ())
 
 
+(defclass basic-regression (regression)
+  ())
+
+
 (defclass score ()
   ((%score :initarg :score
            :accessor score)))

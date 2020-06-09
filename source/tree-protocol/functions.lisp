@@ -40,12 +40,11 @@
 (defun leafs-for* (node data)
   (declare (optimize (speed 3)))
   (cl-grf.data:bind-data-matrix-dimensions ((length features-count data))
-    (iterate
+    (cl-ds:xpr (:i 0)
       (declare (type fixnum i))
-      (with result = (make-array length))
-      (for i from 0 below length)
-      (setf (aref result i) (leaf-for node data i))
-      (finally (return result)))))
+      (when (< i length)
+        (cl-ds:send-recur (leaf-for node data i)
+                          :i (1+ i))))))
 
 
 (defun leafs-for (model data)

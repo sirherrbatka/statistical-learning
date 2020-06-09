@@ -29,7 +29,8 @@
          (score (score leaf))
          (minimal-size (cl-grf.tp:minimal-size training-parameters))
          (parallel (cl-grf.tp:parallel training-parameters))
-         (target-data (cl-grf.tp:target-data training-state)))
+         (target-data (cl-grf.tp:target-data training-state))
+         (attributes (cl-grf.tp:attribute-indexes training-state)))
     (declare (type fixnum trials-count)
              (type double-float score minimal-difference)
              (type boolean parallel)
@@ -56,9 +57,10 @@
       (with optimal-array = (make-array data-size :element-type 'boolean
                                                   :initial-element nil))
       (for attempt from 0 below trials-count)
-      (for (values attribute threshold) = (random-test training-data))
+      (for (values attribute threshold) = (random-test attributes training-data))
       (for (values left-length right-length) = (fill-split-array
-                                                training-data attribute
+                                                training-data
+                                                (aref attributes attribute)
                                                 threshold split-array))
       (when (or (< left-length minimal-size)
                 (< right-length minimal-size))
@@ -84,29 +86,29 @@
          (declare (type double-float difference))
          (when (< difference minimal-difference)
            (return nil))
-         (return (make 'scored-tree-node
-                       :left-node (make-simple-node
-                                   optimal-array
-                                   minimal-left-score
-                                   optimal-left-length
-                                   nil
-                                   parallel
-                                   training-state
-                                   optimal-attribute)
-                       :right-node (make-simple-node
-                                    optimal-array
-                                    minimal-right-score
-                                    optimal-right-length
-                                    t
-                                    nil
-                                    training-state
-                                    optimal-attribute)
-                       :support data-size
-                       :score score
-                       :attribute (~> training-state
-                                      cl-grf.tp:attribute-indexes
-                                      (aref optimal-attribute))
-                       :attribute-value optimal-threshold)))))))
+         (let ((new-attributes (subsample-vector attributes
+                                                 optimal-attribute)))
+           (return (make 'scored-tree-node
+                         :left-node (make-simple-node
+                                     optimal-array
+                                     minimal-left-score
+                                     optimal-left-length
+                                     nil
+                                     parallel
+                                     training-state
+                                     new-attributes)
+                         :right-node (make-simple-node
+                                      optimal-array
+                                      minimal-right-score
+                                      optimal-right-length
+                                      t
+                                      nil
+                                      training-state
+                                      new-attributes)
+                         :support data-size
+                         :score score
+                         :attribute (aref attributes optimal-attribute)
+                         :attribute-value optimal-threshold))))))))
 
 
 
@@ -147,8 +149,8 @@
                         'scored-leaf-node
                         :support (cl-grf.data:data-points-count target-data)
                         :predictions (/ sum data-points-count)
-                        :score (~> (make-array data-points-count
-                                               :initial-element nil
+                        :score (~> data-points-count
+                                   (make-array :initial-element nil
                                                :element-type 'boolean)
                                    (calculate-score training-parameters
                                                     _
@@ -158,18 +160,8 @@
 (defmethod cl-grf.mp:make-model ((parameters scored-training)
                                  train-data
                                  target-data
-                                 &optional weights)
-  (declare (ignore weights))
-  (let* ((attributes (iterate
-                       (with attributes-count =
-                             (cl-grf.data:attributes-count train-data))
-                       (with result = (make-array attributes-count
-                                                  :element-type 'fixnum
-                                                  :initial-element 0))
-                       (for i from 0 below attributes-count)
-                       (setf (aref result i) i)
-                       (finally (return result))))
-         (state (make 'cl-grf.tp:fundamental-training-state
+                                 &key attributes &allow-other-keys)
+  (let* ((state (make 'cl-grf.tp:fundamental-training-state
                       :training-parameters parameters
                       :attribute-indexes attributes
                       :target-data target-data
@@ -218,29 +210,30 @@
     ((parameters single-impurity-classification)
      target
      predictions)
+  (cl-grf.data:check-data-points target predictions)
   (bind ((number-of-classes (the fixnum (number-of-classes parameters)))
          (data-points-count (cl-grf.data:data-points-count target))
          ((:flet prediction (prediction))
           (declare (optimize (speed 3) (safety 0)))
-          (cl-grf.data:check-data-points prediction)
           (iterate
             (declare (type fixnum i))
             (for i from 0 below number-of-classes)
-            (finding i maximizing (cl-grf.data:mref prediction 0 i))))
+            (finding i maximizing (cl-grf.data:mref predictions prediction i))))
          (result (cl-grf.performance:make-confusion-matrix number-of-classes)))
     (iterate
       (declare (type fixnum i)
                (optimize (speed 3)))
       (for i from 0 below data-points-count)
       (for expected = (truncate (cl-grf.data:mref target i 0)))
-      (for predicted = (prediction (aref predictions i)))
+      (for predicted = (prediction i))
       (incf (cl-grf.performance:at-confusion-matrix
              result expected predicted)))
     result))
 
 
-(defmethod cl-grf.performance:average-performance-metric ((parameters impurity-classification)
-                                                          metrics)
+(defmethod cl-grf.performance:average-performance-metric
+    ((parameters impurity-classification)
+     metrics)
   (iterate
     (with result = (~> parameters number-of-classes
                        cl-grf.performance:make-confusion-matrix))
@@ -250,7 +243,7 @@
     (finally (return result))))
 
 
-(defmethod cl-grf.performance:errors ((parameters impurity-classification)
+(defmethod cl-grf.performance:errors ((parameters classification)
                                       target
                                       predictions)
   (declare (optimize (speed 3) (safety 0))
@@ -263,23 +256,22 @@
       (declare (type fixnum i))
       (for i from 0 below data-points-count)
       (for expected = (truncate (cl-grf.data:mref target i 0)))
-      (for predicted = (aref predictions i))
-      (setf (aref result i) (- 1.0d0 (cl-grf.data:mref predicted
-                                                       0
-                                                       expected)))
-      (finally (return result)))))
+      (setf (aref result i) (- 1.0d0 (cl-grf.data:mref predictions
+                                                       i
+                                                       expected))))
+    result))
 
 
 (defmethod cl-grf.performance:errors ((parameters regression)
                                       target
                                       predictions)
   (iterate
-    (with result = (make-array (length predictions)
+    (with result = (make-array (cl-grf.data:data-points-count predictions)
                                :element-type 'double-float
                                :initial-element 0.0d0))
     (for i from 0 below (length predictions))
     (for er = (- (cl-grf.data:mref target i 0)
-                 (aref predictions i)))
+                 (cl-grf.data:mref predictions i 0)))
     (setf (aref result i) (* er er))
     (finally (return result))))
 
@@ -287,11 +279,12 @@
 (defmethod cl-grf.performance:performance-metric ((parameters regression)
                                                   target
                                                   predictions)
+  (cl-grf.data:check-data-points target predictions)
   (iterate
-    (with count = (length predictions))
-    (for i from 0 below (length predictions))
+    (with count = (cl-grf.data:data-points-count target))
+    (for i from 0 below count)
     (for er = (- (cl-grf.data:mref target i 0)
-                 (aref predictions i)))
+                 (cl-grf.data:mref predictions i 0)))
     (sum (* er er) into result)
     (finally (return (/ result count)))))
 
@@ -299,3 +292,75 @@
 (defmethod cl-grf.performance:average-performance-metric ((parameters regression)
                                                           metrics)
   (mean metrics))
+
+
+(defclass gathered-predictions ()
+  ((%contributions-count :initarg :contributions-count
+                         :accessor contributions-count)
+   (%indexes :initarg :indexes
+             :reader indexes)
+   (%sums :initarg :sums
+          :reader sums))
+  (:default-initargs :contributions-count 0))
+
+
+(defmethod cl-grf.tp:contribute-predictions ((parameters classification)
+                                             model
+                                             data
+                                             state
+                                             parallel)
+  (cl-grf.data:bind-data-matrix-dimensions ((data-points-count attributes-count data))
+    (let ((number-of-classes (number-of-classes parameters)))
+      (when (null state)
+        (setf state (make 'gathered-predictions
+                          :indexes (cl-grf.data:iota-vector data-points-count)
+                          :sums (cl-grf.data:make-data-matrix data-points-count
+                                                              number-of-classes))))
+      (let* ((sums (sums state))
+             (root (cl-grf.tp:root model)))
+        (funcall (if parallel #'lparallel:pmap #'map)
+                 nil
+                 (lambda (data-point)
+                   (iterate
+                     (declare (type fixnum j))
+                     (with leaf = (cl-grf.tp:leaf-for root data data-point))
+                     (with predictions = (predictions leaf))
+                     (with support = (support leaf))
+                     (for j from 0 below number-of-classes)
+                     (for class-support = (cl-grf.data:mref predictions 0 j))
+                     (incf (cl-grf.data:mref sums data-point j)
+                           (/ class-support support))))
+                 (indexes state))))
+    (incf (contributions-count state))
+    state))
+
+
+(defmethod cl-grf.tp:contribute-predictions ((parameters regression)
+                                             model
+                                             data
+                                             state
+                                             parallel)
+  (cl-grf.data:bind-data-matrix-dimensions ((data-points-count attributes-count data))
+    (when (null state)
+      (setf state (make 'gathered-predictions
+                        :indexes (cl-grf.data:iota-vector data-points-count)
+                        :sums (cl-grf.data:make-data-matrix data-points-count
+                                                            1))))
+    (let* ((sums (sums state))
+           (root (cl-grf.tp:root model)))
+      (funcall (if parallel #'lparallel:pmap #'map)
+               nil
+               (lambda (data-point)
+                 (let* ((leaf (cl-grf.tp:leaf-for root data data-point))
+                        (predictions (predictions leaf)))
+                   (incf (cl-grf.data:mref sums data-point 0)
+                         predictions)))
+               (indexes state)))
+    (incf (contributions-count state))
+    state))
+
+
+(defmethod cl-grf.tp:extract-predictions ((state gathered-predictions))
+  (let ((count (contributions-count state)))
+    (cl-grf.data:map-data-matrix (lambda (value) (/ value count))
+                                 (sums state))))

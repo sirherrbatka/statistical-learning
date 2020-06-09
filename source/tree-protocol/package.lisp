@@ -18,6 +18,9 @@
    #:fundamental-tree-training-parameters
    #:leafp
    #:leafs-for
+   #:leaf-for
+   #:root
+   #:contribute-predictions
    #:left-node
    #:make-leaf
    #:make-leaf*
@@ -35,4 +38,5 @@
    #:treep
    #:trials-count
    #:tree-model
+   #:extract-predictions
    #:visit-nodes))

@@ -1,6 +1,7 @@
 (cl:in-package #:cl-grf.tree-protocol)
 
 
+(defgeneric root (model))
 (defgeneric treep (node))
 (defgeneric leafp (node))
 (defgeneric maximal-depth (training-parameters))
@@ -27,3 +28,5 @@
 (defgeneric attribute-indexes (training-state))
 (defgeneric (setf attribute-indexes) (new-value training-state))
 (defgeneric make-leaf* (training-parameters training-state))
+(defgeneric contribute-predictions (parameters model data state parallel))
+(defgeneric extract-predictions (state))

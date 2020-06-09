@@ -9,6 +9,7 @@
    #:data-matrix
    #:data-matrix-dimensions
    #:mref
+   #:map-data-matrix
    #:iota-vector
    #:reshuffle
    #:select-random-indexes

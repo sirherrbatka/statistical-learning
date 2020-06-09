@@ -25,15 +25,16 @@
     (finally (return (values min max)))))
 
 
-(-> random-test (cl-grf.data:data-matrix)
+(-> random-test ((simple-array fixnum (*)) cl-grf.data:data-matrix)
     (values fixnum double-float))
-(defun random-test (data)
+(defun random-test (attributes data)
   "Uses ExtraTree approach."
   (declare (optimize (speed 3) (safety 0)))
-  (bind ((attribute (~> data cl-grf.data:attributes-count random))
+  (bind ((attribute-index (~> attributes length random))
+         (attribute (aref attributes attribute-index))
          ((:values min max) (data-min/max data attribute))
          (threshold (random-uniform min max)))
-    (values attribute (if (= threshold max) min threshold))))
+    (values attribute-index (if (= threshold max) min threshold))))
 
 
 (-> fill-split-array (cl-grf.data:data-matrix
@@ -189,23 +190,20 @@
 (defmethod make-simple-node*
     ((parameters scored-training)
      split-array
-     shannon-entropy
+     score
      length
      position
      parallel
      training-state
-     attribute-index)
+     new-attributes)
   (if (not parallel)
-      #1=(let* ((new-attributes (~>  training-state
-                                     cl-grf.tp:attribute-indexes
-                                     (subsample-vector attribute-index)))
-                (old-target-data (cl-grf.tp:target-data training-state))
+      #1=(let* ((old-target-data (cl-grf.tp:target-data training-state))
                 (new-state
                   (cl-grf.tp:training-state-clone
                    training-state
                    (subsample-array (cl-grf.tp:training-data training-state)
                                     length split-array
-                                    position attribute-index)
+                                    position nil)
                    (subsample-array old-target-data
                                     length split-array
                                     position nil)
