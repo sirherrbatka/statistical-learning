@@ -67,16 +67,26 @@
               parallel))
 
 
-(defmethod predictions-from-leafs ((forest classification-random-forest)
-                                   leafs
-                                   &optional parallel)
-  (classification-predictions-from-leafs* leafs
-                                          parallel))
+(defun predictions-from-leafs (random-forest leafs &optional parallel)
+  (~> random-forest
+      cl-grf.mp:parameters
+      tree-parameters
+      (predictions-from-leafs* leafs
+                               (trees random-forest)
+                               parallel)))
 
 
-(defmethod predictions-from-leafs ((forest regression-random-forest)
-                                   leafs
-                                   &optional parallel)
+(defmethod predictions-from-leafs* ((tree-parameters cl-grf.alg:classification)
+                                    leafs
+                                    trees
+                                    &optional parallel)
+  (classification-predictions-from-leafs* leafs parallel))
+
+
+(defmethod predictions-from-leafs* ((tree-parameters cl-grf.alg:regression)
+                                    leafs
+                                    trees
+                                    &optional parallel)
   (declare (type simple-vector leafs))
   (bind ((trees-count (length leafs))
          ((:flet prediction (index))

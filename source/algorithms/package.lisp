@@ -10,6 +10,7 @@
    #:calculate-score
    #:regression
    #:predictions
+   #:classification
    #:support
    #:score
    #:scored-tree-node

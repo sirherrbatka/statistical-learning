@@ -5,7 +5,8 @@
 (defgeneric trees (random-forest))
 (defgeneric attributes (random-forest))
 (defgeneric leafs-for (random-forest data &optional parallel))
-(defgeneric predictions-from-leafs (random-forest leafs &optional parallel))
+(defgeneric predictions-from-leafs* (tree-parameters leafs trees
+                                     &optional parallel))
 (defgeneric trees-count (random-forest-parameters))
 (defgeneric tree-attributes-count (random-forest-parameters))
 (defgeneric parallel (parameters))

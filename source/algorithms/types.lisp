@@ -6,7 +6,11 @@
                         :reader minimal-difference)))
 
 
-(defclass scored-classification (scored-training)
+(defclass classification ()
+  ())
+
+
+(defclass scored-classification (classification scored-training)
   ())
 
 
