@@ -8,7 +8,7 @@
 
 (in-package #:covtype-example)
 
-(defparameter *data*
+(defvar *data*
   (~> (vellum:copy-from :csv (~>> (asdf:system-source-directory :cl-grf)
                                   (merge-pathnames "examples/covtype.data"))
                         :header nil)
@@ -70,19 +70,19 @@
                        :body (vellum:body (cover_type horizontal_distance_to_roadways)
                                (decf cover_type)))))
 
-(defparameter *cover-types* ; 7
+(defvar *cover-types* ; 7
   (vellum:with-table (*data*)
     (bind (((min . max) (cl-ds.alg:extrema *data* #'< :key
                                            (vellum:brr cover_type))))
       (assert (zerop min))
       (1+ (- max min)))))
 
-(defparameter *train-data*
+(defvar *train-data*
   (vellum:to-matrix (vellum:select *data*
                       :columns '(:take-to soil_type_40))
                     :element-type 'double-float))
 
-(defparameter *target-data*
+(defvar *target-data*
   (vellum:to-matrix (vellum:select *data*
                       :columns '(:v cover_type))
                     :element-type 'double-float))
@@ -98,7 +98,7 @@
 
 (defparameter *forest-parameters*
   (make 'cl-grf.forest:classification-random-forest-parameters
-        :trees-count 50
+        :trees-count 200
         :parallel t
         :tree-batch-size 10
         :tree-attributes-count 50
@@ -112,4 +112,4 @@
                                        *target-data*
                                        t))
 
-(print (cl-grf.performance:accuracy *confusion-matrix*)) ; 0.8169177228697514d0
+(print (cl-grf.performance:accuracy *confusion-matrix*)) ; 0.8212171177187391d0

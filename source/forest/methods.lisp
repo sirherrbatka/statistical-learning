@@ -57,9 +57,8 @@
              :format-control "You can't request parallel creation of both the forest and the individual trees at the same time."))))
 
 
-(defun trees-predict (tree-parameters trees data parallel)
+(defun trees-predict (tree-parameters trees data parallel &optional state)
   (iterate
-    (with state = nil)
     (for tree in-vector trees)
     (setf state (cl-grf.tp:contribute-predictions tree-parameters
                                                   tree
@@ -85,12 +84,14 @@
      weights
      train-data
      target-data)
-  (let ((tree-parameters (tree-parameters training-parameters)))
+  (let ((tree-parameters (tree-parameters training-parameters))
+        (state nil))
     (lambda (prev-trees base)
       (let ((predictions (trees-predict tree-parameters
                                         prev-trees
                                         train-data
-                                        parallel)))
+                                        parallel
+                                        state)))
         (calculate-weights training-parameters predictions target-data base weights))
       weights)))
 
@@ -102,6 +103,7 @@
      train-data
      target-data)
   (let ((data-points-count (cl-grf.data:data-points-count train-data))
+        (state nil)
         (tree-parameters (tree-parameters training-parameters)))
     (declare (type fixnum data-points-count))
     (lambda (prev-trees base)
@@ -111,7 +113,8 @@
         (with predictions = (trees-predict tree-parameters
                                            prev-trees
                                            train-data
-                                           parallel))
+                                           parallel
+                                           state))
         (for i from 0 below data-points-count)
         (setf (cl-grf.data:mref weights i 0)
               (abs (- (cl-grf.data:mref predictions i 0)
@@ -153,16 +156,19 @@
              below trees-count
              by tree-batch-size)
         (for base from (1+ (truncate trees-count tree-batch-size)) downto 0)
-        (for prev-trees = (array-view trees :from 0 :to index))
-        (for prev-attributes = (array-view attributes :from 0 :to index))
+        (for prev-trees = (array-view trees
+                                      :from (- index tree-batch-size)
+                                      :to index))
+        (for prev-attributes = (array-view attributes
+                                           :from (- index tree-batch-size)
+                                           :to index))
         (funcall weights-calculator prev-trees base)
         (fit-tree-batch trees attributes index parameters
                         train-data target-data weights))
       (make forest-class
             :trees trees
             :parameters parameters
-            :target-attributes-count target-data-attributes
-            :attributes attributes))))
+            :target-attributes-count target-data-attributes))))
 
 
 (defmethod cl-grf.performance:performance-metric ((parameters random-forest-parameters)
