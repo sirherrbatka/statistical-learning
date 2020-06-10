@@ -1,6 +1,7 @@
 (cl:in-package #:cl-grf.algorithms)
 
 
+(defgeneric learning-rate (regression))
 (defgeneric minimal-difference (training-parameters))
 (defgeneric score (object))
 (defgeneric (setf score) (new-value object))

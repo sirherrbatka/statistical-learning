@@ -1,7 +1,7 @@
 (cl:in-package #:cl-grf.forest)
 
 
-(defclass random-forest-parameters ()
+(defclass ensemble-parameters ()
   ((%trees-count :initarg :trees-count
                  :reader trees-count
                  :type positive-integer)
@@ -18,15 +18,15 @@
                      :reader tree-parameters)))
 
 
-(defclass classification-random-forest-parameters (random-forest-parameters)
+(defclass random-forest-parameters (ensemble-parameters)
   ())
 
 
-(defclass regression-random-forest-parameters (random-forest-parameters)
+(defclass gradient-boost-ensemble-parameters (random-forest-parameters)
   ())
 
 
-(defclass fundamental-random-forest (cl-grf.mp:fundamental-model)
+(defclass ensemble (cl-grf.mp:fundamental-model)
   ((%trees :initarg :trees
            :reader trees
            :type simple-vector)
@@ -34,9 +34,9 @@
                              :reader target-attributes-count)))
 
 
-(defclass classification-random-forest (fundamental-random-forest)
+(defclass random-forest (ensemble)
   ())
 
 
-(defclass regression-random-forest (fundamental-random-forest)
+(defclass gradient-boost-ensemble (ensemble)
   ())

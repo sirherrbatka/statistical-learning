@@ -198,16 +198,17 @@
      new-attributes)
   (if (not parallel)
       #1=(let* ((old-target-data (cl-grf.tp:target-data training-state))
+                (old-training-data (cl-grf.tp:training-data training-state))
                 (new-state
                   (cl-grf.tp:training-state-clone
                    training-state
-                   (subsample-array (cl-grf.tp:training-data training-state)
-                                    length split-array
-                                    position nil)
-                   (subsample-array old-target-data
-                                    length split-array
-                                    position nil)
-                   new-attributes))
+                   :training-data (subsample-array old-training-data
+                                                   length split-array
+                                                   position nil)
+                   :target-data (subsample-array old-target-data
+                                                 length split-array
+                                                 position nil)
+                   :attribute-indexes new-attributes))
                 (new-leaf (cl-grf.tp:make-leaf new-state)))
            (setf training-state nil
                  split-array nil) ; so it can be gced
@@ -230,52 +231,3 @@
 (declaim (inline square))
 (defun square (x)
   (* x x))
-
-
-(defmethod calculate-score ((training-parameters regression)
-                            split-array
-                            target-data)
-  (declare (optimize (speed 3) (safety 0))
-           (type (simple-array boolean (*)) split-array)
-           (type cl-grf.data:data-matrix target-data))
-  (let ((left-sum 0.0d0)
-        (right-sum 0.0d0)
-        (left-count 0)
-        (right-count 0))
-    (declare (type double-float left-sum right-sum)
-             (type fixnum left-count right-count))
-    (iterate
-      (declare (type fixnum i))
-      (for i from 0 below (length split-array))
-      (for right-p = (aref split-array i))
-      (for value = (cl-grf.data:mref target-data i 0))
-      (if right-p
-          (setf right-count (1+ right-count)
-                right-sum (+ right-sum value))
-          (setf left-count (1+ left-count)
-                left-sum (+ left-sum value))))
-    (iterate
-      (declare (type double-float
-                     left-error right-error
-                     left-avg right-avg)
-               (type fixnum i))
-      (with left-error = 0.0d0)
-      (with right-error = 0.0d0)
-      (with left-avg = (if (zerop left-count)
-                           0.0d0
-                           (/ left-sum left-count)))
-      (with right-avg = (if (zerop right-count)
-                            0.0d0
-                            (/ right-sum right-count)))
-      (for i from 0 below (length split-array))
-      (for right-p = (aref split-array i))
-      (for value = (cl-grf.data:mref target-data i 0))
-      (if right-p
-          (incf right-error (square (- value right-avg)))
-          (incf left-error (square (- value left-avg))))
-      (finally (return (values (if (zerop left-count)
-                                   0.0d0
-                                   (/ left-error left-count))
-                               (if (zerop right-count)
-                                   0.0d0
-                                   (/ right-error right-count))))))))

@@ -101,3 +101,17 @@
                                        target
                                        :attributes attributes)))
              (array-view all-attributes))))
+
+
+(defun trees-predict (tree-parameters trees data parallel &optional state)
+  (declare (optimize (debug 3)))
+  (iterate
+    (for tree in-vector trees)
+    (setf state (cl-grf.tp:contribute-predictions tree-parameters
+                                                  tree
+                                                  data
+                                                  state
+                                                  parallel))
+    (finally
+     (let ((result (cl-grf.tp:extract-predictions state)))
+       (return (values result state))))))

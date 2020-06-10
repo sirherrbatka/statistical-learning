@@ -84,3 +84,10 @@
       (for i from 0 below (array-total-size data-matrix))
       (setf (row-major-aref result i)
             (funcall function (row-major-aref data-matrix i))))))
+
+
+(defun make-data-matrix-like (data-matrix &optional (initial-element 0.0d0))
+  (check-type data-matrix data-matrix)
+  (make-array (array-dimensions data-matrix)
+              :element-type 'double-float
+              :initial-element initial-element))

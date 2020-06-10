@@ -1,15 +1,12 @@
 (cl:in-package #:cl-grf.tree-protocol)
 
 
-(defun training-state-clone (training-state
-                             new-data
-                             new-target
-                             new-attribute-indexes)
-  (check-type training-state fundamental-training-state)
-  (cl-ds.utils:quasi-clone* training-state
-    :training-data new-data
-    :attribute-indexes new-attribute-indexes
-    :target-data new-target))
+(defmacro training-state-clone (training-state &rest arguments)
+  (once-only (training-state)
+    `(progn
+       (check-type ,training-state fundamental-training-state)
+       (cl-ds.utils:quasi-clone* ,training-state
+         ,@arguments))))
 
 
 (defun force-tree (model)

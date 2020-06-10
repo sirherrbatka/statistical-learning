@@ -97,7 +97,7 @@
         :parallel nil))
 
 (defparameter *forest-parameters*
-  (make 'cl-grf.forest:classification-random-forest-parameters
+  (make 'cl-grf.forest:random-forest-parameters
         :trees-count 200
         :parallel t
         :tree-batch-size 10

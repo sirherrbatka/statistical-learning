@@ -10,6 +10,7 @@
    #:data-matrix-dimensions
    #:mref
    #:map-data-matrix
+   #:make-data-matrix-like
    #:iota-vector
    #:reshuffle
    #:select-random-indexes

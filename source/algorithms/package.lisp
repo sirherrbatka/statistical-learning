@@ -11,7 +11,8 @@
    #:regression
    #:predictions
    #:classification
-   #:basis-regression
+   #:basic-regression
+   #:gradient-boost-regression
    #:support
    #:score
    #:scored-tree-node

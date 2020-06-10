@@ -24,12 +24,22 @@
                        :reader number-of-classes)))
 
 
-(defclass regression (scored-training)
+(defclass regression ()
   ())
 
 
-(defclass basic-regression (regression)
+(defclass basic-regression (regression scored-training)
   ())
+
+
+(defclass gradient-boost-regression (regression scored-training)
+  ((%learning-rate :initarg :learning-rate
+                   :reader learning-rate)))
+
+
+(defclass gradient-boost-model (cl-grf.tp:tree-model)
+  ((%expected-value :initarg :expected-value
+                    :reader expected-value)))
 
 
 (defclass score ()

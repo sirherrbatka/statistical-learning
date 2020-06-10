@@ -29,7 +29,7 @@
                     :element-type 'double-float))
 
 (defparameter *training-parameters*
-  (make 'cl-grf.algorithms:regression
+  (make 'cl-grf.algorithms:basic-regression
         :maximal-depth 4
         :minimal-difference 0.0001d0
         :minimal-size 5
@@ -37,7 +37,7 @@
         :parallel nil))
 
 (defparameter *forest-parameters*
-  (make 'cl-grf.forest:regression-random-forest-parameters
+  (make 'cl-grf.forest:random-forest-parameters
         :trees-count 500
         :parallel t
         :tree-batch-size 5
@@ -53,3 +53,22 @@
                                        t))
 
 (print *mean-error*) ; 17.34 (squared error, root equal 4.16…)
+
+(print (cl-grf.performance:cross-validation
+        (make 'cl-grf.forest:gradient-boost-ensemble-parameters
+              :trees-count 500
+              :parallel nil
+              :tree-batch-size 10
+              :tree-attributes-count 5
+              :tree-sample-rate 0.2
+              :tree-parameters (make 'cl-grf.alg:gradient-boost-regression
+                                     :maximal-depth 5
+                                     :minimal-size 5
+                                     :learning-rate 0.1
+                                     :minimal-difference 0.00001d0
+                                     :trials-count 15
+                                     :parallel nil))
+        4
+        *train-data*
+        *target-data*
+        t)) ; 3.6266173488203433d0 (also squared error, obviously a lot better)
