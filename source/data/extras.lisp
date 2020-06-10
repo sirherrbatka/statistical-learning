@@ -62,6 +62,18 @@
 
 
 (defun cross-validation-folds (data-points-count number-of-folds)
+  (check-type data-points-count integer)
+  (check-type number-of-folds integer)
+  (when (< data-points-count number-of-folds)
+    (error 'cl-ds:incompatible-arguments
+           :parameters '(data-points-count number-of-folds)
+           :values `(,data-points-count ,number-of-folds)
+           :format-control "NUMBER-OF-FOLDS can't be larger then DATA-POINTS-COUNT"))
+  (when (< number-of-folds 2)
+    (error 'cl-ds:invalid-argument-value
+           :parameter 'number-of-folds
+           :value number-of-folds
+           :format-control "NUMBER-OF-FOLDS must be at least 2."))
   (let* ((indexes (~> data-points-count iota-vector reshuffle))
          (validation-size (truncate data-points-count number-of-folds))
          (train-size (- data-points-count validation-size)))
