@@ -1,4 +1,4 @@
-(cl:in-package #:cl-grf.forest)
+(cl:in-package #:cl-grf.ensemble)
 
 
 (defgeneric trees (random-forest))

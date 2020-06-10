@@ -1,4 +1,4 @@
-(cl:in-package #:cl-grf.forest)
+(cl:in-package #:cl-grf.ensemble)
 
 
 (defun predict (random-forest data &optional parallel)

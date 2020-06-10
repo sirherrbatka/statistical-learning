@@ -1,53 +1,10 @@
-(cl:in-package #:cl-grf.forest)
+(cl:in-package #:cl-grf.ensemble)
 
 
 (defun total-support (leafs index)
   (iterate
     (for l in-vector leafs)
     (sum (cl-grf.alg:support (aref l index)))))
-
-
-(defgeneric calculate-weights (parameters predictions target base &optional result))
-
-
-(defmethod calculate-weights ((parameters classification-random-forest-parameters)
-                              predictions target base &optional result)
-  (declare (optimize (speed 3) (safety 0))
-           (type cl-grf.data:data-matrix target predictions)
-           (type fixnum base))
-  (cl-grf.data:bind-data-matrix-dimensions ((length classes predictions)
-                                            (data-points attributes target))
-    (ensure result
-      (cl-grf.data:make-data-matrix length 1))
-    (iterate
-      (declare (type fixnum i))
-      (for i from 0 below length)
-      (for expected = (cl-grf.data:mref target i 0))
-      (for prediction = (cl-grf.data:mref predictions
-                                          i
-                                          (truncate expected)))
-      (setf (cl-grf.data:mref result i 0) (- (log (max prediction double-float-epsilon)
-                                                  base))))
-    result))
-
-
-(defmethod calculate-weights ((parameters regression-random-forest-parameters)
-                              predictions target base &optional result)
-  (declare (optimize (speed 3) (safety 2))
-           (type cl-grf.data:data-matrix target predictions)
-           (type fixnum base))
-  (cl-grf.data:bind-data-matrix-dimensions ((length classes predictions)
-                                            (data-points attributes target))
-    (ensure result
-      (cl-grf.data:make-data-matrix length 1))
-    (iterate
-      (declare (type fixnum i))
-      (for i from 0 below length)
-      (for expected = (cl-grf.data:mref target i 0))
-      (for prediction = (cl-grf.data:mref predictions i 0))
-      (for error = (- expected prediction))
-      (setf (cl-grf.data:mref result i 0) (* error error))))
-  result)
 
 
 (-> fit-tree-batch (simple-vector

@@ -32,14 +32,24 @@
   ())
 
 
-(defclass gradient-boost-regression (regression scored-training)
+(defclass gradient-boost-training-state (cl-grf.tp:fundamental-training-state)
   ((%learning-rate :initarg :learning-rate
                    :reader learning-rate)))
 
 
+(defmethod cl-ds.utils:cloning-information append ((state gradient-boost-training-state))
+  '((:learning-rate learning-rate)))
+
+
+(defclass gradient-boost-regression (regression scored-training)
+  ())
+
+
 (defclass gradient-boost-model (cl-grf.tp:tree-model)
   ((%expected-value :initarg :expected-value
-                    :reader expected-value)))
+                    :reader expected-value)
+   (%learning-rate :initarg :learning-rate
+                   :reader learning-rate)))
 
 
 (defclass score ()

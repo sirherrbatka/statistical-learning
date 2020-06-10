@@ -51,7 +51,7 @@
                              (:file "utils")
                              (:file "generics")
                              (:file "methods")))
-               (:module "forest"
+               (:module "ensemble"
                 :components ((:file "package")
                              (:file "generics")
                              (:file "types")

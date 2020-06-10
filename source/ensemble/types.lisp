@@ -1,4 +1,4 @@
-(cl:in-package #:cl-grf.forest)
+(cl:in-package #:cl-grf.ensemble)
 
 
 (defclass ensemble-parameters ()
@@ -23,7 +23,13 @@
 
 
 (defclass gradient-boost-ensemble-parameters (random-forest-parameters)
-  ())
+  ((%learning-rate :initarg :learning-rate
+                   :reader learning-rate)
+   (%learning-rate-change :initarg :learning-rate-change
+                          :reader learning-rate-change))
+  (:default-initargs
+   :learning-rate 0.1d0
+   :learning-rate-change 0.0d0))
 
 
 (defclass ensemble (cl-grf.mp:fundamental-model)

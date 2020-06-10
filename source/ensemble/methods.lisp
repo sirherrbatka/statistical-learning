@@ -1,4 +1,4 @@
-(cl:in-package #:cl-grf.forest)
+(cl:in-package #:cl-grf.ensemble)
 
 
 (defmethod shared-initialize :after
@@ -179,7 +179,7 @@
                         :displaced-index-offset (min trees-count from)
                         :displaced-to array))
            (expected-value (~> target-data cl-ds.utils:unfold-table mean))
-           ((:flet fit-tree-batch (trees attributes &optional predictions))
+           ((:flet fit-tree-batch (trees attributes learning-rate predictions))
             (funcall (if parallel #'lparallel:pmap-into #'map-into)
                      trees
                      (lambda (attributes)
@@ -197,6 +197,7 @@
                          (cl-grf.mp:make-model tree-parameters
                                                train
                                                target
+                                               :learning-rate learning-rate
                                                :attributes attributes
                                                :predictions new-predictions
                                                :expected-value expected-value)))
@@ -205,6 +206,8 @@
                                                  train-data-attributes)
            (map-into attributes))
       (iterate
+        (with learning-rate = (learning-rate parameters))
+        (with learning-rate-change = (learning-rate-change parameters))
         (with predictions = nil)
         (with state = nil)
         (for index from 0
@@ -216,12 +219,13 @@
         (for attributes-view = (array-view attributes
                                            :from index
                                            :to (+ index tree-batch-size)))
-        (fit-tree-batch trees-view attributes-view predictions)
+        (fit-tree-batch trees-view attributes-view learning-rate predictions)
         (for (values new-predictions new-state) = (trees-predict tree-parameters
                                                                  trees-view
                                                                  train-data
                                                                  parallel
                                                                  state))
+        (incf learning-rate learning-rate-change)
         (setf predictions new-predictions
               state new-state))
       (make 'gradient-boost-ensemble

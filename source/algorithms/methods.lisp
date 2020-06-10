@@ -34,10 +34,7 @@
          (attributes (cl-grf.tp:attribute-indexes training-state)))
     (declare (type fixnum trials-count)
              (type double-float score minimal-difference)
-             (type boolean parallel)
-             (type (simple-array double-float (* *))
-                   training-data
-                   target-data))
+             (type boolean parallel))
     (iterate
       (declare (type fixnum attempt left-length right-length
                      optimal-left-length optimal-right-length
@@ -164,6 +161,7 @@
                                  &key attributes
                                    predictions
                                    expected-value
+                                   learning-rate
                                  &allow-other-keys)
   (let* ((differences
            (if (null predictions)
@@ -177,7 +175,8 @@
                        (- (cl-grf.data:mref target-data i 0)
                           (cl-grf.data:mref predictions i 0)))
                  (finally (return result)))))
-         (state (make 'cl-grf.tp:fundamental-training-state
+         (state (make 'gradient-boost-training-state
+                      :learning-rate learning-rate
                       :training-parameters parameters
                       :attribute-indexes attributes
                       :target-data differences
@@ -186,6 +185,7 @@
          (tree (cl-grf.tp:split state leaf)))
     (make 'gradient-boost-model
           :parameters parameters
+          :learning-rate learning-rate
           :expected-value expected-value
           :root (if (null tree) leaf tree))))
 
@@ -302,11 +302,24 @@
     (with result = (make-array (cl-grf.data:data-points-count predictions)
                                :element-type 'double-float
                                :initial-element 0.0d0))
-    (for i from 0 below (length predictions))
+    (for i from 0 below (cl-grf.data:data-points-count predictions))
     (for er = (- (cl-grf.data:mref target i 0)
                  (cl-grf.data:mref predictions i 0)))
     (setf (aref result i) (* er er))
     (finally (return result))))
+
+
+(defmethod cl-grf.performance:performance-metric ((parameters regression)
+                                                  target
+                                                  predictions)
+  (iterate
+    (with sum = 0.0d0)
+    (with count = (cl-grf.data:data-points-count predictions))
+    (for i from 0 below count)
+    (for er = (- (cl-grf.data:mref target i 0)
+                 (cl-grf.data:mref predictions i 0)))
+    (incf sum (* er er))
+    (finally (return (/ sum count)))))
 
 
 (defmethod cl-grf.performance:average-performance-metric ((parameters regression)
@@ -398,7 +411,7 @@
                         :sums (cl-grf.data:make-data-matrix data-points-count
                                                             1))))
     (let* ((sums (sums state))
-           (learning-rate (learning-rate parameters))
+           (learning-rate (learning-rate model))
            (root (cl-grf.tp:root model)))
       (funcall (if parallel #'lparallel:pmap #'map)
                nil
@@ -419,8 +432,7 @@
 
 
 (defmethod cl-grf.tp:extract-predictions ((state gradient-boost-gathered-predictions))
-  (let* ((count (contributions-count state))
-         (sums (sums state))
+  (let* ((sums (sums state))
          (expected-value (expected-value state))
          (result (cl-grf.data:make-data-matrix-like sums)))
     (iterate
