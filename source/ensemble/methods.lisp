@@ -1,11 +1,10 @@
 (cl:in-package #:cl-grf.ensemble)
 
 
-(defmethod shared-initialize :after
+(defmethod initialize-instance :after
     ((instance ensemble-parameters)
-     slot-names
      &rest initargs)
-  (declare (ignore initargs slot-names))
+  (declare (ignore initargs))
   (let* ((trees-count (trees-count instance))
          (tree-batch-size (tree-batch-size instance))
          (parallel (parallel instance))
@@ -48,9 +47,27 @@
              :argument :trees-count))
     (when (and parallel (cl-grf.tp:parallel tree-parameters))
       (error 'cl-ds:incompatible-arguments
-             :arguments '(:parallel :tree-parameters)
+             :parameters '(:parallel :tree-parameters)
              :values `(,parallel ,tree-parameters)
              :format-control "You can't request parallel creation of both the forest and the individual trees at the same time."))))
+
+
+(defmethod initialize-instance :after ((instance gradient-boost-ensemble-parameters)
+                                       &rest initargs)
+  (declare (ignore initargs))
+  (let ((learning-rate (learning-rate instance))
+        (learning-rate-change (learning-rate-change instance))
+        (tree-batch-size (tree-batch-size instance))
+        (trees-count (trees-count instance)))
+    (check-type learning-rate double-float)
+    (check-type learning-rate-change double-float)
+    (unless (< (* (/ trees-count tree-batch-size)
+                  learning-rate-change)
+               learning-rate)
+      (error 'cl-ds:incompatible-arguments
+             :parameters '(:learning-rate :learning-rate-change)
+             :values `(,learning-rate ,learning-rate-change)
+             :format-control "LEARNING-RATE-CHANGE value implies that LEARNING-RATE will eventually goes below zero."))))
 
 
 (defmethod cl-grf.mp:predict ((random-forest ensemble)
@@ -225,7 +242,7 @@
                                                                  train-data
                                                                  parallel
                                                                  state))
-        (incf learning-rate learning-rate-change)
+        (decf learning-rate learning-rate-change)
         (setf predictions new-predictions
               state new-state))
       (make 'gradient-boost-ensemble

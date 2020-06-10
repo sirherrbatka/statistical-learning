@@ -60,8 +60,8 @@
               :parallel t
               :tree-batch-size 10
               :tree-attributes-count 5
-              :learning-rate 0.1d0
-              :learning-rate-change (/ -0.1d0 500)
+              :learning-rate 0.2d0
+              :learning-rate-change (/ 0.4d0 200)
               :tree-sample-rate 0.1
               :tree-parameters (make 'cl-grf.alg:gradient-boost-regression
                                      :maximal-depth 5
