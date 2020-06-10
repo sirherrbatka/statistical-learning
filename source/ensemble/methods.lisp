@@ -89,16 +89,19 @@
      train-data
      target-data)
   (let* ((length (cl-grf.data:data-points-count train-data))
-         (result (cl-grf.data:make-data-matrix length 1))
          (state nil))
+    (declare (type fixnum length))
     (lambda (prev-trees base)
+      (declare (optimize (speed 3) (safety 0))
+               (type vector prev-trees)
+               (type fixnum base))
       (bind (((:values predictions new-state)
               (trees-predict tree-parameters
                              prev-trees
                              train-data
                              parallel
-                             state))
-             (length (cl-grf.data:data-points-count predictions)))
+                             state)))
+        (declare (type cl-grf.data:data-matrix predictions))
         (setf state new-state)
         (iterate
           (declare (type fixnum i))
@@ -107,9 +110,10 @@
           (for prediction = (cl-grf.data:mref predictions
                                               i
                                               (truncate expected)))
-          (setf (cl-grf.data:mref result i 0) (- (log (max prediction double-float-epsilon)
-                                                      base))))
-        result))))
+          (setf (cl-grf.data:mref weights i 0) (- (log (max prediction
+                                                            double-float-epsilon)
+                                                       base))))
+        weights))))
 
 
 (defmethod weights-calculator
@@ -123,18 +127,21 @@
         (state nil))
     (declare (type fixnum data-points-count))
     (lambda (prev-trees base)
-      (declare (ignore base))
-      (iterate
-        (declare (type fixnum i))
-        (with predictions = (trees-predict tree-parameters
-                                           prev-trees
-                                           train-data
-                                           parallel
-                                           state))
-        (for i from 0 below data-points-count)
-        (setf (cl-grf.data:mref weights i 0)
-              (abs (- (cl-grf.data:mref predictions i 0)
-                      (cl-grf.data:mref target-data i 0)))))
+      (declare (ignore base)
+               (optimize (speed 3) (safety 0)))
+      (bind (((:values predictions new-state)
+              (trees-predict tree-parameters
+                             prev-trees
+                             train-data
+                             parallel
+                             state)))
+        (setf state new-state)
+        (iterate
+          (declare (type fixnum i))
+          (for i from 0 below data-points-count)
+          (setf (cl-grf.data:mref weights i 0)
+                (abs (- (cl-grf.data:mref predictions i 0)
+                        (cl-grf.data:mref target-data i 0))))))
       weights)))
 
 
@@ -166,22 +173,20 @@
       (~>> (cl-grf.data:selecting-random-indexes tree-attributes-count
                                                  train-data-attributes)
            (map-into attributes))
-      (fit-tree-batch trees attributes 0 parameters
-                      train-data target-data weights)
       (iterate
-        (for index from tree-batch-size
+        (for base from (+ 2 (/ trees-count tree-batch-size)) downto 0)
+        (for index from 0
              below trees-count
              by tree-batch-size)
-        (for base from (1+ (truncate trees-count tree-batch-size)) downto 0)
-        (for prev-trees = (array-view trees
-                                      :from (- index tree-batch-size)
-                                      :to index))
-        (for prev-attributes = (array-view attributes
-                                           :from (- index tree-batch-size)
-                                           :to index))
-        (funcall weights-calculator prev-trees base)
-        (fit-tree-batch trees attributes index parameters
-                        train-data target-data weights))
+        (for trees-view = (array-view trees
+                                      :from index
+                                      :to (+ index tree-batch-size)))
+        (for attributes-view = (array-view attributes
+                                           :from index
+                                           :to (+ index tree-batch-size)))
+        (fit-tree-batch trees-view attributes-view parameters
+                        train-data target-data weights)
+        (funcall weights-calculator trees-view base))
       (make 'random-forest
             :trees trees
             :parameters parameters

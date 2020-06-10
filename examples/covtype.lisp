@@ -98,7 +98,7 @@
 
 (defparameter *forest-parameters*
   (make 'cl-grf.ensemble:random-forest-parameters
-        :trees-count 200
+        :trees-count 50
         :parallel t
         :tree-batch-size 10
         :tree-attributes-count 50
@@ -112,4 +112,4 @@
                                        *target-data*
                                        t))
 
-(print (cl-grf.performance:accuracy *confusion-matrix*)) ; 0.8212171177187391d0
+(print (cl-grf.performance:accuracy *confusion-matrix*)) ; 0.8117216167652304d0

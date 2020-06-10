@@ -1,45 +1,29 @@
 (cl:in-package #:cl-grf.ensemble)
 
 
-(defun total-support (leafs index)
-  (iterate
-    (for l in-vector leafs)
-    (sum (cl-grf.alg:support (aref l index)))))
-
-
-(-> fit-tree-batch (simple-vector
-                    simple-vector
-                    fixnum
+(-> fit-tree-batch (vector
+                    vector
                     t
                     cl-grf.data:data-matrix
                     cl-grf.data:data-matrix
-                    &optional (or null cl-grf.data:data-matrix))
+                    (or null cl-grf.data:data-matrix))
     t)
 (defun fit-tree-batch (trees
                        all-attributes
-                       fill-pointer
                        parameters
                        train-data
                        target-data
-                       &optional weights)
+                       weights)
   (bind ((tree-parameters (tree-parameters parameters))
-         (tree-batch-size (tree-batch-size parameters))
          (parallel (parallel parameters))
          (tree-sample-rate (tree-sample-rate parameters))
          (data-points-count (cl-grf.data:data-points-count train-data))
          (tree-sample-size (ceiling (* tree-sample-rate data-points-count)))
-         (tree-maximum-count (length trees))
-         (real-batch-size (min tree-batch-size
-                               (- tree-maximum-count fill-pointer)))
          (distribution (if (null weights)
                            nil
-                           (cl-grf.random:discrete-distribution weights)))
-         ((:flet array-view (array))
-          (make-array real-batch-size
-                      :displaced-to array
-                      :displaced-index-offset fill-pointer)))
+                           (cl-grf.random:discrete-distribution weights))))
     (funcall (if parallel #'lparallel:pmap-into #'map-into)
-             (array-view trees)
+             trees
              (lambda (attributes)
                (bind ((sample (if (null distribution)
                                   (cl-grf.data:select-random-indexes tree-sample-size
@@ -57,7 +41,7 @@
                                        train
                                        target
                                        :attributes attributes)))
-             (array-view all-attributes))))
+             all-attributes)))
 
 
 (defun trees-predict (tree-parameters trees data parallel &optional state)
