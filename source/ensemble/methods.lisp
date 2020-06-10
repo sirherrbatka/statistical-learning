@@ -44,7 +44,7 @@
              :value trees-count
              :bounds `(< 0 :trees-count
                          ,array-total-size-limit)
-             :argument :trees-count))
+             :parameter :trees-count))
     (when (and parallel (cl-grf.tp:parallel tree-parameters))
       (error 'cl-ds:incompatible-arguments
              :parameters '(:parallel :tree-parameters)
@@ -88,15 +88,28 @@
      weights
      train-data
      target-data)
-  (let ((state nil))
+  (let* ((length (cl-grf.data:data-points-count train-data))
+         (result (cl-grf.data:make-data-matrix length 1))
+         (state nil))
     (lambda (prev-trees base)
-      (let ((predictions (trees-predict tree-parameters
-                                        prev-trees
-                                        train-data
-                                        parallel
-                                        state)))
-        (calculate-weights training-parameters predictions target-data base weights))
-      weights)))
+      (bind (((:values predictions new-state)
+              (trees-predict tree-parameters
+                             prev-trees
+                             train-data
+                             parallel
+                             state))
+             (length (cl-grf.data:data-points-count predictions)))
+        (setf state new-state)
+        (iterate
+          (declare (type fixnum i))
+          (for i from 0 below length)
+          (for expected = (cl-grf.data:mref target-data i 0))
+          (for prediction = (cl-grf.data:mref predictions
+                                              i
+                                              (truncate expected)))
+          (setf (cl-grf.data:mref result i 0) (- (log (max prediction double-float-epsilon)
+                                                      base))))
+        result))))
 
 
 (defmethod weights-calculator
