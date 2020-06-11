@@ -222,6 +222,7 @@
                                        tree-sample-size
                                        train-data-data-points))
                               (train (cl-grf.data:sample train-data
+                                                         :attributes attributes
                                                          :data-points sample))
                               (target (cl-grf.data:sample target-data
                                                           :data-points sample))

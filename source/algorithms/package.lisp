@@ -5,15 +5,15 @@
   (:use #:cl #:cl-grf.aux-package)
   (:nicknames #:cl-grf.alg)
   (:export
-   #:support
-   #:single-impurity-classification
-   #:calculate-score
-   #:regression
-   #:predictions
-   #:classification
    #:basic-regression
+   #:calculate-score
+   #:classification
    #:gradient-boost-regression
-   #:support
+   #:predictions
+   #:regression
    #:score
+   #:scored-leaf-node
    #:scored-tree-node
-   #:scored-leaf-node))
+   #:single-impurity-classification
+   #:support
+   #:support))

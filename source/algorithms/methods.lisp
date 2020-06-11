@@ -58,8 +58,9 @@
       (for (values attribute threshold) = (random-test attributes training-data))
       (for (values left-length right-length) = (fill-split-array
                                                 training-data
-                                                (aref attributes attribute)
-                                                threshold split-array))
+                                                attribute
+                                                threshold
+                                                split-array))
       (when (or (< left-length minimal-size)
                 (< right-length minimal-size))
         (next-iteration))
@@ -94,7 +95,8 @@
                                      nil
                                      parallel
                                      training-state
-                                     new-attributes)
+                                     new-attributes
+                                     optimal-attribute)
                          :right-node (make-simple-node
                                       optimal-array
                                       minimal-right-score
@@ -102,7 +104,8 @@
                                       t
                                       nil
                                       training-state
-                                      new-attributes)
+                                      new-attributes
+                                      optimal-attribute)
                          :support data-size
                          :score score
                          :attribute (aref attributes optimal-attribute)
@@ -342,7 +345,7 @@
                     :reader expected-value)))
 
 
-(defmethod cl-grf.tp:contribute-predictions ((parameters classification)
+(defmethod cl-grf.tp:contribute-predictions ((parameters single-impurity-classification)
                                              model
                                              data
                                              state
@@ -497,3 +500,36 @@
   (~>> training-state
        cl-grf.tp:target-data
        (regression-score split-array)))
+
+
+(defmethod cl-grf.tp:contribute-predictions ((parameters gradient-boost-classification)
+                                             model
+                                             data
+                                             state
+                                             parallel)
+  (cl-grf.data:bind-data-matrix-dimensions ((data-points-count attributes-count data))
+    (let ((number-of-classes (number-of-classes parameters))
+          (learning-rate (learning-rate model))
+          (expected-value (expected-value model)))
+      (when (null state)
+        (setf state (make 'gradient-boost-gathered-predictions
+                          :indexes (cl-grf.data:iota-vector data-points-count)
+                          :expected-value expected-value
+                          :sums (cl-grf.data:make-data-matrix data-points-count
+                                                              number-of-classes))))
+      (let* ((sums (sums state))
+             (root (cl-grf.tp:root model)))
+        (funcall (if parallel #'lparallel:pmap #'map)
+                 nil
+                 (lambda (data-point)
+                   (iterate
+                     (declare (type fixnum j))
+                     (with leaf = (cl-grf.tp:leaf-for root data data-point))
+                     (with predictions = (predictions leaf))
+                     (for j from 0 below number-of-classes)
+                     (for class-gradient = (cl-grf.data:mref predictions 0 j))
+                     (incf (cl-grf.data:mref sums data-point j)
+                           (* learning-rate class-gradient))))
+                 (indexes state))))
+    (incf (contributions-count state))
+    state))

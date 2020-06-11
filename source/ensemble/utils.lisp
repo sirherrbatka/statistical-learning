@@ -33,10 +33,15 @@
                                             distribution)))
                       (train (cl-grf.data:sample
                               train-data
+                              :attributes attributes
                               :data-points sample))
                       (target (cl-grf.data:sample
                                target-data
                                :data-points sample)))
+                 (assert (= (cl-grf.data:attributes-count train)
+                            (length attributes)))
+                 (assert (= (cl-grf.data:data-points-count target)
+                            (length sample)))
                  (cl-grf.mp:make-model tree-parameters
                                        train
                                        target

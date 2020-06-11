@@ -30,10 +30,11 @@
 (defun random-test (attributes data)
   "Uses ExtraTree approach."
   (declare (optimize (speed 3) (safety 0)))
-  (bind ((attribute-index (~> attributes length random))
-         (attribute (aref attributes attribute-index))
-         ((:values min max) (data-min/max data attribute))
-         (threshold (random-uniform min max)))
+  (bind ((attributes-count (length attributes))
+         (attribute-index (random attributes-count))
+         ((:values min max) (data-min/max data attribute-index))
+         (threshold (if (= min max) min (random-uniform min max))))
+    (assert (= attributes-count (cl-grf.data:attributes-count data)))
     (values attribute-index (if (= threshold max) min threshold))))
 
 
@@ -153,7 +154,8 @@
                 (next-iteration))
               (setf (cl-grf.data:mref result j p)
                     (cl-grf.data:mref array i k)
-                    p (1+ p)))
+                    p (1+ p))
+              (finally (assert (= p (array-dimension result 1)))))
             (incf j))
           (finally (assert (= j length))))))))
 
@@ -171,12 +173,12 @@
 
 (defgeneric make-simple-node* (parameters split-array shannon-entropy
                                length position parallel training-state
-                               attribute-index))
+                               new-attributes attribute-index))
 
 
 (defun make-simple-node (split-array shannon-entropy length
                          position parallel training-state
-                         attribute-index)
+                         new-attributes attribute-index)
   (make-simple-node* (cl-grf.tp:training-parameters training-state)
                      split-array
                      shannon-entropy
@@ -184,6 +186,7 @@
                      position
                      parallel
                      training-state
+                     new-attributes
                      attribute-index))
 
 
@@ -195,7 +198,8 @@
      position
      parallel
      training-state
-     new-attributes)
+     new-attributes
+     attribute-index)
   (if (not parallel)
       #1=(let* ((old-target-data (cl-grf.tp:target-data training-state))
                 (old-training-data (cl-grf.tp:training-data training-state))
@@ -204,7 +208,7 @@
                    training-state
                    :training-data (subsample-array old-training-data
                                                    length split-array
-                                                   position nil)
+                                                   position attribute-index)
                    :target-data (subsample-array old-target-data
                                                  length split-array
                                                  position nil)

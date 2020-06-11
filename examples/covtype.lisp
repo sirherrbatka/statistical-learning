@@ -100,7 +100,7 @@
   (make 'cl-grf.ensemble:random-forest-parameters
         :trees-count 50
         :parallel t
-        :tree-batch-size 10
+        :tree-batch-size 5
         :tree-attributes-count 50
         :tree-sample-rate 0.1
         :tree-parameters *training-parameters*))

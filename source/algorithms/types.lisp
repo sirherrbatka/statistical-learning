@@ -34,10 +34,13 @@
 
 (defclass gradient-boost-training-state (cl-grf.tp:fundamental-training-state)
   ((%learning-rate :initarg :learning-rate
-                   :reader learning-rate)))
+                   :reader learning-rate)
+   (%number-of-classes :initarg :number-of-classes
+                       :reader number-of-classes)))
 
 
-(defmethod cl-ds.utils:cloning-information append ((state gradient-boost-training-state))
+(defmethod cl-ds.utils:cloning-information
+    append ((state gradient-boost-training-state))
   '((:learning-rate learning-rate)))
 
 
