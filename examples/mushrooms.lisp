@@ -1,15 +1,15 @@
 (cl:in-package #:cl-user)
 
-(ql:quickload :cl-grf)
+(ql:quickload :statistical-learning)
 (ql:quickload :vellum)
 
 (defpackage #:mushrooms-example
-  (:use #:cl #:cl-grf.aux-package))
+  (:use #:cl #:statistical-learning.aux-package))
 
 (cl:in-package #:mushrooms-example)
 
 (defvar *data*
-  (~> (vellum:copy-from :csv (~>> (asdf:system-source-directory :cl-grf)
+  (~> (vellum:copy-from :csv (~>> (asdf:system-source-directory :statistical-learning)
                                   (merge-pathnames "examples/mushrooms.data"))
                         :header nil)
       (vellum:to-table :columns '((:alias class)
@@ -56,7 +56,7 @@
              (collect (column-encoder-hash-table (vellum:select table :columns `(:v ,i))))))
          (sizes (serapeum:scan #'+ hash-tables :key #'hash-table-count :initial-value 0))
          (total-size (last-elt sizes))
-         (result (cl-grf.data:make-data-matrix (vellum:row-count table)
+         (result (statistical-learning.data:make-data-matrix (vellum:row-count table)
                                                total-size))
          (index 0))
     (vellum:transform table
@@ -67,7 +67,7 @@
                           (for hash-table in hash-tables)
                           (for v = (vellum:rr i))
                           (for encoded = (gethash v hash-table))
-                          (setf (cl-grf.data:mref result index (+ offset encoded)) 1.0d0))
+                          (setf (statistical-learning.data:mref result index (+ offset encoded)) 1.0d0))
                         (incf index)))
     result))
 
@@ -75,16 +75,16 @@
   (encode (vellum:select *data* :columns '(:take-from cap-shape :take-to habitat))))
 
 (defparameter *target-data*
-  (lret ((result (cl-grf.data:make-data-matrix (vellum:row-count *data*) 1)))
+  (lret ((result (statistical-learning.data:make-data-matrix (vellum:row-count *data*) 1)))
     (iterate
       (for i from 0 below (vellum:row-count *data*))
-      (setf (cl-grf.data:mref result i 0)
+      (setf (statistical-learning.data:mref result i 0)
             (eswitch ((vellum:at *data* 'class i) :test 'equal)
               ("p" 1.0d0)
               ("e" 0.0d0))))))
 
 (defparameter *training-parameters*
-  (make 'cl-grf.algorithms:single-impurity-classification
+  (make 'statistical-learning.algorithms:single-impurity-classification
         :maximal-depth 8
         :minimal-difference 0.0001d0
         :number-of-classes 2
@@ -93,7 +93,7 @@
         :parallel nil))
 
 (defparameter *forest-parameters*
-  (make 'cl-grf.ensemble:random-forest-parameters
+  (make 'statistical-learning.ensemble:random-forest-parameters
         :trees-count 200
         :parallel t
         :tree-batch-size 5
@@ -103,15 +103,15 @@
 
 
 (defparameter *confusion-matrix*
-  (cl-grf.performance:cross-validation *forest-parameters*
+  (statistical-learning.performance:cross-validation *forest-parameters*
                                        4
                                        *train-data*
                                        *target-data*
                                        t))
 
-(print (cl-grf.performance:accuracy *confusion-matrix*)) ; 1.0
+(print (statistical-learning.performance:accuracy *confusion-matrix*)) ; 1.0
 
-(print (cl-grf.performance:attributes-importance *forest-parameters*
+(print (statistical-learning.performance:attributes-importance *forest-parameters*
                                                  4
                                                  *train-data*
                                                  *target-data*

@@ -1,4 +1,4 @@
-(cl:in-package #:cl-grf.forest)
+(cl:in-package #:statistical-learning.forest)
 
 (defparameter *data*
   (make-array (list 20 1) :element-type 'double-float
@@ -16,11 +16,11 @@
   (for i from 0 below 20)
   (setf (aref *data* i 0)
         (if (oddp i)
-            (cl-grf.algorithms::random-uniform 0.7d0 1.0d0)
-            (cl-grf.algorithms::random-uniform 0.0d0 0.8d0))))
+            (statistical-learning.algorithms::random-uniform 0.7d0 1.0d0)
+            (statistical-learning.algorithms::random-uniform 0.0d0 0.8d0))))
 
 (defparameter *training-parameters*
-  (make 'cl-grf.algorithms:information-gain-classification
+  (make 'statistical-learning.algorithms:information-gain-classification
         :maximal-depth 3
         :minimal-difference 0.001d0
         :minimal-size 1
@@ -38,12 +38,12 @@
         :tree-parameters *training-parameters*))
 
 
-(defparameter *forest* (cl-grf.mp:make-model *forest-parameters*
+(defparameter *forest* (statistical-learning.mp:make-model *forest-parameters*
                                              *data*
                                              *target*))
 
 (iterate
-  (with attribute-value = (cl-grf.tp:attribute-value *tree*))
+  (with attribute-value = (statistical-learning.tp:attribute-value *tree*))
   (with result = (make-array 20))
   (for i from 0 below 20)
   (setf (aref result i) (list (> (aref *data* i 0)

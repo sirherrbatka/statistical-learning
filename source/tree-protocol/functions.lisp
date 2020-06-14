@@ -1,4 +1,4 @@
-(cl:in-package #:cl-grf.tree-protocol)
+(cl:in-package #:statistical-learning.tree-protocol)
 
 
 (defmacro training-state-clone (training-state &rest arguments)
@@ -36,7 +36,7 @@
 
 (defun leafs-for* (node data)
   (declare (optimize (speed 3)))
-  (cl-grf.data:bind-data-matrix-dimensions ((length features-count data))
+  (statistical-learning.data:bind-data-matrix-dimensions ((length features-count data))
     (cl-ds:xpr (:i 0)
       (declare (type fixnum i))
       (when (< i length)

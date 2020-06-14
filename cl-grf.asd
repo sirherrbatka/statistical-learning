@@ -1,7 +1,7 @@
 (cl:in-package #:cl-user)
 
 
-(asdf:defsystem cl-grf
+(asdf:defsystem statistical-learning
   :name "cl-grf"
   :version "0.0.0"
   :license "BSD simplified"

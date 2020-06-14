@@ -1,7 +1,7 @@
 (cl:in-package #:cl-user)
 
 
-(defpackage #:cl-grf.random
-  (:use #:cl #:cl-grf.aux-package)
+(defpackage #:statistical-learning.random
+  (:use #:cl #:statistical-learning.aux-package)
   (:export
    #:discrete-distribution))

@@ -1,4 +1,4 @@
-(cl:in-package #:cl-grf.ensemble)
+(cl:in-package #:statistical-learning.ensemble)
 
 
 (defclass ensemble-parameters ()
@@ -32,7 +32,7 @@
    :shrinkage-change 0.0d0))
 
 
-(defclass ensemble (cl-grf.mp:fundamental-model)
+(defclass ensemble (statistical-learning.mp:fundamental-model)
   ((%trees :initarg :trees
            :reader trees
            :type simple-vector)

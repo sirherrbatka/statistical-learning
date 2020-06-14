@@ -1,4 +1,4 @@
-(cl:in-package #:cl-grf.tree-protocol)
+(cl:in-package #:statistical-learning.tree-protocol)
 
 
 (defgeneric root (model))

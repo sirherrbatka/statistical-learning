@@ -1,8 +1,8 @@
 (cl:in-package #:cl-user)
 
 
-(defpackage #:cl-grf.performance
-  (:use #:cl #:cl-grf.aux-package)
+(defpackage #:statistical-learning.performance
+  (:use #:cl #:statistical-learning.aux-package)
   (:export
    #:accuracy
    #:attributes-importance

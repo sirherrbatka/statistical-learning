@@ -1,4 +1,4 @@
-(cl:in-package #:cl-grf.tree-protocol)
+(cl:in-package #:statistical-learning.tree-protocol)
 
 
 (defclass fundamental-node ()
@@ -21,7 +21,7 @@
 
 
 (defclass fundamental-tree-training-parameters
-    (cl-grf.mp:fundamental-model-parameters)
+    (statistical-learning.mp:fundamental-model-parameters)
   ((%maximal-depth :initarg :maximal-depth
                    :reader maximal-depth)
    (%minimal-size :initarg :minimal-size
@@ -59,7 +59,7 @@
   (:default-initargs :depth 0))
 
 
-(defclass tree-model (cl-grf.mp:fundamental-model)
+(defclass tree-model (statistical-learning.mp:fundamental-model)
   ((%root :initarg :root
           :writer write-root
           :reader root)))

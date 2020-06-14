@@ -1,4 +1,4 @@
-(cl:in-package #:cl-grf.model-protocol)
+(cl:in-package #:statistical-learning.model-protocol)
 
 
 (defclass fundamental-model ()

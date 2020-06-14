@@ -1,8 +1,8 @@
 (cl:in-package #:cl-user)
 
 
-(defpackage #:cl-grf.data
-  (:use #:cl #:cl-grf.aux-package)
+(defpackage #:statistical-learning.data
+  (:use #:cl #:statistical-learning.aux-package)
   (:export
    #:attributes-count
    #:bind-data-matrix-dimensions

@@ -1,10 +1,10 @@
 (in-package #:cl-user)
 
-(defpackage #:cl-grf.aux-package
+(defpackage #:statistical-learning.aux-package
   (:use #:cl)
   (:export #:rexport))
 
-(in-package :cl-grf.aux-package)
+(in-package :statistical-learning.aux-package)
 
 (defmacro rexport (package &body symbols)
   (alexandria:with-gensyms (!package)
@@ -14,7 +14,7 @@
        ,@(mapcar (lambda (symbol) `(export ',symbol ,!package))
                  symbols))))
 
-(rexport :cl-grf.aux-package
+(rexport :statistical-learning.aux-package
   alexandria:if-let
   alexandria:when-let
   alexandria:when-let*

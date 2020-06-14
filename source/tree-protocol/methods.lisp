@@ -1,4 +1,4 @@
-(cl:in-package #:cl-grf.tree-protocol)
+(cl:in-package #:statistical-learning.tree-protocol)
 
 
 (defmethod (setf training-parameters) :round (new-value state)
@@ -20,7 +20,7 @@
 
 
 (defmethod (setf training-data) :before (new-value training-state)
-  (cl-grf.data:check-data-points new-value))
+  (statistical-learning.data:check-data-points new-value))
 
 
 (defmethod treep ((node fundamental-tree-node))
@@ -60,9 +60,9 @@
          (attribute-indexes (attribute-indexes training-state))
          (maximal-depth (maximal-depth training-parameters))
          (minimal-size (minimal-size training-parameters)))
-    (declare (type cl-grf.data:data-matrix training-data)
+    (declare (type statistical-learning.data:data-matrix training-data)
              (type (integer 1 *) minimal-size))
-    (if (or (< (cl-grf.data:data-points-count training-data)
+    (if (or (< (statistical-learning.data:data-points-count training-data)
                (* 2 minimal-size))
             (emptyp attribute-indexes)
             (>= depth maximal-depth))
@@ -71,40 +71,40 @@
 
 
 (defun leaf-for (node data index)
-  (declare (type cl-grf.data:data-matrix data)
+  (declare (type statistical-learning.data:data-matrix data)
            (type fixnum index))
   (if (typep node 'fundamental-leaf-node)
       node
       (bind ((attribute-index (attribute node))
              (attribute-value (attribute-value node)))
-        (if (> (cl-grf.data:mref data index attribute-index)
+        (if (> (statistical-learning.data:mref data index attribute-index)
                attribute-value)
             (leaf-for (right-node node) data index)
             (leaf-for (left-node node) data index)))))
 
 
-(defmethod cl-grf.mp:predict ((model fundamental-tree-node) data
+(defmethod statistical-learning.mp:predict ((model fundamental-tree-node) data
                               &optional parallel)
   (declare (ignore parallel))
   ;; TODO should be able to work in parallel
-  (cl-grf.data:check-data-points data)
-  (cl-grf.data:bind-data-matrix-dimensions
+  (statistical-learning.data:check-data-points data)
+  (statistical-learning.data:bind-data-matrix-dimensions
       ((data-points attributes data))
     (iterate
       (with result = nil)
-      (with slice = (cl-grf.data:make-data-matrix 1 attributes))
+      (with slice = (statistical-learning.data:make-data-matrix 1 attributes))
       (for i from 0 below data-points)
       (iterate
         (for j from 0 below attributes)
-        (setf (cl-grf.data:mref slice 0 j) (cl-grf.data:mref data i j)))
+        (setf (statistical-learning.data:mref slice 0 j) (statistical-learning.data:mref data i j)))
       (for leaf = (leaf-for model slice 0))
-      (for prediction = (cl-grf.mp:predict leaf slice))
+      (for prediction = (statistical-learning.mp:predict leaf slice))
       (when (null result)
-        (setf result (~>> (cl-grf.data:attributes-count prediction)
-                          (cl-grf.data:make-data-matrix data-points))))
+        (setf result (~>> (statistical-learning.data:attributes-count prediction)
+                          (statistical-learning.data:make-data-matrix data-points))))
       (iterate
         (for j from 0 below attributes)
-        (setf (cl-grf.data:mref slice i j) (cl-grf.data:mref prediction 0 j)))
+        (setf (statistical-learning.data:mref slice i j) (statistical-learning.data:mref prediction 0 j)))
       (finally (return result)))))
 
 

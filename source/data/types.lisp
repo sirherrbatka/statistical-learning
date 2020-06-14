@@ -1,4 +1,4 @@
-(cl:in-package #:cl-grf.data)
+(cl:in-package #:statistical-learning.data)
 
 
 (deftype data-matrix ()

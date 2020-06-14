@@ -1,8 +1,8 @@
 (cl:in-package #:cl-user)
 
 
-(defpackage #:cl-grf.ensemble
-  (:use #:cl #:cl-grf.aux-package)
+(defpackage #:statistical-learning.ensemble
+  (:use #:cl #:statistical-learning.aux-package)
   (:export
    #:ensemble
    #:random-forest-parameters

@@ -1,4 +1,4 @@
-(cl:in-package #:cl-grf.algorithms)
+(cl:in-package #:statistical-learning.algorithms)
 
 
 (defgeneric shrinkage (gradient-boost))

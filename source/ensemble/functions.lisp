@@ -1,4 +1,4 @@
-(cl:in-package #:cl-grf.ensemble)
+(cl:in-package #:statistical-learning.ensemble)
 
 
 (defun predict (random-forest data &optional parallel)

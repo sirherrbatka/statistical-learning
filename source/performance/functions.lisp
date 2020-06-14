@@ -1,26 +1,26 @@
-(cl:in-package #:cl-grf.performance)
+(cl:in-package #:statistical-learning.performance)
 
 
 (defun cross-validation (model-parameters number-of-folds
                          train-data target-data &optional parallel)
-  (cl-grf.data:check-data-points train-data target-data)
+  (statistical-learning.data:check-data-points train-data target-data)
   (~> train-data
-      cl-grf.data:data-points-count
-      (cl-grf.data:cross-validation-folds number-of-folds)
+      statistical-learning.data:data-points-count
+      (statistical-learning.data:cross-validation-folds number-of-folds)
       (cl-ds.alg:on-each
        (lambda (train.test)
          (bind (((train . test) train.test)
-                (model (cl-grf.mp:make-model
+                (model (statistical-learning.mp:make-model
                         model-parameters
-                        (cl-grf.data:sample train-data
+                        (statistical-learning.data:sample train-data
                                             :data-points train)
-                        (cl-grf.data:sample target-data
+                        (statistical-learning.data:sample target-data
                                             :data-points train)))
-                (test-target-data (cl-grf.data:sample target-data
+                (test-target-data (statistical-learning.data:sample target-data
                                                       :data-points test))
-                (test-train-data (cl-grf.data:sample train-data
+                (test-train-data (statistical-learning.data:sample train-data
                                                      :data-points test))
-                (test-predictions (cl-grf.mp:predict model
+                (test-predictions (statistical-learning.mp:predict model
                                                      test-train-data
                                                      parallel)))
            (performance-metric model-parameters
@@ -31,8 +31,8 @@
 
 
 (defun attributes-importance* (model train-data target-data &optional parallel)
-  (let* ((predictions (cl-grf.mp:predict model train-data parallel))
-         (model-parameters (cl-grf.mp:parameters model))
+  (let* ((predictions (statistical-learning.mp:predict model train-data parallel))
+         (model-parameters (statistical-learning.mp:parameters model))
          (errors (errors model-parameters
                          target-data
                          predictions)))
@@ -46,23 +46,23 @@
 
 (defun attributes-importance (model-parameters number-of-folds
                               train-data target-data &optional parallel)
-  (cl-grf.data:check-data-points train-data target-data)
+  (statistical-learning.data:check-data-points train-data target-data)
   (~> train-data
-      cl-grf.data:data-points-count
-      (cl-grf.data:cross-validation-folds number-of-folds)
+      statistical-learning.data:data-points-count
+      (statistical-learning.data:cross-validation-folds number-of-folds)
       (cl-ds.alg:on-each
        (lambda (train.test)
          (bind (((train . test) train.test)
-                (train-train-data (cl-grf.data:sample train-data
+                (train-train-data (statistical-learning.data:sample train-data
                                                        :data-points train))
-                (train-target-data (cl-grf.data:sample target-data
+                (train-target-data (statistical-learning.data:sample target-data
                                                        :data-points train))
-                (model (cl-grf.mp:make-model model-parameters
+                (model (statistical-learning.mp:make-model model-parameters
                                              train-train-data
                                              train-target-data))
-                (test-target-data (cl-grf.data:sample target-data
+                (test-target-data (statistical-learning.data:sample target-data
                                                       :data-points test))
-                (test-train-data (cl-grf.data:sample train-data
+                (test-train-data (statistical-learning.data:sample train-data
                                                      :data-points test)))
            (attributes-importance* model test-train-data
                                    test-target-data parallel))))

@@ -1,4 +1,4 @@
-(cl:in-package #:cl-grf.algorithms)
+(cl:in-package #:statistical-learning.algorithms)
 
 
 (declaim (inline random-uniform))
@@ -6,26 +6,26 @@
   (+ (random (- max min)) min))
 
 
-(-> data-min/max (cl-grf.data:data-matrix fixnum)
+(-> data-min/max (statistical-learning.data:data-matrix fixnum)
     (values double-float double-float))
 (defun data-min/max (data attribute)
-  (declare (type cl-grf.data:data-matrix data)
+  (declare (type statistical-learning.data:data-matrix data)
            (type fixnum attribute)
            (optimize (speed 3) (safety 0)))
   (iterate
     (declare (type double-float min max element)
              (type fixnum i))
-    (with min = (cl-grf.data:mref data 0 attribute))
+    (with min = (statistical-learning.data:mref data 0 attribute))
     (with max = min)
-    (with length = (cl-grf.data:data-points-count data))
+    (with length = (statistical-learning.data:data-points-count data))
     (for i from 1 below length)
-    (for element = (cl-grf.data:mref data i attribute))
+    (for element = (statistical-learning.data:mref data i attribute))
     (cond ((< max element) (setf max element))
           ((> min element) (setf min element)))
     (finally (return (values min max)))))
 
 
-(-> random-test ((simple-array fixnum (*)) cl-grf.data:data-matrix)
+(-> random-test ((simple-array fixnum (*)) statistical-learning.data:data-matrix)
     (values fixnum double-float))
 (defun random-test (attributes data)
   "Uses ExtraTree approach."
@@ -34,11 +34,11 @@
          (attribute-index (random attributes-count))
          ((:values min max) (data-min/max data attribute-index))
          (threshold (if (= min max) min (random-uniform min max))))
-    (assert (= attributes-count (cl-grf.data:attributes-count data)))
+    (assert (= attributes-count (statistical-learning.data:attributes-count data)))
     (values attribute-index (if (= threshold max) min threshold))))
 
 
-(-> fill-split-array (cl-grf.data:data-matrix
+(-> fill-split-array (statistical-learning.data:data-matrix
                       fixnum double-float
                       (simple-array boolean (*)))
     (values fixnum fixnum))
@@ -50,7 +50,7 @@
     (with right-count = 0)
     (with left-count = 0)
     (for i from 0 below (length array))
-    (for right-p = (> (cl-grf.data:mref data i attribute) threshold))
+    (for right-p = (> (statistical-learning.data:mref data i attribute) threshold))
     (setf (aref array i) right-p)
     (if right-p (incf right-count) (incf left-count))
     (finally (return (values left-count right-count)))))
@@ -93,7 +93,7 @@
 
 (-> split-impurity (single-impurity-classification
                    (simple-array boolean (*))
-                   cl-grf.data:data-matrix)
+                   statistical-learning.data:data-matrix)
     (values double-float double-float))
 (defun split-impurity (parameters split-array target-data)
   (iterate
@@ -108,10 +108,10 @@
     (with right-sums = (make-array number-of-classes
                                    :initial-element 0.0d0
                                    :element-type 'double-float))
-    (with length = (cl-grf.data:data-points-count target-data))
+    (with length = (statistical-learning.data:data-points-count target-data))
     (for i from 0 below length)
     (for right-p = (aref split-array i))
-    (for target = (truncate (cl-grf.data:mref target-data i 0)))
+    (for target = (truncate (statistical-learning.data:mref target-data i 0)))
     (if right-p
         (incf (aref right-sums target) 1.0d0)
         (incf (aref left-sums target) 1.0d0))
@@ -121,21 +121,21 @@
 
 
 (defun total-impurity (parameters target-data)
-  (let* ((length (cl-grf.data:data-points-count target-data))
+  (let* ((length (statistical-learning.data:data-points-count target-data))
          (split-array (make-array length :element-type 'boolean
                                          :initial-element nil)))
     (nth-value 0 (split-impurity parameters split-array target-data))))
 
 
-(-> subsample-array (cl-grf.data:data-matrix
+(-> subsample-array (statistical-learning.data:data-matrix
                      fixnum (simple-array boolean (*))
                      boolean
                      (or null fixnum))
-    cl-grf.data:data-matrix)
+    statistical-learning.data:data-matrix)
 (defun subsample-array (array length split-array position skipped-column)
   (declare (optimize (speed 3) (safety 0)))
   (cl-ds.utils:cases ((null skipped-column))
-    (cl-grf.data:bind-data-matrix-dimensions
+    (statistical-learning.data:bind-data-matrix-dimensions
         ((data-points-count attributes-count array))
       (lret ((result (make-array `(,length ,(if (null skipped-column)
                                                 attributes-count
@@ -152,8 +152,8 @@
               (for k from 0 below attributes-count)
               (when (eql skipped-column k)
                 (next-iteration))
-              (setf (cl-grf.data:mref result j p)
-                    (cl-grf.data:mref array i k)
+              (setf (statistical-learning.data:mref result j p)
+                    (statistical-learning.data:mref array i k)
                     p (1+ p))
               (finally (assert (= p (array-dimension result 1)))))
             (incf j))
@@ -179,7 +179,7 @@
 (defun make-simple-node (split-array shannon-entropy length
                          position parallel training-state
                          new-attributes attribute-index)
-  (make-simple-node* (cl-grf.tp:training-parameters training-state)
+  (make-simple-node* (statistical-learning.tp:training-parameters training-state)
                      split-array
                      shannon-entropy
                      length
@@ -201,10 +201,10 @@
      new-attributes
      attribute-index)
   (if (not parallel)
-      #1=(let* ((old-target-data (cl-grf.tp:target-data training-state))
-                (old-training-data (cl-grf.tp:training-data training-state))
+      #1=(let* ((old-target-data (statistical-learning.tp:target-data training-state))
+                (old-training-data (statistical-learning.tp:training-data training-state))
                 (new-state
-                  (cl-grf.tp:training-state-clone
+                  (statistical-learning.tp:training-state-clone
                    training-state
                    :training-data (subsample-array old-training-data
                                                    length split-array
@@ -213,11 +213,11 @@
                                                  length split-array
                                                  position nil)
                    :attribute-indexes new-attributes))
-                (new-leaf (cl-grf.tp:make-leaf new-state)))
+                (new-leaf (statistical-learning.tp:make-leaf new-state)))
            (setf training-state nil
                  split-array nil) ; so it can be gced
-           (incf (cl-grf.tp:depth new-state))
-           (let ((split-candidate (cl-grf.tp:split new-state new-leaf)))
+           (incf (statistical-learning.tp:depth new-state))
+           (let ((split-candidate (statistical-learning.tp:split new-state new-leaf)))
              (if (null split-candidate)
                  new-leaf
                  split-candidate)))

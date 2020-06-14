@@ -1,4 +1,4 @@
-(cl:in-package #:cl-grf.data)
+(cl:in-package #:statistical-learning.data)
 
 
 (declaim (inline attributes-count))
@@ -76,7 +76,7 @@
 (declaim (inline map-data-matrix))
 (defun map-data-matrix (function data-matrix &optional in-place)
   (declare (optimize (speed 3) (safety 0)))
-  (check-type data-matrix cl-grf.data:data-matrix)
+  (check-type data-matrix statistical-learning.data:data-matrix)
   (lret ((result (if in-place
                      data-matrix
                      (make-data-matrix

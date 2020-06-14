@@ -1,4 +1,4 @@
-(cl:in-package #:cl-grf.performance)
+(cl:in-package #:statistical-learning.performance)
 
 
 (defclass fundamental-performance-metric ()

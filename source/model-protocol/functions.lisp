@@ -1,1 +1,1 @@
-(cl:in-package #:cl-grf.mp)
+(cl:in-package #:statistical-learning.mp)

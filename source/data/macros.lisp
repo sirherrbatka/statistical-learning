@@ -1,4 +1,4 @@
-(cl:in-package #:cl-grf.data)
+(cl:in-package #:statistical-learning.data)
 
 
 (defmacro bind-data-matrix-dimensions (bindings &body body)

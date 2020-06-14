@@ -1,15 +1,15 @@
-(ql:quickload :cl-grf)
+(ql:quickload :statistical-learning)
 (ql:quickload :vellum)
 
 (cl:in-package #:cl-user)
 
 (defpackage #:covtype-example
-  (:use #:cl #:cl-grf.aux-package))
+  (:use #:cl #:statistical-learning.aux-package))
 
 (in-package #:covtype-example)
 
 (defvar *data*
-  (~> (vellum:copy-from :csv (~>> (asdf:system-source-directory :cl-grf)
+  (~> (vellum:copy-from :csv (~>> (asdf:system-source-directory :statistical-learning)
                                   (merge-pathnames "examples/covtype.data"))
                         :header nil)
       (vellum:to-table :columns '((:alias elevation :type integer)
@@ -88,7 +88,7 @@
                     :element-type 'double-float))
 
 (defparameter *training-parameters*
-  (make 'cl-grf.algorithms:single-impurity-classification
+  (make 'statistical-learning.algorithms:single-impurity-classification
         :maximal-depth 25
         :minimal-difference 0.00001d0
         :number-of-classes *cover-types*
@@ -97,7 +97,7 @@
         :parallel nil))
 
 (defparameter *forest-parameters*
-  (make 'cl-grf.ensemble:random-forest-parameters
+  (make 'statistical-learning.ensemble:random-forest-parameters
         :trees-count 50
         :parallel t
         :tree-batch-size 5
@@ -106,15 +106,15 @@
         :tree-parameters *training-parameters*))
 
 (defparameter *confusion-matrix*
-  (cl-grf.performance:cross-validation *forest-parameters*
+  (statistical-learning.performance:cross-validation *forest-parameters*
                                        4
                                        *train-data*
                                        *target-data*
                                        t))
 
-(print (cl-grf.performance:accuracy *confusion-matrix*)) ; 0.8117216167652304d0
+(print (statistical-learning.performance:accuracy *confusion-matrix*)) ; 0.8117216167652304d0
 
-(print (~> (make 'cl-grf.ensemble:gradient-boost-ensemble-parameters
+(print (~> (make 'statistical-learning.ensemble:gradient-boost-ensemble-parameters
                  :trees-count 50
                  :parallel t
                  :tree-batch-size 5
@@ -122,15 +122,15 @@
                  :shrinkage 0.2d0
                  :shrinkage-change (/ 0.2d0 75)
                  :tree-sample-rate 0.1
-                 :tree-parameters (make 'cl-grf.alg:gradient-boost-classification
+                 :tree-parameters (make 'statistical-learning.alg:gradient-boost-classification
                                         :maximal-depth 25
                                         :minimal-size 10
                                         :number-of-classes *cover-types*
                                         :minimal-difference 0.00001d0
                                         :trials-count 50
                                         :parallel nil))
-           (cl-grf.performance:cross-validation 4
+           (statistical-learning.performance:cross-validation 4
                                                 *train-data*
                                                 *target-data*
                                                 t)
-           cl-grf.performance:accuracy)) ; ~0.83 slightly better, but takes much more time…
+           statistical-learning.performance:accuracy)) ; ~0.83 slightly better, but takes much more time…

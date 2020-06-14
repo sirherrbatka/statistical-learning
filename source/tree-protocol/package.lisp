@@ -1,9 +1,9 @@
 (cl:in-package #:cl-user)
 
 
-(defpackage #:cl-grf.tree-protocol
-  (:use #:cl #:cl-grf.aux-package)
-  (:nicknames #:cl-grf.tp)
+(defpackage #:statistical-learning.tree-protocol
+  (:use #:cl #:statistical-learning.aux-package)
+  (:nicknames #:statistical-learning.tp)
   (:export
    #:attribute
    #:attribute-indexes

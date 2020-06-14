@@ -1,9 +1,9 @@
 (cl:in-package #:cl-user)
 
 
-(defpackage #:cl-grf.algorithms
-  (:use #:cl #:cl-grf.aux-package)
-  (:nicknames #:cl-grf.alg)
+(defpackage #:statistical-learning.algorithms
+  (:use #:cl #:statistical-learning.aux-package)
+  (:nicknames #:statistical-learning.alg)
   (:export
    #:basic-regression
    #:calculate-expected-value

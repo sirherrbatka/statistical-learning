@@ -1,11 +1,11 @@
-(cl:in-package #:cl-grf.model-protocol)
+(cl:in-package #:statistical-learning.model-protocol)
 
 
 (defmethod make-model :before ((model fundamental-model)
                                train-data
                                target-data
                                &key &allow-other-keys)
-  (cl-grf.data:bind-data-matrix-dimensions
+  (statistical-learning.data:bind-data-matrix-dimensions
       ((train-data-points train-data-attributes train-data)
        (target-data-points target-data-attributes target-data))
     (when (zerop train-data-attributes)
@@ -31,4 +31,4 @@
 
 
 (defmethod predict :before ((model fundamental-model) data &optional parallel)
-  (cl-grf.data:check-data-points data))
+  (statistical-learning.data:check-data-points data))

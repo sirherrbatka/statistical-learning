@@ -1,4 +1,4 @@
-(cl:in-package #:cl-grf.ensemble)
+(cl:in-package #:statistical-learning.ensemble)
 
 
 (defmethod initialize-instance :after
@@ -27,9 +27,9 @@
                          ,array-total-size-limit)
              :argument :tree-attributes-count))
     (unless (typep tree-parameters
-                   'cl-grf.mp:fundamental-model-parameters)
+                   'statistical-learning.mp:fundamental-model-parameters)
       (error 'type-error
-             :expected-type 'cl-grf.mp:fundamental-model-parameters
+             :expected-type 'statistical-learning.mp:fundamental-model-parameters
              :datum tree-parameters))
     (unless (integerp trees-count)
       (error 'type-error :expected-type 'integer
@@ -45,7 +45,7 @@
              :bounds `(< 0 :trees-count
                          ,array-total-size-limit)
              :parameter :trees-count))
-    (when (and parallel (cl-grf.tp:parallel tree-parameters))
+    (when (and parallel (statistical-learning.tp:parallel tree-parameters))
       (error 'cl-ds:incompatible-arguments
              :parameters '(:parallel :tree-parameters)
              :values `(,parallel ,tree-parameters)
@@ -70,12 +70,12 @@
              :format-control "SHRINKAGE-CHANGE value implies that SHRINKAGE will eventually go below zero."))))
 
 
-(defmethod cl-grf.mp:predict ((random-forest ensemble)
+(defmethod statistical-learning.mp:predict ((random-forest ensemble)
                               data
                               &optional parallel)
-  (check-type data cl-grf.data:data-matrix)
+  (check-type data statistical-learning.data:data-matrix)
   (let* ((trees (trees random-forest))
-         (parameters (cl-grf.mp:parameters random-forest))
+         (parameters (statistical-learning.mp:parameters random-forest))
          (tree-parameters (tree-parameters parameters))
          (result (trees-predict tree-parameters trees data parallel)))
     result))
@@ -83,12 +83,12 @@
 
 (defmethod weights-calculator
     ((training-parameters random-forest-parameters)
-     (tree-parameters cl-grf.alg:classification)
+     (tree-parameters statistical-learning.alg:classification)
      parallel
      weights
      train-data
      target-data)
-  (let* ((length (cl-grf.data:data-points-count train-data))
+  (let* ((length (statistical-learning.data:data-points-count train-data))
          (state nil))
     (declare (type fixnum length))
     (lambda (prev-trees base)
@@ -101,16 +101,16 @@
                              train-data
                              parallel
                              state)))
-        (declare (type cl-grf.data:data-matrix predictions))
+        (declare (type statistical-learning.data:data-matrix predictions))
         (setf state new-state)
         (iterate
           (declare (type fixnum i))
           (for i from 0 below length)
-          (for expected = (cl-grf.data:mref target-data i 0))
-          (for prediction = (cl-grf.data:mref predictions
+          (for expected = (statistical-learning.data:mref target-data i 0))
+          (for prediction = (statistical-learning.data:mref predictions
                                               i
                                               (truncate expected)))
-          (setf (cl-grf.data:mref weights i 0) (- (log (max prediction
+          (setf (statistical-learning.data:mref weights i 0) (- (log (max prediction
                                                             double-float-epsilon)
                                                        base))))
         weights))))
@@ -118,12 +118,12 @@
 
 (defmethod weights-calculator
     ((training-parameters random-forest-parameters)
-     (tree-parameters cl-grf.alg:regression)
+     (tree-parameters statistical-learning.alg:regression)
      parallel
      weights
      train-data
      target-data)
-  (let ((data-points-count (cl-grf.data:data-points-count train-data))
+  (let ((data-points-count (statistical-learning.data:data-points-count train-data))
         (state nil))
     (declare (type fixnum data-points-count))
     (lambda (prev-trees base)
@@ -139,17 +139,17 @@
         (iterate
           (declare (type fixnum i))
           (for i from 0 below data-points-count)
-          (setf (cl-grf.data:mref weights i 0)
-                (abs (- (cl-grf.data:mref predictions i 0)
-                        (cl-grf.data:mref target-data i 0))))))
+          (setf (statistical-learning.data:mref weights i 0)
+                (abs (- (statistical-learning.data:mref predictions i 0)
+                        (statistical-learning.data:mref target-data i 0))))))
       weights)))
 
 
-(defmethod cl-grf.mp:make-model ((parameters random-forest-parameters)
+(defmethod statistical-learning.mp:make-model ((parameters random-forest-parameters)
                                  train-data
                                  target-data
                                  &key weights)
-  (cl-grf.data:bind-data-matrix-dimensions
+  (statistical-learning.data:bind-data-matrix-dimensions
       ((train-data-data-points train-data-attributes train-data)
        (target-data-data-points target-data-attributes target-data))
     (bind ((tree-batch-size (tree-batch-size parameters))
@@ -165,12 +165,12 @@
                         :displaced-index-offset (min trees-count from)
                         :displaced-to array)))
       (when (null weights)
-        (setf weights (cl-grf.data:make-data-matrix train-data-data-points 1
+        (setf weights (statistical-learning.data:make-data-matrix train-data-data-points 1
                                                     1.0d0)))
       (setf weights-calculator (weights-calculator parameters tree-parameters
                                                    parallel weights
                                                    train-data target-data))
-      (~>> (cl-grf.data:selecting-random-indexes tree-attributes-count
+      (~>> (statistical-learning.data:selecting-random-indexes tree-attributes-count
                                                  train-data-attributes)
            (map-into attributes))
       (iterate
@@ -193,11 +193,11 @@
             :target-attributes-count target-data-attributes))))
 
 
-(defmethod cl-grf.mp:make-model ((parameters gradient-boost-ensemble-parameters)
+(defmethod statistical-learning.mp:make-model ((parameters gradient-boost-ensemble-parameters)
                                  train-data
                                  target-data
                                  &key)
-  (cl-grf.data:bind-data-matrix-dimensions
+  (statistical-learning.data:bind-data-matrix-dimensions
       ((train-data-data-points train-data-attributes train-data)
        (target-data-data-points target-data-attributes target-data))
     (bind ((tree-batch-size (tree-batch-size parameters))
@@ -213,25 +213,25 @@
             (make-array (min trees-count (- to from))
                         :displaced-index-offset (min trees-count from)
                         :displaced-to array))
-           (expected-value (cl-grf.alg:calculate-expected-value tree-parameters
+           (expected-value (statistical-learning.alg:calculate-expected-value tree-parameters
                                                                 target-data))
            ((:flet fit-tree-batch (trees attributes shrinkage response))
             (funcall (if parallel #'lparallel:pmap-into #'map-into)
                      trees
                      (lambda (attributes)
-                       (bind ((sample (cl-grf.data:select-random-indexes
+                       (bind ((sample (statistical-learning.data:select-random-indexes
                                        tree-sample-size
                                        train-data-data-points))
-                              (train (cl-grf.data:sample train-data
+                              (train (statistical-learning.data:sample train-data
                                                          :attributes attributes
                                                          :data-points sample))
-                              (target (cl-grf.data:sample target-data
+                              (target (statistical-learning.data:sample target-data
                                                           :data-points sample))
                               (response (if (null response)
                                             nil
-                                            (cl-grf.data:sample response
+                                            (statistical-learning.data:sample response
                                                                 :data-points sample))))
-                         (cl-grf.mp:make-model tree-parameters
+                         (statistical-learning.mp:make-model tree-parameters
                                                train
                                                target
                                                :shrinkage shrinkage
@@ -239,7 +239,7 @@
                                                :response response
                                                :expected-value expected-value)))
                      attributes)))
-      (~>> (cl-grf.data:selecting-random-indexes tree-attributes-count
+      (~>> (statistical-learning.data:selecting-random-indexes tree-attributes-count
                                                  train-data-attributes)
            (map-into attributes))
       (iterate
@@ -263,7 +263,7 @@
                                            parallel
                                            state))
         (decf shrinkage shrinkage-change)
-        (setf response (cl-grf.alg:gradient-boost-response new-state target-data)
+        (setf response (statistical-learning.alg:gradient-boost-response new-state target-data)
               state new-state))
       (make 'gradient-boost-ensemble
             :trees trees
@@ -271,23 +271,23 @@
             :target-attributes-count target-data-attributes))))
 
 
-(defmethod cl-grf.performance:performance-metric ((parameters random-forest-parameters)
+(defmethod statistical-learning.performance:performance-metric ((parameters random-forest-parameters)
                                                   target
                                                   predictions)
-  (cl-grf.performance:performance-metric (tree-parameters parameters)
+  (statistical-learning.performance:performance-metric (tree-parameters parameters)
                                          target
                                          predictions))
 
 
-(defmethod cl-grf.performance:average-performance-metric ((parameters random-forest-parameters)
+(defmethod statistical-learning.performance:average-performance-metric ((parameters random-forest-parameters)
                                                           metrics)
-  (cl-grf.performance:average-performance-metric (tree-parameters parameters)
+  (statistical-learning.performance:average-performance-metric (tree-parameters parameters)
                                                  metrics))
 
 
-(defmethod cl-grf.performance:errors ((parameters random-forest-parameters)
+(defmethod statistical-learning.performance:errors ((parameters random-forest-parameters)
                                       target
                                       predictions)
-  (cl-grf.performance:errors (tree-parameters parameters)
+  (statistical-learning.performance:errors (tree-parameters parameters)
                              target
                              predictions))

@@ -1,7 +1,7 @@
-(cl:in-package #:cl-grf.algorithms)
+(cl:in-package #:statistical-learning.algorithms)
 
 
-(defclass scored-training (cl-grf.tp:fundamental-tree-training-parameters)
+(defclass scored-training (statistical-learning.tp:fundamental-tree-training-parameters)
   ((%minimal-difference :initarg :minimal-difference
                         :reader minimal-difference)))
 
@@ -32,7 +32,7 @@
   ())
 
 
-(defclass gradient-boost-training-state (cl-grf.tp:fundamental-training-state)
+(defclass gradient-boost-training-state (statistical-learning.tp:fundamental-training-state)
   ((%shrinkage :initarg :shrinkage
                :reader shrinkage)
    (%number-of-classes :initarg :number-of-classes
@@ -57,7 +57,7 @@
                        :reader number-of-classes)))
 
 
-(defclass gradient-boost-model (cl-grf.tp:tree-model)
+(defclass gradient-boost-model (statistical-learning.tp:tree-model)
   ((%expected-value :initarg :expected-value
                     :reader expected-value)
    (%shrinkage :initarg :shrinkage
@@ -75,18 +75,18 @@
 
 
 (defclass scored-leaf-node (scored-node
-                            cl-grf.tp:fundamental-leaf-node)
+                            statistical-learning.tp:fundamental-leaf-node)
   ((%predictions :initarg :predictions
-                 :type cl-grf.data:data-matrix
+                 :type statistical-learning.data:data-matrix
                  :accessor predictions)))
 
 
 (defclass scored-tree-node (scored-node
-                            cl-grf.tp:fundamental-tree-node)
+                            statistical-learning.tp:fundamental-tree-node)
   ())
 
 
-(defclass gathered-predictions (cl-grf.tp:contributed-predictions)
+(defclass gathered-predictions (statistical-learning.tp:contributed-predictions)
   ((%contributions-count :initarg :contributions-count
                          :accessor contributions-count)
    (%indexes :initarg :indexes

@@ -1,4 +1,4 @@
-(cl:in-package #:cl-grf.algorithms)
+(cl:in-package #:statistical-learning.algorithms)
 
 (defparameter *data*
   (make-array (list 20 1) :element-type 'double-float
@@ -27,10 +27,10 @@
         :parallel nil))
 
 
-(defparameter *tree* (cl-grf.mp:make-model *training-parameters* *data* *target*))
+(defparameter *tree* (statistical-learning.mp:make-model *training-parameters* *data* *target*))
 
 (iterate
-  (with attribute-value = (cl-grf.tp:attribute-value *tree*))
+  (with attribute-value = (statistical-learning.tp:attribute-value *tree*))
   (with result = (make-array 20))
   (for i from 0 below 20)
   (setf (aref result i) (list (> (aref *data* i 0)

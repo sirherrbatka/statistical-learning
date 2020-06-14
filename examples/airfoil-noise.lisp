@@ -1,15 +1,15 @@
 (cl:in-package #:cl-user)
 
-(ql:quickload :cl-grf)
+(ql:quickload :statistical-learning)
 (ql:quickload :vellum)
 
 (defpackage #:airfoil-noise-example
-  (:use #:cl #:cl-grf.aux-package))
+  (:use #:cl #:statistical-learning.aux-package))
 
 (cl:in-package #:airfoil-noise-example)
 
 (defvar *data*
-  (~> (vellum:copy-from :csv (~>> (asdf:system-source-directory :cl-grf)
+  (~> (vellum:copy-from :csv (~>> (asdf:system-source-directory :statistical-learning)
                                   (merge-pathnames "examples/airfoil_self_noise.dat"))
                         :header nil
                         :separator #\tab)
@@ -29,7 +29,7 @@
                     :element-type 'double-float))
 
 (defparameter *training-parameters*
-  (make 'cl-grf.algorithms:basic-regression
+  (make 'statistical-learning.algorithms:basic-regression
         :maximal-depth 4
         :minimal-difference 0.0001d0
         :minimal-size 5
@@ -37,7 +37,7 @@
         :parallel nil))
 
 (defparameter *forest-parameters*
-  (make 'cl-grf.ensemble:random-forest-parameters
+  (make 'statistical-learning.ensemble:random-forest-parameters
         :trees-count 500
         :parallel t
         :tree-batch-size 5
@@ -46,7 +46,7 @@
         :tree-parameters *training-parameters*))
 
 (defparameter *mean-error*
-  (cl-grf.performance:cross-validation *forest-parameters*
+  (statistical-learning.performance:cross-validation *forest-parameters*
                                        4
                                        *train-data*
                                        *target-data*
@@ -54,8 +54,8 @@
 
 (print *mean-error*) ; 16.943994007564303d0 (squared error, root equal 4.11630829841064d0)
 
-(print (cl-grf.performance:cross-validation
-        (make 'cl-grf.ensemble:gradient-boost-ensemble-parameters
+(print (statistical-learning.performance:cross-validation
+        (make 'statistical-learning.ensemble:gradient-boost-ensemble-parameters
               :trees-count 500
               :parallel t
               :tree-batch-size 10
@@ -63,7 +63,7 @@
               :shrinkage 0.2d0
               :shrinkage-change (/ 0.4d0 200)
               :tree-sample-rate 0.1
-              :tree-parameters (make 'cl-grf.alg:gradient-boost-regression
+              :tree-parameters (make 'statistical-learning.alg:gradient-boost-regression
                                      :maximal-depth 5
                                      :minimal-size 5
                                      :minimal-difference 0.00001d0

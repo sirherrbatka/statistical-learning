@@ -1,6 +1,6 @@
-(cl:in-package #:cl-grf.performance)
+(cl:in-package #:statistical-learning.performance)
 
 
-(defmethod performance-metric :before ((parameters cl-grf.mp:fundamental-model-parameters)
+(defmethod performance-metric :before ((parameters statistical-learning.mp:fundamental-model-parameters)
                                        target predictions)
-  (cl-grf.data:check-data-points target predictions))
+  (statistical-learning.data:check-data-points target predictions))

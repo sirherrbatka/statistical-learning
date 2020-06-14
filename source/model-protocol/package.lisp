@@ -1,9 +1,9 @@
 (cl:in-package #:cl-user)
 
 
-(defpackage #:cl-grf.model-protocol
-  (:use #:cl #:cl-grf.aux-package)
-  (:nicknames #:cl-grf.mp)
+(defpackage #:statistical-learning.model-protocol
+  (:use #:cl #:statistical-learning.aux-package)
+  (:nicknames #:statistical-learning.mp)
   (:export
    #:make-model
    #:parameters
