@@ -63,3 +63,16 @@
 
 (defun visit-nodes (model function &key (filter-function (constantly t)))
   (visit-nodes* (root model) function :filter-function filter-function))
+
+
+(defun contribute-predictions (model data state parallel)
+  (contribute-predictions* (training-parameters model)
+                           model
+                           data
+                           state
+                           parallel))
+
+
+(defun extract-predictions (state)
+  (extract-predictions* (training-parameters state)
+                        state))

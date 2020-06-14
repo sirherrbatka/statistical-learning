@@ -74,11 +74,14 @@
 
 
 (declaim (inline map-data-matrix))
-(defun map-data-matrix (function data-matrix)
+(defun map-data-matrix (function data-matrix &optional in-place)
   (declare (optimize (speed 3) (safety 0)))
   (check-type data-matrix cl-grf.data:data-matrix)
-  (lret ((result (make-data-matrix (data-points-count data-matrix)
-                                   (attributes-count data-matrix))))
+  (lret ((result (if in-place
+                     data-matrix
+                     (make-data-matrix
+                      (data-points-count data-matrix)
+                      (attributes-count data-matrix)))))
     (iterate
       (declare (type fixnum i))
       (for i from 0 below (array-total-size data-matrix))
@@ -91,3 +94,24 @@
   (make-array (array-dimensions data-matrix)
               :element-type 'double-float
               :initial-element initial-element))
+
+
+(declaim (inline reduce-data-points))
+(defun reduce-data-points (function data-matrix)
+  (declare (optimize (speed 3) (safety 0)))
+  (check-type data-matrix data-matrix)
+  (iterate
+    (declare (type fixnum i attributes-count data-points-count))
+    (with function = (ensure-function function))
+    (with data-points-count = (data-points-count data-matrix))
+    (with attributes-count = (attributes-count data-matrix))
+    (with result = (make-data-matrix 1 attributes-count))
+    (for i from 0 below data-points-count)
+    (iterate
+      (declare (type fixnum j))
+      (for j from 0 below attributes-count)
+      (setf (mref result 0 j)
+            (the double-float (funcall function
+                                       (mref result 0 j)
+                                       (mref data-matrix i j)))))
+    (finally (return result))))

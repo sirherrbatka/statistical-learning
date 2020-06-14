@@ -213,8 +213,9 @@
             (make-array (min trees-count (- to from))
                         :displaced-index-offset (min trees-count from)
                         :displaced-to array))
-           (expected-value (~> target-data cl-ds.utils:unfold-table mean))
-           ((:flet fit-tree-batch (trees attributes learning-rate predictions))
+           (expected-value (cl-grf.alg:calculate-expected-value tree-parameters
+                                                                target-data))
+           ((:flet fit-tree-batch (trees attributes learning-rate response))
             (funcall (if parallel #'lparallel:pmap-into #'map-into)
                      trees
                      (lambda (attributes)
@@ -226,16 +227,16 @@
                                                          :data-points sample))
                               (target (cl-grf.data:sample target-data
                                                           :data-points sample))
-                              (new-predictions (if (null predictions)
-                                                   nil
-                                                   (cl-grf.data:sample predictions
-                                                                       :data-points sample))))
+                              (response (if (null response)
+                                            nil
+                                            (cl-grf.data:sample response
+                                                                :data-points sample))))
                          (cl-grf.mp:make-model tree-parameters
                                                train
                                                target
                                                :learning-rate learning-rate
                                                :attributes attributes
-                                               :predictions new-predictions
+                                               :response response
                                                :expected-value expected-value)))
                      attributes)))
       (~>> (cl-grf.data:selecting-random-indexes tree-attributes-count
@@ -244,7 +245,7 @@
       (iterate
         (with learning-rate = (learning-rate parameters))
         (with learning-rate-change = (learning-rate-change parameters))
-        (with predictions = nil)
+        (with response = nil)
         (with state = nil)
         (for index from 0
              below trees-count
@@ -255,14 +256,14 @@
         (for attributes-view = (array-view attributes
                                            :from index
                                            :to (+ index tree-batch-size)))
-        (fit-tree-batch trees-view attributes-view learning-rate predictions)
-        (for (values new-predictions new-state) = (trees-predict tree-parameters
-                                                                 trees-view
-                                                                 train-data
-                                                                 parallel
-                                                                 state))
+        (fit-tree-batch trees-view attributes-view learning-rate response)
+        (for new-state = (contribute-trees tree-parameters
+                                           trees-view
+                                           train-data
+                                           parallel
+                                           state))
         (decf learning-rate learning-rate-change)
-        (setf predictions new-predictions
+        (setf response (cl-grf.alg:gradient-boost-response new-state target-data)
               state new-state))
       (make 'gradient-boost-ensemble
             :trees trees

@@ -11,6 +11,7 @@
    #:mref
    #:map-data-matrix
    #:make-data-matrix-like
+   #:reduce-data-points
    #:iota-vector
    #:reshuffle
    #:select-random-indexes

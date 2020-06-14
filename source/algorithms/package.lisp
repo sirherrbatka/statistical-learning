@@ -6,14 +6,15 @@
   (:nicknames #:cl-grf.alg)
   (:export
    #:basic-regression
+   #:calculate-expected-value
    #:calculate-score
    #:classification
+   #:gradient-boost-classification
    #:gradient-boost-regression
+   #:gradient-boost-response
    #:predictions
    #:regression
    #:score
    #:scored-leaf-node
-   #:scored-tree-node
    #:single-impurity-classification
-   #:support
    #:support))

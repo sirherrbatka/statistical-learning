@@ -50,7 +50,9 @@
                              (:file "types")
                              (:file "utils")
                              (:file "generics")
-                             (:file "methods")))
+                             (:file "methods")
+                             (:file "functions")
+                             ))
                (:module "ensemble"
                 :components ((:file "package")
                              (:file "generics")

@@ -134,9 +134,29 @@
                                           target-data))))
 
 
+(defmethod cl-grf.tp:make-leaf* ((training-parameters gradient-boost-classification)
+                                 training-state)
+  (declare (optimize (speed 3) (safety 0)))
+  (let* ((target-data (cl-grf.tp:target-data training-state))
+         (data-points-count (cl-grf.data:data-points-count target-data)))
+    (declare (type fixnum data-points-count))
+    (make-instance
+     'scored-leaf-node
+     :support (cl-grf.data:data-points-count target-data)
+     :predictions (~>> (cl-grf.data:reduce-data-points #'+ target-data)
+                       (cl-grf.data:map-data-matrix (lambda (x)
+                                                      (/ x data-points-count))))
+     :score (~> data-points-count
+                (make-array :initial-element nil
+                            :element-type 'boolean)
+                (calculate-score training-parameters
+                                 _
+                                 training-state)))))
+
+
 (defmethod cl-grf.tp:make-leaf* ((training-parameters regression)
                                  training-state)
-  (declare (optimize (speed 3)))
+  (declare (optimize (speed 3) (safety 0)))
   (let* ((target-data (cl-grf.tp:target-data training-state))
          (data-points-count (cl-grf.data:data-points-count target-data)))
     (declare (type fixnum data-points-count))
@@ -158,31 +178,36 @@
                                                     training-state))))))))
 
 
-(defmethod cl-grf.mp:make-model ((parameters gradient-boost-regression)
+(defmethod cl-grf.mp:make-model ((parameters gradient-boost-classification)
                                  train-data
                                  target-data
                                  &key attributes
-                                   predictions
                                    expected-value
+                                   response
                                    learning-rate
                                  &allow-other-keys)
-  (let* ((differences
-           (if (null predictions)
-               (cl-grf.data:map-data-matrix (lambda (x)
-                                              (- x expected-value))
-                                            target-data)
+  (let* ((number-of-classes (number-of-classes parameters))
+         (target
+           (if (null response)
                (iterate
-                 (with result = (cl-grf.data:make-data-matrix-like target-data))
-                 (for i from 0 below (cl-grf.data:data-points-count result))
-                 (setf (cl-grf.data:mref result i 0)
-                       (- (cl-grf.data:mref target-data i 0)
-                          (cl-grf.data:mref predictions i 0)))
-                 (finally (return result)))))
+                 (with data-points-count = (cl-grf.data:data-points-count target-data))
+                 (with result = (cl-grf.data:make-data-matrix
+                                 data-points-count
+                                 number-of-classes))
+                 (for i from 0 below data-points-count)
+                 (for target = (truncate (cl-grf.data:mref target-data i 0)))
+                 (iterate
+                   (for j from 0 below number-of-classes)
+                   (setf (cl-grf.data:mref result i j)
+                         (- (if (= target j) 1 0)
+                            (cl-grf.data:mref expected-value 0 j))))
+                 (finally (return result)))
+               response))
          (state (make 'gradient-boost-training-state
                       :learning-rate learning-rate
                       :training-parameters parameters
                       :attribute-indexes attributes
-                      :target-data differences
+                      :target-data target
                       :training-data train-data))
          (leaf (cl-grf.tp:make-leaf state))
          (tree (cl-grf.tp:split state leaf)))
@@ -191,6 +216,97 @@
           :learning-rate learning-rate
           :expected-value expected-value
           :root (if (null tree) leaf tree))))
+
+
+(defmethod cl-grf.mp:make-model ((parameters gradient-boost-regression)
+                                 train-data
+                                 target-data
+                                 &key attributes
+                                   expected-value
+                                   response
+                                   learning-rate
+                                 &allow-other-keys)
+  (let* ((target
+           (if (null response)
+               (cl-grf.data:map-data-matrix (lambda (x)
+                                              (- x expected-value))
+                                            target-data)
+               response))
+         (state (make 'gradient-boost-training-state
+                      :learning-rate learning-rate
+                      :training-parameters parameters
+                      :attribute-indexes attributes
+                      :target-data target
+                      :training-data train-data))
+         (leaf (cl-grf.tp:make-leaf state))
+         (tree (cl-grf.tp:split state leaf)))
+    (make 'gradient-boost-model
+          :parameters parameters
+          :learning-rate learning-rate
+          :expected-value expected-value
+          :root (if (null tree) leaf tree))))
+
+
+(defmethod calculate-expected-value ((parameters regression) data)
+  (~> data cl-ds.utils:unfold-table mean))
+
+
+(defmethod calculate-expected-value ((parameters classification) data)
+  (iterate
+    (with result = (~>> parameters number-of-classes
+                        (cl-grf.data:make-data-matrix 1)))
+    (for i from 0 below (cl-grf.data:data-points-count data))
+    (iterate
+      (for j from 0 below (cl-grf.data:attributes-count data))
+      (incf (cl-grf.data:mref result 0
+                              (truncate (cl-grf.data:mref data i 0)))))
+    (finally
+     (iterate
+       (for j from 0 below (cl-grf.data:attributes-count data))
+       (for avg = (/ #1=(cl-grf.data:mref result 0 j)
+                     (cl-grf.data:data-points-count data)))
+       (setf #1# avg))
+     (return result))))
+
+
+(defmethod gradient-boost-response* ((parameters gradient-boost-classification)
+                                     expected
+                                     predicted)
+  (declare (optimize (speed 3) (safety 0))
+           (type cl-grf.data:data-matrix expected))
+  (iterate
+    (declare (type fixnum i number-of-classes)
+             (type cl-grf.data:data-matrix sums result))
+    (with sums = (sums predicted))
+    (with number-of-classes = (number-of-classes parameters))
+    (with result = (cl-grf.data:make-data-matrix-like sums))
+    (for i from 0 below (cl-grf.data:data-points-count expected))
+    (iterate
+      (declare (type fixnum j))
+      (for j from 0 below number-of-classes)
+      (setf (cl-grf.data:mref result i j)
+            (- (if (= (coerce j 'double-float)
+                      (cl-grf.data:mref expected i 0))
+                   1.0d0
+                   0.0d0)
+               (cl-grf.data:mref sums i j))))
+    (finally (return result))))
+
+
+(defmethod gradient-boost-response* ((parameters gradient-boost-regression)
+                                     expected
+                                     gathered-predictions)
+  (declare (optimize (speed 3) (safety 0)))
+  (let ((predicted (cl-grf.tp:extract-predictions gathered-predictions)))
+    (cl-grf.data:check-data-points expected predicted)
+    (iterate
+      (declare (type fixnum i))
+      (with result = (cl-grf.data:make-data-matrix-like expected))
+      (for i from 0 below (cl-grf.data:data-points-count result))
+      (setf (cl-grf.data:mref result i 0)
+            (- (cl-grf.data:mref expected i 0)
+               (cl-grf.data:mref predicted i 0)))
+      (finally (return result)))))
 
 
 (defmethod cl-grf.mp:make-model ((parameters scored-training)
@@ -209,26 +325,9 @@
           :root (if (null tree) leaf tree))))
 
 
-(defmethod shared-initialize :after ((parameters impurity-classification)
-                                     slot-names
+(defmethod initialize-instance :after ((parameters single-impurity-classification)
                                      &rest initargs)
-  (declare (ignore slot-names initargs))
-  (let ((minimal-difference (minimal-difference parameters)))
-    (unless (typep minimal-difference 'double-float)
-      (error 'type-error
-             :expected-type 'double-float
-             :datum minimal-difference))
-    (when (< minimal-difference 0.0d0)
-      (error 'cl-ds:argument-value-out-of-bounds
-             :argument :minimal-difference
-             :value minimal-difference
-             :format-control "Minimal difference in the impurity-classification must not be negative."))))
-
-
-(defmethod shared-initialize :after ((parameters single-impurity-classification)
-                                     slot-names
-                                     &rest initargs)
-  (declare (ignore slot-names initargs))
+  (declare (ignore initargs))
   (let ((number-of-classes (number-of-classes parameters)))
     (unless (integerp number-of-classes)
       (error 'type-error
@@ -243,7 +342,7 @@
 
 
 (defmethod cl-grf.performance:performance-metric
-    ((parameters single-impurity-classification)
+    ((parameters classification)
      target
      predictions)
   (cl-grf.data:check-data-points target predictions)
@@ -330,31 +429,17 @@
   (mean metrics))
 
 
-(defclass gathered-predictions ()
-  ((%contributions-count :initarg :contributions-count
-                         :accessor contributions-count)
-   (%indexes :initarg :indexes
-             :reader indexes)
-   (%sums :initarg :sums
-          :reader sums))
-  (:default-initargs :contributions-count 0))
-
-
-(defclass gradient-boost-gathered-predictions (gathered-predictions)
-  ((%expected-value :initarg :expected-value
-                    :reader expected-value)))
-
-
-(defmethod cl-grf.tp:contribute-predictions ((parameters single-impurity-classification)
-                                             model
-                                             data
-                                             state
-                                             parallel)
+(defmethod cl-grf.tp:contribute-predictions* ((parameters single-impurity-classification)
+                                              model
+                                              data
+                                              state
+                                              parallel)
   (cl-grf.data:bind-data-matrix-dimensions ((data-points-count attributes-count data))
     (let ((number-of-classes (number-of-classes parameters)))
       (when (null state)
         (setf state (make 'gathered-predictions
                           :indexes (cl-grf.data:iota-vector data-points-count)
+                          :training-parameters parameters
                           :sums (cl-grf.data:make-data-matrix data-points-count
                                                               number-of-classes))))
       (let* ((sums (sums state))
@@ -376,15 +461,16 @@
     state))
 
 
-(defmethod cl-grf.tp:contribute-predictions ((parameters basic-regression)
-                                             model
-                                             data
-                                             state
-                                             parallel)
+(defmethod cl-grf.tp:contribute-predictions* ((parameters basic-regression)
+                                              model
+                                              data
+                                              state
+                                              parallel)
   (cl-grf.data:bind-data-matrix-dimensions ((data-points-count attributes-count data))
     (when (null state)
       (setf state (make 'gathered-predictions
                         :indexes (cl-grf.data:iota-vector data-points-count)
+                        :training-parameters parameters
                         :sums (cl-grf.data:make-data-matrix data-points-count
                                                             1))))
     (let* ((sums (sums state))
@@ -401,18 +487,19 @@
     state))
 
 
-(defmethod cl-grf.tp:contribute-predictions ((parameters gradient-boost-regression)
-                                             model
-                                             data
-                                             state
-                                             parallel)
+(defmethod cl-grf.tp:contribute-predictions* ((parameters gradient-boost-regression)
+                                              model
+                                              data
+                                              state
+                                              parallel)
   (cl-grf.data:bind-data-matrix-dimensions ((data-points-count attributes-count data))
     (when (null state)
-      (setf state (make 'gradient-boost-gathered-predictions
+      (setf state (make 'gathered-predictions
                         :indexes (cl-grf.data:iota-vector data-points-count)
-                        :expected-value (expected-value model)
+                        :training-parameters parameters
                         :sums (cl-grf.data:make-data-matrix data-points-count
-                                                            1))))
+                                                            1
+                                                            (expected-value model)))))
     (let* ((sums (sums state))
            (learning-rate (learning-rate model))
            (root (cl-grf.tp:root model)))
@@ -428,23 +515,86 @@
     state))
 
 
-(defmethod cl-grf.tp:extract-predictions ((state gathered-predictions))
+(defmethod cl-grf.tp:contribute-predictions* ((parameters gradient-boost-classification)
+                                              model
+                                              data
+                                              state
+                                              parallel)
+  (cl-grf.data:bind-data-matrix-dimensions ((data-points-count attributes-count data))
+    (when (null state)
+      (setf state (make 'gathered-predictions
+                        :indexes (cl-grf.data:iota-vector data-points-count)
+                        :training-parameters parameters
+                        :sums (cl-grf.data:make-data-matrix data-points-count
+                                                            (number-of-classes parameters)))))
+    (let* ((sums (sums state))
+           (number-of-classes (number-of-classes parameters))
+           (learning-rate (learning-rate model))
+           (root (cl-grf.tp:root model)))
+      (funcall (if parallel #'lparallel:pmap #'map)
+               nil
+               (lambda (data-point)
+                 (iterate
+                   (declare (type fixnum j))
+                   (with leaf = (cl-grf.tp:leaf-for root data data-point))
+                   (with predictions = (predictions leaf))
+                   (for j from 0 below number-of-classes)
+                   (for gradient = (cl-grf.data:mref predictions 0 j))
+                   (incf (cl-grf.data:mref sums data-point j)
+                         (* learning-rate gradient))))
+               (indexes state)))
+    (incf (contributions-count state))
+    state))
+
+
+(defmethod cl-grf.tp:extract-predictions* ((parameters basic-regression)
+                                           (state gathered-predictions))
   (let ((count (contributions-count state)))
     (cl-grf.data:map-data-matrix (lambda (value) (/ value count))
                                  (sums state))))
 
 
-(defmethod cl-grf.tp:extract-predictions ((state gradient-boost-gathered-predictions))
-  (let* ((sums (sums state))
-         (expected-value (expected-value state))
-         (result (cl-grf.data:make-data-matrix-like sums)))
+(defmethod cl-grf.tp:extract-predictions* ((parameters single-impurity-classification)
+                                           (state gathered-predictions))
+  (let ((count (contributions-count state)))
+    (cl-grf.data:map-data-matrix (lambda (value) (/ value count))
+                                 (sums state))))
+
+
+(defmethod cl-grf.tp:extract-predictions* ((parameters gradient-boost-regression)
+                                           (state gathered-predictions))
+  (sums state))
+
+
+(defmethod cl-grf.tp:extract-predictions* ((parameters gradient-boost-classification)
+                                           (state gathered-predictions))
+  (declare (optimize (speed 3) (debug 0) (safety 0)))
+  (iterate
+    (declare (type fixnum i number-of-classes)
+             (type double-float maximum sum)
+             (type cl-grf.data:data-matrix sums result))
+    (with number-of-classes = (number-of-classes parameters))
+    (with sums = (sums state))
+    (with result = (cl-grf.data:make-data-matrix-like sums))
+    (for i from 0 below (cl-grf.data:data-points-count sums))
+    (for maximum = most-negative-double-float)
+    (for sum = 0.0d0)
     (iterate
-      (declare (type fixnum i))
-      (for i from 0 below (cl-grf.data:data-points-count sums))
-      (setf (cl-grf.data:mref result i 0)
-            (+ expected-value
-               (cl-grf.data:mref sums i 0))))
-    result))
+      (declare (type fixnum j))
+      (for j from 0 below number-of-classes)
+      (maxf maximum (cl-grf.data:mref sums i j)))
+    (iterate
+      (declare (type fixnum j)
+               (type double-float out))
+      (for j from 0 below number-of-classes)
+      (for out = (exp (- (cl-grf.data:mref sums i j) maximum)))
+      (setf (cl-grf.data:mref result i j) out)
+      (incf sum out))
+    (iterate
+      (declare (type fixnum j))
+      (for j from 0 below number-of-classes)
+      (setf #1=(cl-grf.data:mref result i j) (/ #1# sum)))
+    (finally (return result))))
 
 
 (defun regression-score (split-array target-data)
@@ -502,34 +652,11 @@
        (regression-score split-array)))
 
 
-(defmethod cl-grf.tp:contribute-predictions ((parameters gradient-boost-classification)
-                                             model
-                                             data
-                                             state
-                                             parallel)
-  (cl-grf.data:bind-data-matrix-dimensions ((data-points-count attributes-count data))
-    (let ((number-of-classes (number-of-classes parameters))
-          (learning-rate (learning-rate model))
-          (expected-value (expected-value model)))
-      (when (null state)
-        (setf state (make 'gradient-boost-gathered-predictions
-                          :indexes (cl-grf.data:iota-vector data-points-count)
-                          :expected-value expected-value
-                          :sums (cl-grf.data:make-data-matrix data-points-count
-                                                              number-of-classes))))
-      (let* ((sums (sums state))
-             (root (cl-grf.tp:root model)))
-        (funcall (if parallel #'lparallel:pmap #'map)
-                 nil
-                 (lambda (data-point)
-                   (iterate
-                     (declare (type fixnum j))
-                     (with leaf = (cl-grf.tp:leaf-for root data data-point))
-                     (with predictions = (predictions leaf))
-                     (for j from 0 below number-of-classes)
-                     (for class-gradient = (cl-grf.data:mref predictions 0 j))
-                     (incf (cl-grf.data:mref sums data-point j)
-                           (* learning-rate class-gradient))))
-                 (indexes state))))
-    (incf (contributions-count state))
-    state))
+(defmethod calculate-score ((training-parameters gradient-boost-classification)
+                            split-array
+                            training-state)
+  (declare (optimize (speed 3) (safety 0))
+           (type (simple-array boolean (*)) split-array))
+  (~>> training-state
+       cl-grf.tp:target-data
+       (regression-score split-array)))

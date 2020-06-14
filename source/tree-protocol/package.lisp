@@ -8,7 +8,12 @@
    #:attribute
    #:attribute-indexes
    #:attribute-value
+   #:contribute-predictions
+   #:contribute-predictions*
+   #:contributed-predictions
    #:depth
+   #:extract-predictions
+   #:extract-predictions*
    #:force-tree
    #:force-tree*
    #:fundamental-leaf-node
@@ -16,11 +21,9 @@
    #:fundamental-training-state
    #:fundamental-tree-node
    #:fundamental-tree-training-parameters
+   #:leaf-for
    #:leafp
    #:leafs-for
-   #:leaf-for
-   #:root
-   #:contribute-predictions
    #:left-node
    #:make-leaf
    #:make-leaf*
@@ -29,14 +32,14 @@
    #:minimal-size
    #:parallel
    #:right-node
+   #:root
    #:split
    #:split*
    #:target-data
    #:training-data
    #:training-parameters
    #:training-state-clone
+   #:tree-model
    #:treep
    #:trials-count
-   #:tree-model
-   #:extract-predictions
    #:visit-nodes))

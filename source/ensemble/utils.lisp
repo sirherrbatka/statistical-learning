@@ -49,15 +49,18 @@
              all-attributes)))
 
 
-(defun trees-predict (tree-parameters trees data parallel &optional state)
-  (declare (optimize (debug 3)))
+(defun contribute-trees (tree-parameters trees data parallel &optional state)
   (iterate
     (for tree in-vector trees)
-    (setf state (cl-grf.tp:contribute-predictions tree-parameters
-                                                  tree
-                                                  data
-                                                  state
-                                                  parallel))
-    (finally
-     (let ((result (cl-grf.tp:extract-predictions state)))
-       (return (values result state))))))
+    (setf state (cl-grf.tp:contribute-predictions* tree-parameters
+                                                   tree
+                                                   data
+                                                   state
+                                                   parallel))
+    (finally (return state))))
+
+
+(defun trees-predict (tree-parameters trees data parallel &optional state)
+  (let ((state (contribute-trees tree-parameters trees data parallel state)))
+    (values (cl-grf.tp:extract-predictions state)
+            state)))

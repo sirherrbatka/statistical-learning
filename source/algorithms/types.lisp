@@ -44,8 +44,17 @@
   '((:learning-rate learning-rate)))
 
 
-(defclass gradient-boost-regression (regression scored-training)
+(defclass gradient-boost (scored-training)
   ())
+
+
+(defclass gradient-boost-regression (regression gradient-boost)
+  ())
+
+
+(defclass gradient-boost-classification (classification gradient-boost)
+  ((%number-of-classes :initarg :number-of-classes
+                       :reader number-of-classes)))
 
 
 (defclass gradient-boost-model (cl-grf.tp:tree-model)
@@ -75,3 +84,13 @@
 (defclass scored-tree-node (scored-node
                             cl-grf.tp:fundamental-tree-node)
   ())
+
+
+(defclass gathered-predictions (cl-grf.tp:contributed-predictions)
+  ((%contributions-count :initarg :contributions-count
+                         :accessor contributions-count)
+   (%indexes :initarg :indexes
+             :reader indexes)
+   (%sums :initarg :sums
+          :reader sums))
+  (:default-initargs :contributions-count 0))

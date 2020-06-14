@@ -63,3 +63,8 @@
   ((%root :initarg :root
           :writer write-root
           :reader root)))
+
+
+(defclass contributed-predictions ()
+  ((%training-parameters :initarg :training-parameters
+                         :reader training-parameters)))

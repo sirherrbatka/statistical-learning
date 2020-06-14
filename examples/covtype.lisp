@@ -113,3 +113,24 @@
                                        t))
 
 (print (cl-grf.performance:accuracy *confusion-matrix*)) ; 0.8117216167652304d0
+
+(print (~> (make 'cl-grf.ensemble:gradient-boost-ensemble-parameters
+                 :trees-count 50
+                 :parallel t
+                 :tree-batch-size 5
+                 :tree-attributes-count 50
+                 :learning-rate 0.2d0
+                 :learning-rate-change (/ 0.2d0 100)
+                 :tree-sample-rate 0.1
+                 :tree-parameters (make 'cl-grf.alg:gradient-boost-classification
+                                        :maximal-depth 25
+                                        :minimal-size 10
+                                        :number-of-classes *cover-types*
+                                        :minimal-difference 0.00001d0
+                                        :trials-count 50
+                                        :parallel nil))
+           (cl-grf.performance:cross-validation 4
+                                                *train-data*
+                                                *target-data*
+                                                t)
+           cl-grf.performance:accuracy)) ; ~0.83 slightly better, but takes much more time…
