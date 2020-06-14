@@ -1,7 +1,7 @@
 (cl:in-package #:cl-grf.algorithms)
 
 
-(defgeneric learning-rate (gradient-boost))
+(defgeneric shrinkage (gradient-boost))
 (defgeneric minimal-difference (training-parameters))
 (defgeneric score (object))
 (defgeneric (setf score) (new-value object))

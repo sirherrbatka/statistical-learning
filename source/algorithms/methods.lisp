@@ -184,7 +184,7 @@
                                  &key attributes
                                    expected-value
                                    response
-                                   learning-rate
+                                   shrinkage
                                  &allow-other-keys)
   (let* ((number-of-classes (number-of-classes parameters))
          (target
@@ -204,7 +204,7 @@
                  (finally (return result)))
                response))
          (state (make 'gradient-boost-training-state
-                      :learning-rate learning-rate
+                      :shrinkage shrinkage
                       :training-parameters parameters
                       :attribute-indexes attributes
                       :target-data target
@@ -213,7 +213,7 @@
          (tree (cl-grf.tp:split state leaf)))
     (make 'gradient-boost-model
           :parameters parameters
-          :learning-rate learning-rate
+          :shrinkage shrinkage
           :expected-value expected-value
           :root (if (null tree) leaf tree))))
 
@@ -224,7 +224,7 @@
                                  &key attributes
                                    expected-value
                                    response
-                                   learning-rate
+                                   shrinkage
                                  &allow-other-keys)
   (let* ((target
            (if (null response)
@@ -233,7 +233,7 @@
                                             target-data)
                response))
          (state (make 'gradient-boost-training-state
-                      :learning-rate learning-rate
+                      :shrinkage shrinkage
                       :training-parameters parameters
                       :attribute-indexes attributes
                       :target-data target
@@ -242,7 +242,7 @@
          (tree (cl-grf.tp:split state leaf)))
     (make 'gradient-boost-model
           :parameters parameters
-          :learning-rate learning-rate
+          :shrinkage shrinkage
           :expected-value expected-value
           :root (if (null tree) leaf tree))))
 
@@ -501,7 +501,7 @@
                                                             1
                                                             (expected-value model)))))
     (let* ((sums (sums state))
-           (learning-rate (learning-rate model))
+           (shrinkage (shrinkage model))
            (root (cl-grf.tp:root model)))
       (funcall (if parallel #'lparallel:pmap #'map)
                nil
@@ -509,7 +509,7 @@
                  (let* ((leaf (cl-grf.tp:leaf-for root data data-point))
                         (predictions (predictions leaf)))
                    (incf (cl-grf.data:mref sums data-point 0)
-                         (* learning-rate predictions))))
+                         (* shrinkage predictions))))
                (indexes state)))
     (incf (contributions-count state))
     state))
@@ -529,7 +529,7 @@
                                                             (number-of-classes parameters)))))
     (let* ((sums (sums state))
            (number-of-classes (number-of-classes parameters))
-           (learning-rate (learning-rate model))
+           (shrinkage (shrinkage model))
            (root (cl-grf.tp:root model)))
       (funcall (if parallel #'lparallel:pmap #'map)
                nil
@@ -541,7 +541,7 @@
                    (for j from 0 below number-of-classes)
                    (for gradient = (cl-grf.data:mref predictions 0 j))
                    (incf (cl-grf.data:mref sums data-point j)
-                         (* learning-rate gradient))))
+                         (* shrinkage gradient))))
                (indexes state)))
     (incf (contributions-count state))
     state))

@@ -23,13 +23,13 @@
 
 
 (defclass gradient-boost-ensemble-parameters (random-forest-parameters)
-  ((%learning-rate :initarg :learning-rate
-                   :reader learning-rate)
-   (%learning-rate-change :initarg :learning-rate-change
-                          :reader learning-rate-change))
+  ((%shrinkage :initarg :shrinkage
+               :reader shrinkage)
+   (%shrinkage-change :initarg :shrinkage-change
+                      :reader shrinkage-change))
   (:default-initargs
-   :learning-rate 0.1d0
-   :learning-rate-change 0.0d0))
+   :shrinkage 0.1d0
+   :shrinkage-change 0.0d0))
 
 
 (defclass ensemble (cl-grf.mp:fundamental-model)

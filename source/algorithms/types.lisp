@@ -33,15 +33,15 @@
 
 
 (defclass gradient-boost-training-state (cl-grf.tp:fundamental-training-state)
-  ((%learning-rate :initarg :learning-rate
-                   :reader learning-rate)
+  ((%shrinkage :initarg :shrinkage
+               :reader shrinkage)
    (%number-of-classes :initarg :number-of-classes
                        :reader number-of-classes)))
 
 
 (defmethod cl-ds.utils:cloning-information
     append ((state gradient-boost-training-state))
-  '((:learning-rate learning-rate)))
+  '((:shrinkage shrinkage)))
 
 
 (defclass gradient-boost (scored-training)
@@ -60,8 +60,8 @@
 (defclass gradient-boost-model (cl-grf.tp:tree-model)
   ((%expected-value :initarg :expected-value
                     :reader expected-value)
-   (%learning-rate :initarg :learning-rate
-                   :reader learning-rate)))
+   (%shrinkage :initarg :shrinkage
+               :reader shrinkage)))
 
 
 (defclass score ()

@@ -119,8 +119,8 @@
                  :parallel t
                  :tree-batch-size 5
                  :tree-attributes-count 50
-                 :learning-rate 0.2d0
-                 :learning-rate-change (/ 0.2d0 100)
+                 :shrinkage 0.2d0
+                 :shrinkage-change (/ 0.2d0 75)
                  :tree-sample-rate 0.1
                  :tree-parameters (make 'cl-grf.alg:gradient-boost-classification
                                         :maximal-depth 25

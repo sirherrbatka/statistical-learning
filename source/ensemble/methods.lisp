@@ -55,19 +55,19 @@
 (defmethod initialize-instance :after ((instance gradient-boost-ensemble-parameters)
                                        &rest initargs)
   (declare (ignore initargs))
-  (let ((learning-rate (learning-rate instance))
-        (learning-rate-change (learning-rate-change instance))
+  (let ((shrinkage (shrinkage instance))
+        (shrinkage-change (shrinkage-change instance))
         (tree-batch-size (tree-batch-size instance))
         (trees-count (trees-count instance)))
-    (check-type learning-rate double-float)
-    (check-type learning-rate-change double-float)
+    (check-type shrinkage double-float)
+    (check-type shrinkage-change double-float)
     (unless (< (* (/ trees-count tree-batch-size)
-                  learning-rate-change)
-               learning-rate)
+                  shrinkage-change)
+               shrinkage)
       (error 'cl-ds:incompatible-arguments
-             :parameters '(:learning-rate :learning-rate-change)
-             :values `(,learning-rate ,learning-rate-change)
-             :format-control "LEARNING-RATE-CHANGE value implies that LEARNING-RATE will eventually goes below zero."))))
+             :parameters '(:shrinkage :shrinkage-change)
+             :values `(,shrinkage ,shrinkage-change)
+             :format-control "SHRINKAGE-CHANGE value implies that SHRINKAGE will eventually go below zero."))))
 
 
 (defmethod cl-grf.mp:predict ((random-forest ensemble)
@@ -215,7 +215,7 @@
                         :displaced-to array))
            (expected-value (cl-grf.alg:calculate-expected-value tree-parameters
                                                                 target-data))
-           ((:flet fit-tree-batch (trees attributes learning-rate response))
+           ((:flet fit-tree-batch (trees attributes shrinkage response))
             (funcall (if parallel #'lparallel:pmap-into #'map-into)
                      trees
                      (lambda (attributes)
@@ -234,7 +234,7 @@
                          (cl-grf.mp:make-model tree-parameters
                                                train
                                                target
-                                               :learning-rate learning-rate
+                                               :shrinkage shrinkage
                                                :attributes attributes
                                                :response response
                                                :expected-value expected-value)))
@@ -243,8 +243,8 @@
                                                  train-data-attributes)
            (map-into attributes))
       (iterate
-        (with learning-rate = (learning-rate parameters))
-        (with learning-rate-change = (learning-rate-change parameters))
+        (with shrinkage = (shrinkage parameters))
+        (with shrinkage-change = (shrinkage-change parameters))
         (with response = nil)
         (with state = nil)
         (for index from 0
@@ -256,13 +256,13 @@
         (for attributes-view = (array-view attributes
                                            :from index
                                            :to (+ index tree-batch-size)))
-        (fit-tree-batch trees-view attributes-view learning-rate response)
+        (fit-tree-batch trees-view attributes-view shrinkage response)
         (for new-state = (contribute-trees tree-parameters
                                            trees-view
                                            train-data
                                            parallel
                                            state))
-        (decf learning-rate learning-rate-change)
+        (decf shrinkage shrinkage-change)
         (setf response (cl-grf.alg:gradient-boost-response new-state target-data)
               state new-state))
       (make 'gradient-boost-ensemble
