@@ -190,17 +190,17 @@
                      attribute-index))
 
 
-(-> subsample-vector ((simple-array t (*)) fixnum symbol (simple-array boolean (*)))
-    (simple-array t (*))))
-(defun subsample-vector (vector length position split-array)
+(-> split-weights ((simple-array fixnum (*)) fixnum symbol (simple-array boolean (*)))
+    (simple-array fixnum (*)))
+(defun split-weights (weights length position split-array)
   (iterate
     (declare (type fixnum i j length))
-    (with result = (make-array length :element-type (array-element-type vector)))
-    (with length = (length vector))
+    (with result = (make-array length :element-type 'fixnum))
+    (with length = (length weights))
     (with j = 0)
     (for i from 0 below length)
     (when (eq position (aref split-array i))
-      (setf (aref result j) (aref vector i))
+      (setf (aref result j) (aref weights i))
       (incf j))
     (finally (return result))))
 
@@ -225,7 +225,7 @@
                    :loss score
                    :weights (if (null weights)
                                 nil
-                                (subsample-vector weights length position split-array))
+                                (split-weights weights length position split-array))
                    :training-data (subsample-array old-training-data
                                                    length split-array
                                                    position attribute-index)
