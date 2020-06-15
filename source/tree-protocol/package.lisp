@@ -6,7 +6,6 @@
   (:nicknames #:statistical-learning.tp)
   (:export
    #:attribute
-   #:loss
    #:attribute-indexes
    #:attribute-value
    #:contribute-predictions
@@ -26,6 +25,7 @@
    #:leafp
    #:leafs-for
    #:left-node
+   #:loss
    #:make-leaf
    #:make-leaf*
    #:make-node
@@ -43,4 +43,5 @@
    #:tree-model
    #:treep
    #:trials-count
-   #:visit-nodes))
+   #:visit-nodes
+   #:weights))

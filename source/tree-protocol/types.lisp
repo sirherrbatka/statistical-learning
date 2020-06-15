@@ -56,9 +56,12 @@
            :accessor depth)
    (%loss :initarg :loss
           :accessor loss)
+   (%weights :initarg :weights
+             :accessor weights)
    (%training-data :initarg :training-data
                    :accessor training-data))
-  (:default-initargs :depth 0))
+  (:default-initargs :depth 0
+                     :weights nil))
 
 
 (defclass tree-model (statistical-learning.mp:fundamental-model)

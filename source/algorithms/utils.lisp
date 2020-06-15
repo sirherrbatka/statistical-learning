@@ -190,6 +190,21 @@
                      attribute-index))
 
 
+(-> subsample-vector ((simple-array t (*)) fixnum symbol (simple-array boolean (*)))
+    (simple-array t (*))))
+(defun subsample-vector (vector length position split-array)
+  (iterate
+    (declare (type fixnum i j length))
+    (with result = (make-array length :element-type (array-element-type vector)))
+    (with length = (length vector))
+    (with j = 0)
+    (for i from 0 below length)
+    (when (eq position (aref split-array i))
+      (setf (aref result j) (aref vector i))
+      (incf j))
+    (finally (return result))))
+
+
 (defmethod make-simple-node*
     ((parameters scored-training)
      split-array
@@ -203,10 +218,14 @@
   (if (not parallel)
       #1=(let* ((old-target-data (statistical-learning.tp:target-data training-state))
                 (old-training-data (statistical-learning.tp:training-data training-state))
+                (weights (statistical-learning.tp:weights training-state))
                 (new-state
                   (statistical-learning.tp:training-state-clone
                    training-state
                    :loss score
+                   :weights (if (null weights)
+                                nil
+                                (subsample-vector weights length position split-array))
                    :training-data (subsample-array old-training-data
                                                    length split-array
                                                    position attribute-index)

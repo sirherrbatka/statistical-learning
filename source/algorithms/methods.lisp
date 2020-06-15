@@ -176,6 +176,7 @@
                                                  expected-value
                                                  response
                                                  shrinkage
+                                                 weights
                                                &allow-other-keys)
   (let* ((number-of-classes (number-of-classes parameters))
          (data-points-count (statistical-learning.data:data-points-count target-data))
@@ -200,6 +201,7 @@
                       :attribute-indexes attributes
                       :target-data target
                       :number-of-classes number-of-classes
+                      :weights weights
                       :loss (~> (make-array data-points-count
                                             :element-type 'boolean
                                             :initial-element nil)
@@ -221,6 +223,7 @@
                                                  expected-value
                                                  response
                                                  shrinkage
+                                                 weights
                                                &allow-other-keys)
   (let* ((target
            (if (null response)
@@ -233,6 +236,7 @@
                       :shrinkage shrinkage
                       :training-parameters parameters
                       :attribute-indexes attributes
+                      :weights weights
                       :loss (~> (make-array data-points-count
                                             :element-type 'boolean
                                             :initial-element nil)
@@ -313,11 +317,12 @@
 (defmethod statistical-learning.mp:make-model ((parameters scored-training)
                                                train-data
                                                target-data
-                                               &key attributes &allow-other-keys)
+                                               &key attributes weights &allow-other-keys)
   (let* ((data-points-count (statistical-learning.data:data-points-count target-data))
          (state (make 'statistical-learning.tp:fundamental-training-state
                       :training-parameters parameters
                       :loss 0.0d0
+                      :weights weights
                       :attribute-indexes attributes
                       :target-data target-data
                       :training-data train-data))
@@ -607,52 +612,58 @@
 
 
 (-> regression-score ((simple-array boolean (*))
-                      statistical-learning.data:data-matrix)
+                      statistical-learning.data:data-matrix
+                      &optional (or null (simple-array double-float (*))))
     double-float)
-(defun regression-score (split-array target-data)
+(defun regression-score (split-array target-data &optional weights)
   (declare (optimize (speed 3) (safety 0) (debug 0)))
-  (let ((left-sum 0.0d0)
-        (right-sum 0.0d0)
-        (left-count 0)
-        (right-count 0))
-    (declare (type double-float left-sum right-sum)
-             (type statistical-learning.data:data-matrix target-data)
-             (type fixnum left-count right-count))
-    (iterate
-      (declare (type fixnum i))
-      (for i from 0 below (length split-array))
-      (for right-p = (aref split-array i))
-      (for value = (statistical-learning.data:mref target-data i 0))
-      (if right-p
-          (setf right-count (1+ right-count)
-                right-sum (+ right-sum value))
-          (setf left-count (1+ left-count)
-                left-sum (+ left-sum value))))
-    (iterate
-      (declare (type double-float
-                     left-error right-error
-                     left-avg right-avg)
-               (type fixnum i))
-      (with left-error = 0.0d0)
-      (with right-error = 0.0d0)
-      (with left-avg = (if (zerop left-count)
-                           0.0d0
-                           (/ left-sum left-count)))
-      (with right-avg = (if (zerop right-count)
-                            0.0d0
-                            (/ right-sum right-count)))
-      (for i from 0 below (length split-array))
-      (for rightp = (aref split-array i))
-      (for value = (statistical-learning.data:mref target-data i 0))
-      (if rightp
-          (incf right-error (square (- value right-avg)))
-          (incf left-error (square (- value left-avg))))
-      (finally (return (values (if (zerop left-count)
-                                   0.0d0
-                                   (/ left-error left-count))
-                               (if (zerop right-count)
-                                   0.0d0
-                                   (/ right-error right-count))))))))
+  (cl-ds.utils:cases ((null weights))
+    (let ((left-sum 0.0d0)
+          (right-sum 0.0d0)
+          (left-count 0)
+          (right-count 0))
+      (declare (type double-float left-sum right-sum)
+               (type statistical-learning.data:data-matrix target-data)
+               (type fixnum left-count right-count))
+      (iterate
+        (declare (type fixnum i))
+        (for i from 0 below (length split-array))
+        (for right-p = (aref split-array i))
+        (for value = (statistical-learning.data:mref target-data i 0))
+        (if right-p
+            (setf right-count (1+ right-count)
+                  right-sum (+ right-sum value))
+            (setf left-count (1+ left-count)
+                  left-sum (+ left-sum value))))
+      (iterate
+        (declare (type double-float
+                       left-error right-error
+                       left-avg right-avg)
+                 (type fixnum i))
+        (with left-error = 0.0d0)
+        (with right-error = 0.0d0)
+        (with left-avg = (if (zerop left-count)
+                             0.0d0
+                             (/ left-sum left-count)))
+        (with right-avg = (if (zerop right-count)
+                              0.0d0
+                              (/ right-sum right-count)))
+        (for i from 0 below (length split-array))
+        (for rightp = (aref split-array i))
+        (for value = (statistical-learning.data:mref target-data i 0))
+        (if rightp
+            (incf right-error (square (if (null weights)
+                                          #1=(- value right-avg)
+                                          (* (aref weights i) #1#))))
+            (incf left-error (square (if (null weights)
+                                         #2=(- value left-avg)
+                                         (* (aref weights i) #2#)))))
+        (finally (return (values (if (zerop left-count)
+                                     0.0d0
+                                     (/ left-error left-count))
+                                 (if (zerop right-count)
+                                     0.0d0
+                                     (/ right-error right-count)))))))))
 
 
 (defmethod calculate-score ((training-parameters regression)
@@ -660,9 +671,9 @@
                             training-state)
   (declare (optimize (speed 3) (safety 0))
            (type (simple-array boolean (*)) split-array))
-  (~>> training-state
-       statistical-learning.tp:target-data
-       (regression-score split-array)))
+  (regression-score split-array
+                    (statistical-learning.tp:target-data training-state)
+                    (statistical-learning.tp:weights training-state)))
 
 
 (defmethod calculate-score ((training-parameters gradient-boost-classification)

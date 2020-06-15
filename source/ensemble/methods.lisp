@@ -194,9 +194,9 @@
 
 
 (defmethod statistical-learning.mp:make-model ((parameters gradient-boost-ensemble-parameters)
-                                 train-data
-                                 target-data
-                                 &key)
+                                               train-data
+                                               target-data
+                                               &key weights)
   (statistical-learning.data:bind-data-matrix-dimensions
       ((train-data-data-points train-data-attributes train-data)
        (target-data-data-points target-data-attributes target-data))
@@ -223,21 +223,26 @@
                                        tree-sample-size
                                        train-data-data-points))
                               (train (statistical-learning.data:sample train-data
-                                                         :attributes attributes
-                                                         :data-points sample))
+                                                                       :attributes attributes
+                                                                       :data-points sample))
                               (target (statistical-learning.data:sample target-data
-                                                          :data-points sample))
+                                                                        :data-points sample))
                               (response (if (null response)
                                             nil
                                             (statistical-learning.data:sample response
                                                                 :data-points sample))))
                          (statistical-learning.mp:make-model tree-parameters
-                                               train
-                                               target
-                                               :shrinkage shrinkage
-                                               :attributes attributes
-                                               :response response
-                                               :expected-value expected-value)))
+                                                             train
+                                                             target
+                                                             :shrinkage shrinkage
+                                                             :attributes attributes
+                                                             :response response
+                                                             :weights (if (null weights)
+                                                                          nil
+                                                                          (map '(vector double-float)
+                                                                               (lambda (x) (aref weights x))
+                                                                               sample))
+                                                             :expected-value expected-value)))
                      attributes)))
       (~>> (statistical-learning.data:selecting-random-indexes tree-attributes-count
                                                  train-data-attributes)

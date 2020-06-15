@@ -50,6 +50,7 @@
   `((:training-parameters training-parameters)
     (:depth depth)
     (:loss loss)
+    (:weights weights)
     (:attribute-indexes attribute-indexes)
     (:target-data target-data)
     (:training-data training-data)))
