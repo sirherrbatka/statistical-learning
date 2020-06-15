@@ -130,7 +130,7 @@
                                         :trials-count 50
                                         :parallel nil))
            (statistical-learning.performance:cross-validation 4
-                                                *train-data*
-                                                *target-data*
-                                                t)
+                                                              *train-data*
+                                                              *target-data*
+                                                              t)
            statistical-learning.performance:accuracy)) ; ~0.83 slightly better, but takes much more time…

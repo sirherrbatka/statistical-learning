@@ -47,10 +47,10 @@
 
 (defparameter *mean-error*
   (statistical-learning.performance:cross-validation *forest-parameters*
-                                       4
-                                       *train-data*
-                                       *target-data*
-                                       t))
+                                                     4
+                                                     *train-data*
+                                                     *target-data*
+                                                     t))
 
 (print *mean-error*) ; 16.943994007564303d0 (squared error, root equal 4.11630829841064d0)
 

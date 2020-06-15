@@ -2,7 +2,9 @@
 
 
 (defun cross-validation (model-parameters number-of-folds
-                         train-data target-data &optional parallel)
+                         train-data target-data parallel
+                         &key weights
+                         &allow-other-keys)
   (statistical-learning.data:check-data-points train-data target-data)
   (~> train-data
       statistical-learning.data:data-points-count
@@ -10,12 +12,18 @@
       (cl-ds.alg:on-each
        (lambda (train.test)
          (bind (((train . test) train.test)
+                (sampled-weights (if (null weights)
+                                     nil
+                                     (map '(vector double-float)
+                                          (lambda (i) (aref weights i))
+                                          train)))
                 (model (statistical-learning.mp:make-model
                         model-parameters
                         (statistical-learning.data:sample train-data
                                             :data-points train)
                         (statistical-learning.data:sample target-data
-                                            :data-points train)))
+                                                          :data-points train)
+                        :weights sampled-weights))
                 (test-target-data (statistical-learning.data:sample target-data
                                                       :data-points test))
                 (test-train-data (statistical-learning.data:sample train-data
