@@ -54,6 +54,8 @@
                  :accessor target-data)
    (%depth :initarg :depth
            :accessor depth)
+   (%loss :initarg :loss
+          :accessor loss)
    (%training-data :initarg :training-data
                    :accessor training-data))
   (:default-initargs :depth 0))

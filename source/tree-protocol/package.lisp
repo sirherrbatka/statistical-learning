@@ -6,6 +6,7 @@
   (:nicknames #:statistical-learning.tp)
   (:export
    #:attribute
+   #:loss
    #:attribute-indexes
    #:attribute-value
    #:contribute-predictions

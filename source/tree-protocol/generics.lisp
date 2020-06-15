@@ -28,5 +28,7 @@
 (defgeneric attribute-indexes (training-state))
 (defgeneric (setf attribute-indexes) (new-value training-state))
 (defgeneric make-leaf* (training-parameters training-state))
+(defgeneric loss (state))
+(defgeneric (setf loss) (new-value state))
 (defgeneric contribute-predictions* (parameters model data state parallel))
 (defgeneric extract-predictions* (parameters state))

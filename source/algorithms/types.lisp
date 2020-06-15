@@ -41,7 +41,8 @@
 
 (defmethod cl-ds.utils:cloning-information
     append ((state gradient-boost-training-state))
-  '((:shrinkage shrinkage)))
+  '((:shrinkage shrinkage)
+    (:number-of-classes number-of-classes)))
 
 
 (defclass gradient-boost (scored-training)

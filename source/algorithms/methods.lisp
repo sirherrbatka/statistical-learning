@@ -13,7 +13,6 @@
     ((training-parameters scored-classification)
      training-state
      leaf)
-  (declare (optimize (speed 3)))
   (when (<= (score leaf)
             (~> training-parameters minimal-difference))
     (return-from statistical-learning.tp:split* nil))
@@ -114,11 +113,12 @@
 
 
 (defmethod statistical-learning.tp:make-leaf* ((training-parameters single-impurity-classification)
-                                 training-state)
+                                               training-state)
   (declare (optimize (speed 3)))
   (let* ((target-data (statistical-learning.tp:target-data training-state))
          (number-of-classes (number-of-classes training-parameters))
          (data-points-count (statistical-learning.data:data-points-count target-data))
+         (score (statistical-learning.tp:loss training-state))
          (predictions (statistical-learning.data:make-data-matrix 1 number-of-classes)))
     (declare (type fixnum number-of-classes data-points-count)
              (type statistical-learning.data:data-matrix target-data predictions))
@@ -130,14 +130,14 @@
     (make-instance 'scored-leaf-node
                    :support (statistical-learning.data:data-points-count target-data)
                    :predictions predictions
-                   :score (total-impurity training-parameters
-                                          target-data))))
+                   :score score)))
 
 
 (defmethod statistical-learning.tp:make-leaf* ((training-parameters gradient-boost-classification)
-                                 training-state)
+                                               training-state)
   (declare (optimize (speed 3) (safety 0)))
   (let* ((target-data (statistical-learning.tp:target-data training-state))
+         (score (statistical-learning.tp:loss training-state))
          (data-points-count (statistical-learning.data:data-points-count target-data)))
     (declare (type fixnum data-points-count))
     (make-instance
@@ -146,18 +146,14 @@
      :predictions (~>> (statistical-learning.data:reduce-data-points #'+ target-data)
                        (statistical-learning.data:map-data-matrix (lambda (x)
                                                       (/ x data-points-count))))
-     :score (~> data-points-count
-                (make-array :initial-element nil
-                            :element-type 'boolean)
-                (calculate-score training-parameters
-                                 _
-                                 training-state)))))
+     :score score)))
 
 
 (defmethod statistical-learning.tp:make-leaf* ((training-parameters regression)
-                                 training-state)
+                                               training-state)
   (declare (optimize (speed 3) (safety 0)))
   (let* ((target-data (statistical-learning.tp:target-data training-state))
+         (score (statistical-learning.tp:loss training-state))
          (data-points-count (statistical-learning.data:data-points-count target-data)))
     (declare (type fixnum data-points-count))
     (iterate
@@ -170,27 +166,22 @@
                         'scored-leaf-node
                         :support (statistical-learning.data:data-points-count target-data)
                         :predictions (/ sum data-points-count)
-                        :score (~> data-points-count
-                                   (make-array :initial-element nil
-                                               :element-type 'boolean)
-                                   (calculate-score training-parameters
-                                                    _
-                                                    training-state))))))))
+                        :score score))))))
 
 
 (defmethod statistical-learning.mp:make-model ((parameters gradient-boost-classification)
-                                 train-data
-                                 target-data
-                                 &key attributes
-                                   expected-value
-                                   response
-                                   shrinkage
-                                 &allow-other-keys)
+                                               train-data
+                                               target-data
+                                               &key attributes
+                                                 expected-value
+                                                 response
+                                                 shrinkage
+                                               &allow-other-keys)
   (let* ((number-of-classes (number-of-classes parameters))
+         (data-points-count (statistical-learning.data:data-points-count target-data))
          (target
            (if (null response)
                (iterate
-                 (with data-points-count = (statistical-learning.data:data-points-count target-data))
                  (with result = (statistical-learning.data:make-data-matrix
                                  data-points-count
                                  number-of-classes))
@@ -208,6 +199,11 @@
                       :training-parameters parameters
                       :attribute-indexes attributes
                       :target-data target
+                      :number-of-classes number-of-classes
+                      :loss (~> (make-array data-points-count
+                                            :element-type 'boolean
+                                            :initial-element nil)
+                                (regression-score target))
                       :training-data train-data))
          (leaf (statistical-learning.tp:make-leaf state))
          (tree (statistical-learning.tp:split state leaf)))
@@ -219,23 +215,28 @@
 
 
 (defmethod statistical-learning.mp:make-model ((parameters gradient-boost-regression)
-                                 train-data
-                                 target-data
-                                 &key attributes
-                                   expected-value
-                                   response
-                                   shrinkage
-                                 &allow-other-keys)
+                                               train-data
+                                               target-data
+                                               &key attributes
+                                                 expected-value
+                                                 response
+                                                 shrinkage
+                                               &allow-other-keys)
   (let* ((target
            (if (null response)
                (statistical-learning.data:map-data-matrix (lambda (x)
                                               (- x expected-value))
                                             target-data)
                response))
+         (data-points-count (statistical-learning.data:data-points-count target-data))
          (state (make 'gradient-boost-training-state
                       :shrinkage shrinkage
                       :training-parameters parameters
                       :attribute-indexes attributes
+                      :loss (~> (make-array data-points-count
+                                            :element-type 'boolean
+                                            :initial-element nil)
+                                (regression-score target))
                       :target-data target
                       :training-data train-data))
          (leaf (statistical-learning.tp:make-leaf state))
@@ -310,19 +311,27 @@
 
 
 (defmethod statistical-learning.mp:make-model ((parameters scored-training)
-                                 train-data
-                                 target-data
-                                 &key attributes &allow-other-keys)
-  (let* ((state (make 'statistical-learning.tp:fundamental-training-state
+                                               train-data
+                                               target-data
+                                               &key attributes &allow-other-keys)
+  (let* ((data-points-count (statistical-learning.data:data-points-count target-data))
+         (state (make 'statistical-learning.tp:fundamental-training-state
                       :training-parameters parameters
+                      :loss 0.0d0
                       :attribute-indexes attributes
                       :target-data target-data
                       :training-data train-data))
-         (leaf (statistical-learning.tp:make-leaf state))
-         (tree (statistical-learning.tp:split state leaf)))
+         (score (~> data-points-count
+                    (make-array :initial-element nil
+                                :element-type 'boolean)
+                    (calculate-score parameters
+                                     _
+                                     state))))
+    (setf (statistical-learning.tp:loss state) score)
     (make 'statistical-learning.tp:tree-model
           :parameters parameters
-          :root (if (null tree) leaf tree))))
+          :root (let ((leaf (statistical-learning.tp:make-leaf state)))
+                  (or (statistical-learning.tp:split state leaf) leaf)))))
 
 
 (defmethod initialize-instance :after ((parameters single-impurity-classification)
@@ -430,10 +439,10 @@
 
 
 (defmethod statistical-learning.tp:contribute-predictions* ((parameters single-impurity-classification)
-                                              model
-                                              data
-                                              state
-                                              parallel)
+                                                            model
+                                                            data
+                                                            state
+                                                            parallel)
   (statistical-learning.data:bind-data-matrix-dimensions ((data-points-count attributes-count data))
     (let ((number-of-classes (number-of-classes parameters)))
       (when (null state)
@@ -597,7 +606,11 @@
     (finally (return result))))
 
 
+(-> regression-score ((simple-array boolean (*))
+                      statistical-learning.data:data-matrix)
+    double-float)
 (defun regression-score (split-array target-data)
+  (declare (optimize (speed 3) (safety 0) (debug 0)))
   (let ((left-sum 0.0d0)
         (right-sum 0.0d0)
         (left-count 0)

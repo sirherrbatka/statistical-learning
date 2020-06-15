@@ -206,6 +206,7 @@
                 (new-state
                   (statistical-learning.tp:training-state-clone
                    training-state
+                   :loss score
                    :training-data (subsample-array old-training-data
                                                    length split-array
                                                    position attribute-index)

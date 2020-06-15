@@ -49,6 +49,7 @@
     ((object fundamental-training-state))
   `((:training-parameters training-parameters)
     (:depth depth)
+    (:loss loss)
     (:attribute-indexes attribute-indexes)
     (:target-data target-data)
     (:training-data training-data)))
