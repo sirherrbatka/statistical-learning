@@ -642,9 +642,9 @@
                             0.0d0
                             (/ right-sum right-count)))
       (for i from 0 below (length split-array))
-      (for right-p = (aref split-array i))
+      (for rightp = (aref split-array i))
       (for value = (statistical-learning.data:mref target-data i 0))
-      (if right-p
+      (if rightp
           (incf right-error (square (- value right-avg)))
           (incf left-error (square (- value left-avg))))
       (finally (return (values (if (zerop left-count)
