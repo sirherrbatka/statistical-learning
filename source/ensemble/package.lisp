@@ -3,6 +3,7 @@
 
 (defpackage #:statistical-learning.ensemble
   (:use #:cl #:statistical-learning.aux-package)
+  (:nicknames #:sl.ensemble)
   (:export
    #:ensemble
    #:random-forest-parameters

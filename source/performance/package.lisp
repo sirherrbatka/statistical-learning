@@ -3,6 +3,7 @@
 
 (defpackage #:statistical-learning.performance
   (:use #:cl #:statistical-learning.aux-package)
+  (:nicknames #:sl.perf)
   (:export
    #:accuracy
    #:attributes-importance

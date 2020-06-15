@@ -3,6 +3,7 @@
 
 (defpackage #:statistical-learning.data
   (:use #:cl #:statistical-learning.aux-package)
+  (:nicknames #:sl.data)
   (:export
    #:attributes-count
    #:bind-data-matrix-dimensions

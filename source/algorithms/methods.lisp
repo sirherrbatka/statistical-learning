@@ -6,31 +6,31 @@
                             state)
   (split-impurity training-parameters
                   split-array
-                  (statistical-learning.tp:target-data state)))
+                  (sl.tp:target-data state)))
 
 
-(defmethod statistical-learning.tp:split* :around
+(defmethod sl.tp:split* :around
     ((training-parameters scored-classification)
      training-state
      leaf)
   (when (<= (score leaf)
             (~> training-parameters minimal-difference))
-    (return-from statistical-learning.tp:split* nil))
+    (return-from sl.tp:split* nil))
   (call-next-method))
 
 
-(defmethod statistical-learning.tp:split*
+(defmethod sl.tp:split*
     ((training-parameters scored-training)
      training-state
      leaf)
   (declare (optimize (speed 3) (safety 0)))
-  (bind ((training-data (statistical-learning.tp:training-data training-state))
-         (trials-count (statistical-learning.tp:trials-count training-parameters))
+  (bind ((training-data (sl.tp:training-data training-state))
+         (trials-count (sl.tp:trials-count training-parameters))
          (minimal-difference (minimal-difference training-parameters))
          (score (score leaf))
-         (minimal-size (statistical-learning.tp:minimal-size training-parameters))
-         (parallel (statistical-learning.tp:parallel training-parameters))
-         (attributes (statistical-learning.tp:attribute-indexes training-state)))
+         (minimal-size (sl.tp:minimal-size training-parameters))
+         (parallel (sl.tp:parallel training-parameters))
+         (attributes (sl.tp:attribute-indexes training-state)))
     (declare (type fixnum trials-count)
              (type double-float score minimal-difference)
              (type boolean parallel))
@@ -48,7 +48,7 @@
       (with minimal-left-score = most-positive-double-float)
       (with minimal-right-score = most-positive-double-float)
       (with optimal-threshold = most-positive-double-float)
-      (with data-size = (statistical-learning.data:data-points-count training-data))
+      (with data-size = (sl.data:data-points-count training-data))
       (with split-array = (make-array data-size :element-type 'boolean
                                                 :initial-element nil))
       (with optimal-array = (make-array data-size :element-type 'boolean
@@ -112,59 +112,59 @@
 
 
 
-(defmethod statistical-learning.tp:make-leaf* ((training-parameters single-impurity-classification)
-                                               training-state)
+(defmethod sl.tp:make-leaf* ((training-parameters single-impurity-classification)
+                             training-state)
   (declare (optimize (speed 3)))
-  (let* ((target-data (statistical-learning.tp:target-data training-state))
+  (let* ((target-data (sl.tp:target-data training-state))
          (number-of-classes (number-of-classes training-parameters))
-         (data-points-count (statistical-learning.data:data-points-count target-data))
-         (score (statistical-learning.tp:loss training-state))
-         (predictions (statistical-learning.data:make-data-matrix 1 number-of-classes)))
+         (data-points-count (sl.data:data-points-count target-data))
+         (score (sl.tp:loss training-state))
+         (predictions (sl.data:make-data-matrix 1 number-of-classes)))
     (declare (type fixnum number-of-classes data-points-count)
              (type statistical-learning.data:data-matrix target-data predictions))
     (iterate
       (declare (type fixnum i index))
       (for i from 0 below data-points-count)
-      (for index = (truncate (statistical-learning.data:mref target-data i 0)))
-      (incf (statistical-learning.data:mref predictions 0 index)))
+      (for index = (truncate (sl.data:mref target-data i 0)))
+      (incf (sl.data:mref predictions 0 index)))
     (make-instance 'scored-leaf-node
-                   :support (statistical-learning.data:data-points-count target-data)
+                   :support (sl.data:data-points-count target-data)
                    :predictions predictions
                    :score score)))
 
 
-(defmethod statistical-learning.tp:make-leaf* ((training-parameters gradient-boost-classification)
-                                               training-state)
+(defmethod sl.tp:make-leaf* ((training-parameters gradient-boost-classification)
+                             training-state)
   (declare (optimize (speed 3) (safety 0)))
-  (let* ((target-data (statistical-learning.tp:target-data training-state))
-         (score (statistical-learning.tp:loss training-state))
-         (data-points-count (statistical-learning.data:data-points-count target-data)))
+  (let* ((target-data (sl.tp:target-data training-state))
+         (score (sl.tp:loss training-state))
+         (data-points-count (sl.data:data-points-count target-data)))
     (declare (type fixnum data-points-count))
     (make-instance
      'scored-leaf-node
-     :support (statistical-learning.data:data-points-count target-data)
+     :support (sl.data:data-points-count target-data)
      :predictions (~>> (statistical-learning.data:reduce-data-points #'+ target-data)
                        (statistical-learning.data:map-data-matrix (lambda (x)
-                                                      (/ x data-points-count))))
+                                                                    (/ x data-points-count))))
      :score score)))
 
 
-(defmethod statistical-learning.tp:make-leaf* ((training-parameters regression)
-                                               training-state)
+(defmethod sl.tp:make-leaf* ((training-parameters regression)
+                             training-state)
   (declare (optimize (speed 3) (safety 0)))
-  (let* ((target-data (statistical-learning.tp:target-data training-state))
-         (score (statistical-learning.tp:loss training-state))
-         (data-points-count (statistical-learning.data:data-points-count target-data)))
+  (let* ((target-data (sl.tp:target-data training-state))
+         (score (sl.tp:loss training-state))
+         (data-points-count (sl.data:data-points-count target-data)))
     (declare (type fixnum data-points-count))
     (iterate
       (declare (type fixnum i)
                (type double-float sum))
       (with sum = 0.0d0)
       (for i from 0 below data-points-count)
-      (incf sum (statistical-learning.data:mref target-data i 0))
+      (incf sum (sl.data:mref target-data i 0))
       (finally (return (make-instance
                         'scored-leaf-node
-                        :support (statistical-learning.data:data-points-count target-data)
+                        :support (sl.data:data-points-count target-data)
                         :predictions (/ sum data-points-count)
                         :score score))))))
 
@@ -179,20 +179,20 @@
                                                  weights
                                                &allow-other-keys)
   (let* ((number-of-classes (number-of-classes parameters))
-         (data-points-count (statistical-learning.data:data-points-count target-data))
+         (data-points-count (sl.data:data-points-count target-data))
          (target
            (if (null response)
                (iterate
-                 (with result = (statistical-learning.data:make-data-matrix
+                 (with result = (sl.data:make-data-matrix
                                  data-points-count
                                  number-of-classes))
                  (for i from 0 below data-points-count)
-                 (for target = (truncate (statistical-learning.data:mref target-data i 0)))
+                 (for target = (truncate (sl.data:mref target-data i 0)))
                  (iterate
                    (for j from 0 below number-of-classes)
-                   (setf (statistical-learning.data:mref result i j)
+                   (setf (sl.data:mref result i j)
                          (- (if (= target j) 1 0)
-                            (statistical-learning.data:mref expected-value 0 j))))
+                            (sl.data:mref expected-value 0 j))))
                  (finally (return result)))
                response))
          (state (make 'gradient-boost-training-state
@@ -207,8 +207,8 @@
                                             :initial-element nil)
                                 (regression-score target))
                       :training-data train-data))
-         (leaf (statistical-learning.tp:make-leaf state))
-         (tree (statistical-learning.tp:split state leaf)))
+         (leaf (sl.tp:make-leaf state))
+         (tree (sl.tp:split state leaf)))
     (make 'gradient-boost-model
           :parameters parameters
           :shrinkage shrinkage
@@ -228,10 +228,10 @@
   (let* ((target
            (if (null response)
                (statistical-learning.data:map-data-matrix (lambda (x)
-                                              (- x expected-value))
-                                            target-data)
+                                                            (- x expected-value))
+                                                          target-data)
                response))
-         (data-points-count (statistical-learning.data:data-points-count target-data))
+         (data-points-count (sl.data:data-points-count target-data))
          (state (make 'gradient-boost-training-state
                       :shrinkage shrinkage
                       :training-parameters parameters
@@ -243,8 +243,8 @@
                                 (regression-score target))
                       :target-data target
                       :training-data train-data))
-         (leaf (statistical-learning.tp:make-leaf state))
-         (tree (statistical-learning.tp:split state leaf)))
+         (leaf (sl.tp:make-leaf state))
+         (tree (sl.tp:split state leaf)))
     (make 'gradient-boost-model
           :parameters parameters
           :shrinkage shrinkage
@@ -259,17 +259,17 @@
 (defmethod calculate-expected-value ((parameters classification) data)
   (iterate
     (with result = (~>> parameters number-of-classes
-                        (statistical-learning.data:make-data-matrix 1)))
-    (for i from 0 below (statistical-learning.data:data-points-count data))
+                        (sl.data:make-data-matrix 1)))
+    (for i from 0 below (sl.data:data-points-count data))
     (iterate
       (for j from 0 below (statistical-learning.data:attributes-count data))
-      (incf (statistical-learning.data:mref result 0
-                              (truncate (statistical-learning.data:mref data i 0)))))
+      (incf (sl.data:mref result 0
+                          (truncate (sl.data:mref data i 0)))))
     (finally
      (iterate
        (for j from 0 below (statistical-learning.data:attributes-count data))
-       (for avg = (/ #1=(statistical-learning.data:mref result 0 j)
-                     (statistical-learning.data:data-points-count data)))
+       (for avg = (/ #1=(sl.data:mref result 0 j)
+                     (sl.data:data-points-count data)))
        (setf #1# avg))
      (return result))))
 
@@ -285,16 +285,16 @@
     (with sums = (sums predicted))
     (with number-of-classes = (number-of-classes parameters))
     (with result = (statistical-learning.data:make-data-matrix-like sums))
-    (for i from 0 below (statistical-learning.data:data-points-count expected))
+    (for i from 0 below (sl.data:data-points-count expected))
     (iterate
       (declare (type fixnum j))
       (for j from 0 below number-of-classes)
-      (setf (statistical-learning.data:mref result i j)
+      (setf (sl.data:mref result i j)
             (- (if (= (coerce j 'double-float)
-                      (statistical-learning.data:mref expected i 0))
+                      (sl.data:mref expected i 0))
                    1.0d0
                    0.0d0)
-               (statistical-learning.data:mref sums i j))))
+               (sl.data:mref sums i j))))
     (finally (return result))))
 
 
@@ -302,15 +302,15 @@
                                      expected
                                      gathered-predictions)
   (declare (optimize (speed 3) (safety 0)))
-  (let ((predicted (statistical-learning.tp:extract-predictions gathered-predictions)))
+  (let ((predicted (sl.tp:extract-predictions gathered-predictions)))
     (statistical-learning.data:check-data-points expected predicted)
     (iterate
       (declare (type fixnum i))
       (with result = (statistical-learning.data:make-data-matrix-like expected))
-      (for i from 0 below (statistical-learning.data:data-points-count result))
-      (setf (statistical-learning.data:mref result i 0)
-            (- (statistical-learning.data:mref expected i 0)
-               (statistical-learning.data:mref predicted i 0)))
+      (for i from 0 below (sl.data:data-points-count result))
+      (setf (sl.data:mref result i 0)
+            (- (sl.data:mref expected i 0)
+               (sl.data:mref predicted i 0)))
       (finally (return result)))))
 
 
@@ -318,8 +318,8 @@
                                                train-data
                                                target-data
                                                &key attributes weights &allow-other-keys)
-  (let* ((data-points-count (statistical-learning.data:data-points-count target-data))
-         (state (make 'statistical-learning.tp:fundamental-training-state
+  (let* ((data-points-count (sl.data:data-points-count target-data))
+         (state (make 'sl.tp:fundamental-training-state
                       :training-parameters parameters
                       :loss 0.0d0
                       :weights weights
@@ -332,15 +332,15 @@
                     (calculate-score parameters
                                      _
                                      state))))
-    (setf (statistical-learning.tp:loss state) score)
-    (make 'statistical-learning.tp:tree-model
+    (setf (sl.tp:loss state) score)
+    (make 'sl.tp:tree-model
           :parameters parameters
-          :root (let ((leaf (statistical-learning.tp:make-leaf state)))
-                  (or (statistical-learning.tp:split state leaf) leaf)))))
+          :root (let ((leaf (sl.tp:make-leaf state)))
+                  (or (sl.tp:split state leaf) leaf)))))
 
 
 (defmethod initialize-instance :after ((parameters single-impurity-classification)
-                                     &rest initargs)
+                                       &rest initargs)
   (declare (ignore initargs))
   (let ((number-of-classes (number-of-classes parameters)))
     (unless (integerp number-of-classes)
@@ -358,230 +358,235 @@
 (defmethod statistical-learning.performance:performance-metric
     ((parameters classification)
      target
-     predictions)
-  (statistical-learning.data:check-data-points target predictions)
+     predictions
+     &key weights)
+  (sl.data:check-data-points target predictions)
   (bind ((number-of-classes (the fixnum (number-of-classes parameters)))
-         (data-points-count (statistical-learning.data:data-points-count target))
+         (data-points-count (sl.data:data-points-count target))
          ((:flet prediction (prediction))
           (declare (optimize (speed 3) (safety 0)))
           (iterate
             (declare (type fixnum i))
             (for i from 0 below number-of-classes)
-            (finding i maximizing (statistical-learning.data:mref predictions prediction i))))
+            (finding i maximizing (sl.data:mref predictions prediction i))))
          (result (statistical-learning.performance:make-confusion-matrix number-of-classes)))
     (iterate
       (declare (type fixnum i)
                (optimize (speed 3)))
       (for i from 0 below data-points-count)
-      (for expected = (truncate (statistical-learning.data:mref target i 0)))
+      (for expected = (truncate (sl.data:mref target i 0)))
       (for predicted = (prediction i))
-      (incf (statistical-learning.performance:at-confusion-matrix
-             result expected predicted)))
+      (incf (sl.perf:at-confusion-matrix result expected predicted)
+            (if (null weights)
+                1.0d0
+                (aref weights i))))
     result))
 
 
-(defmethod statistical-learning.performance:average-performance-metric
+(defmethod sl.perf:average-performance-metric
     ((parameters classification)
      metrics)
   (iterate
     (with result = (~> parameters number-of-classes
-                       statistical-learning.performance:make-confusion-matrix))
+                       sl.perf:make-confusion-matrix))
     (for i from 0 below (length metrics))
     (for confusion-matrix = (aref metrics i))
     (sum-matrices confusion-matrix result)
     (finally (return result))))
 
 
-(defmethod statistical-learning.performance:errors ((parameters classification)
-                                      target
-                                      predictions)
+(defmethod sl.perf:errors ((parameters classification)
+                           target
+                           predictions)
   (declare (optimize (speed 3) (safety 0))
            (type simple-vector predictions)
            (type statistical-learning.data:data-matrix target))
-  (let* ((data-points-count (statistical-learning.data:data-points-count target))
+  (let* ((data-points-count (sl.data:data-points-count target))
          (result (make-array data-points-count :element-type 'double-float)))
     (declare (type (simple-array double-float (*)) result))
     (iterate
       (declare (type fixnum i))
       (for i from 0 below data-points-count)
-      (for expected = (truncate (statistical-learning.data:mref target i 0)))
-      (setf (aref result i) (- 1.0d0 (statistical-learning.data:mref predictions
-                                                       i
-                                                       expected))))
+      (for expected = (truncate (sl.data:mref target i 0)))
+      (setf (aref result i) (- 1.0d0 (sl.data:mref predictions
+                                                   i
+                                                   expected))))
     result))
 
 
-(defmethod statistical-learning.performance:errors ((parameters regression)
-                                      target
-                                      predictions)
+(defmethod sl.perf:errors ((parameters regression)
+                           target
+                           predictions)
   (iterate
-    (with result = (make-array (statistical-learning.data:data-points-count predictions)
+    (with result = (make-array (sl.data:data-points-count predictions)
                                :element-type 'double-float
                                :initial-element 0.0d0))
-    (for i from 0 below (statistical-learning.data:data-points-count predictions))
-    (for er = (- (statistical-learning.data:mref target i 0)
-                 (statistical-learning.data:mref predictions i 0)))
+    (for i from 0 below (sl.data:data-points-count predictions))
+    (for er = (- (sl.data:mref target i 0)
+                 (sl.data:mref predictions i 0)))
     (setf (aref result i) (* er er))
     (finally (return result))))
 
 
-(defmethod statistical-learning.performance:performance-metric ((parameters regression)
-                                                  target
-                                                  predictions)
+(defmethod sl.perf:performance-metric ((parameters regression)
+                                       target
+                                       predictions
+                                       &key weights)
   (iterate
     (with sum = 0.0d0)
-    (with count = (statistical-learning.data:data-points-count predictions))
+    (with count = (sl.data:data-points-count predictions))
     (for i from 0 below count)
-    (for er = (- (statistical-learning.data:mref target i 0)
-                 (statistical-learning.data:mref predictions i 0)))
-    (incf sum (* er er))
+    (for er = (- (sl.data:mref target i 0)
+                 (sl.data:mref predictions i 0)))
+    (incf sum (* (if (null weights) 1.0d0 (aref weights i))
+                 (* er er)))
     (finally (return (/ sum count)))))
 
 
-(defmethod statistical-learning.performance:average-performance-metric ((parameters regression)
-                                                          metrics)
+(defmethod sl.perf:average-performance-metric ((parameters regression)
+                                               metrics)
   (mean metrics))
 
 
-(defmethod statistical-learning.tp:contribute-predictions* ((parameters single-impurity-classification)
-                                                            model
-                                                            data
-                                                            state
-                                                            parallel)
+(defmethod sl.tp:contribute-predictions* ((parameters single-impurity-classification)
+                                          model
+                                          data
+                                          state
+                                          parallel)
   (statistical-learning.data:bind-data-matrix-dimensions ((data-points-count attributes-count data))
     (let ((number-of-classes (number-of-classes parameters)))
       (when (null state)
         (setf state (make 'gathered-predictions
-                          :indexes (statistical-learning.data:iota-vector data-points-count)
+                          :indexes (sl.data:iota-vector data-points-count)
                           :training-parameters parameters
-                          :sums (statistical-learning.data:make-data-matrix data-points-count
-                                                              number-of-classes))))
+                          :sums (sl.data:make-data-matrix data-points-count
+                                                          number-of-classes))))
       (let* ((sums (sums state))
-             (root (statistical-learning.tp:root model)))
+             (root (sl.tp:root model)))
         (funcall (if parallel #'lparallel:pmap #'map)
                  nil
                  (lambda (data-point)
                    (iterate
                      (declare (type fixnum j))
-                     (with leaf = (statistical-learning.tp:leaf-for root data data-point))
+                     (with leaf = (sl.tp:leaf-for root data data-point))
                      (with predictions = (predictions leaf))
                      (with support = (support leaf))
                      (for j from 0 below number-of-classes)
-                     (for class-support = (statistical-learning.data:mref predictions 0 j))
-                     (incf (statistical-learning.data:mref sums data-point j)
+                     (for class-support = (sl.data:mref predictions 0 j))
+                     (incf (sl.data:mref sums data-point j)
                            (/ class-support support))))
                  (indexes state))))
     (incf (contributions-count state))
     state))
 
 
-(defmethod statistical-learning.tp:contribute-predictions* ((parameters basic-regression)
-                                              model
-                                              data
-                                              state
-                                              parallel)
+(defmethod sl.tp:contribute-predictions* ((parameters basic-regression)
+                                          model
+                                          data
+                                          state
+                                          parallel)
   (statistical-learning.data:bind-data-matrix-dimensions ((data-points-count attributes-count data))
     (when (null state)
       (setf state (make 'gathered-predictions
-                        :indexes (statistical-learning.data:iota-vector data-points-count)
+                        :indexes (sl.data:iota-vector data-points-count)
                         :training-parameters parameters
-                        :sums (statistical-learning.data:make-data-matrix data-points-count
-                                                            1))))
+                        :sums (sl.data:make-data-matrix data-points-count
+                                                        1))))
     (let* ((sums (sums state))
-           (root (statistical-learning.tp:root model)))
+           (root (sl.tp:root model)))
       (funcall (if parallel #'lparallel:pmap #'map)
                nil
                (lambda (data-point)
-                 (let* ((leaf (statistical-learning.tp:leaf-for root data data-point))
+                 (let* ((leaf (sl.tp:leaf-for root data data-point))
                         (predictions (predictions leaf)))
-                   (incf (statistical-learning.data:mref sums data-point 0)
+                   (incf (sl.data:mref sums data-point 0)
                          predictions)))
                (indexes state)))
     (incf (contributions-count state))
     state))
 
 
-(defmethod statistical-learning.tp:contribute-predictions* ((parameters gradient-boost-regression)
-                                              model
-                                              data
-                                              state
-                                              parallel)
+(defmethod sl.tp:contribute-predictions* ((parameters gradient-boost-regression)
+                                          model
+                                          data
+                                          state
+                                          parallel)
   (statistical-learning.data:bind-data-matrix-dimensions ((data-points-count attributes-count data))
     (when (null state)
       (setf state (make 'gathered-predictions
-                        :indexes (statistical-learning.data:iota-vector data-points-count)
+                        :indexes (sl.data:iota-vector data-points-count)
                         :training-parameters parameters
-                        :sums (statistical-learning.data:make-data-matrix data-points-count
-                                                            1
-                                                            (expected-value model)))))
+                        :sums (sl.data:make-data-matrix data-points-count
+                                                        1
+                                                        (expected-value model)))))
     (let* ((sums (sums state))
            (shrinkage (shrinkage model))
-           (root (statistical-learning.tp:root model)))
+           (root (sl.tp:root model)))
       (funcall (if parallel #'lparallel:pmap #'map)
                nil
                (lambda (data-point)
-                 (let* ((leaf (statistical-learning.tp:leaf-for root data data-point))
+                 (let* ((leaf (sl.tp:leaf-for root data data-point))
                         (predictions (predictions leaf)))
-                   (incf (statistical-learning.data:mref sums data-point 0)
+                   (incf (sl.data:mref sums data-point 0)
                          (* shrinkage predictions))))
                (indexes state)))
     (incf (contributions-count state))
     state))
 
 
-(defmethod statistical-learning.tp:contribute-predictions* ((parameters gradient-boost-classification)
-                                              model
-                                              data
-                                              state
-                                              parallel)
+(defmethod sl.tp:contribute-predictions* ((parameters gradient-boost-classification)
+                                          model
+                                          data
+                                          state
+                                          parallel)
   (statistical-learning.data:bind-data-matrix-dimensions ((data-points-count attributes-count data))
     (when (null state)
       (setf state (make 'gathered-predictions
-                        :indexes (statistical-learning.data:iota-vector data-points-count)
+                        :indexes (sl.data:iota-vector data-points-count)
                         :training-parameters parameters
-                        :sums (statistical-learning.data:make-data-matrix data-points-count
-                                                            (number-of-classes parameters)))))
+                        :sums (sl.data:make-data-matrix data-points-count
+                                                                          (number-of-classes parameters)))))
     (let* ((sums (sums state))
            (number-of-classes (number-of-classes parameters))
            (shrinkage (shrinkage model))
-           (root (statistical-learning.tp:root model)))
+           (root (sl.tp:root model)))
       (funcall (if parallel #'lparallel:pmap #'map)
                nil
                (lambda (data-point)
                  (iterate
                    (declare (type fixnum j))
-                   (with leaf = (statistical-learning.tp:leaf-for root data data-point))
+                   (with leaf = (sl.tp:leaf-for root data data-point))
                    (with predictions = (predictions leaf))
                    (for j from 0 below number-of-classes)
-                   (for gradient = (statistical-learning.data:mref predictions 0 j))
-                   (incf (statistical-learning.data:mref sums data-point j)
+                   (for gradient = (sl.data:mref predictions 0 j))
+                   (incf (sl.data:mref sums data-point j)
                          (* shrinkage gradient))))
                (indexes state)))
     (incf (contributions-count state))
     state))
 
 
-(defmethod statistical-learning.tp:extract-predictions* ((parameters basic-regression)
-                                           (state gathered-predictions))
+(defmethod sl.tp:extract-predictions* ((parameters basic-regression)
+                                       (state gathered-predictions))
   (let ((count (contributions-count state)))
     (statistical-learning.data:map-data-matrix (lambda (value) (/ value count))
-                                 (sums state))))
+                                               (sums state))))
 
 
-(defmethod statistical-learning.tp:extract-predictions* ((parameters single-impurity-classification)
-                                           (state gathered-predictions))
+(defmethod sl.tp:extract-predictions* ((parameters single-impurity-classification)
+                                       (state gathered-predictions))
   (let ((count (contributions-count state)))
     (statistical-learning.data:map-data-matrix (lambda (value) (/ value count))
-                                 (sums state))))
+                                               (sums state))))
 
 
-(defmethod statistical-learning.tp:extract-predictions* ((parameters gradient-boost-regression)
-                                           (state gathered-predictions))
+(defmethod sl.tp:extract-predictions* ((parameters gradient-boost-regression)
+                                       (state gathered-predictions))
   (sums state))
 
 
-(defmethod statistical-learning.tp:extract-predictions* ((parameters gradient-boost-classification)
-                                           (state gathered-predictions))
+(defmethod sl.tp:extract-predictions* ((parameters gradient-boost-classification)
+                                       (state gathered-predictions))
   (declare (optimize (speed 3) (debug 0) (safety 0)))
   (iterate
     (declare (type fixnum i number-of-classes)
@@ -590,24 +595,24 @@
     (with number-of-classes = (number-of-classes parameters))
     (with sums = (sums state))
     (with result = (statistical-learning.data:make-data-matrix-like sums))
-    (for i from 0 below (statistical-learning.data:data-points-count sums))
+    (for i from 0 below (sl.data:data-points-count sums))
     (for maximum = most-negative-double-float)
     (for sum = 0.0d0)
     (iterate
       (declare (type fixnum j))
       (for j from 0 below number-of-classes)
-      (maxf maximum (statistical-learning.data:mref sums i j)))
+      (maxf maximum (sl.data:mref sums i j)))
     (iterate
       (declare (type fixnum j)
                (type double-float out))
       (for j from 0 below number-of-classes)
-      (for out = (exp (- (statistical-learning.data:mref sums i j) maximum)))
-      (setf (statistical-learning.data:mref result i j) out)
+      (for out = (exp (- (sl.data:mref sums i j) maximum)))
+      (setf (sl.data:mref result i j) out)
       (incf sum out))
     (iterate
       (declare (type fixnum j))
       (for j from 0 below number-of-classes)
-      (setf #1=(statistical-learning.data:mref result i j) (/ #1# sum)))
+      (setf #1=(sl.data:mref result i j) (/ #1# sum)))
     (finally (return result))))
 
 
@@ -629,7 +634,7 @@
         (declare (type fixnum i))
         (for i from 0 below (length split-array))
         (for right-p = (aref split-array i))
-        (for value = (statistical-learning.data:mref target-data i 0))
+        (for value = (sl.data:mref target-data i 0))
         (if right-p
             (setf right-count (1+ right-count)
                   right-sum (+ right-sum value))
@@ -650,7 +655,7 @@
                               (/ right-sum right-count)))
         (for i from 0 below (length split-array))
         (for rightp = (aref split-array i))
-        (for value = (statistical-learning.data:mref target-data i 0))
+        (for value = (sl.data:mref target-data i 0))
         (if rightp
             (incf right-error (square (if (null weights)
                                           #1=(- value right-avg)
@@ -672,8 +677,8 @@
   (declare (optimize (speed 3) (safety 0))
            (type (simple-array boolean (*)) split-array))
   (regression-score split-array
-                    (statistical-learning.tp:target-data training-state)
-                    (statistical-learning.tp:weights training-state)))
+                    (sl.tp:target-data training-state)
+                    (sl.tp:weights training-state)))
 
 
 (defmethod calculate-score ((training-parameters gradient-boost-classification)
@@ -682,5 +687,5 @@
   (declare (optimize (speed 3) (safety 0))
            (type (simple-array boolean (*)) split-array))
   (~>> training-state
-       statistical-learning.tp:target-data
+       sl.tp:target-data
        (regression-score split-array)))

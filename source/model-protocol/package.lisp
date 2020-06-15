@@ -3,7 +3,7 @@
 
 (defpackage #:statistical-learning.model-protocol
   (:use #:cl #:statistical-learning.aux-package)
-  (:nicknames #:statistical-learning.mp)
+  (:nicknames #:statistical-learning.mp #:sl.mp)
   (:export
    #:make-model
    #:parameters

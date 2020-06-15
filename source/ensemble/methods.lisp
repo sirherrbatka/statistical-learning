@@ -276,23 +276,25 @@
             :target-attributes-count target-data-attributes))))
 
 
-(defmethod statistical-learning.performance:performance-metric ((parameters random-forest-parameters)
-                                                  target
-                                                  predictions)
+(defmethod statistical-learning.performance:performance-metric ((parameters ensemble-parameters)
+                                                                target
+                                                                predictions
+                                                                &key weights)
   (statistical-learning.performance:performance-metric (tree-parameters parameters)
-                                         target
-                                         predictions))
+                                                       target
+                                                       predictions
+                                                       :weights weights))
 
 
-(defmethod statistical-learning.performance:average-performance-metric ((parameters random-forest-parameters)
-                                                          metrics)
+(defmethod statistical-learning.performance:average-performance-metric ((parameters ensemble-parameters)
+                                                                        metrics)
   (statistical-learning.performance:average-performance-metric (tree-parameters parameters)
-                                                 metrics))
+                                                               metrics))
 
 
-(defmethod statistical-learning.performance:errors ((parameters random-forest-parameters)
-                                      target
-                                      predictions)
+(defmethod statistical-learning.performance:errors ((parameters ensemble-parameters)
+                                                    target
+                                                    predictions)
   (statistical-learning.performance:errors (tree-parameters parameters)
-                             target
-                             predictions))
+                                           target
+                                           predictions))

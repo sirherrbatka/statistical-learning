@@ -3,7 +3,7 @@
 
 (defpackage #:statistical-learning.algorithms
   (:use #:cl #:statistical-learning.aux-package)
-  (:nicknames #:statistical-learning.alg)
+  (:nicknames #:statistical-learning.alg #:sl.alg)
   (:export
    #:basic-regression
    #:calculate-expected-value

@@ -22,7 +22,7 @@
   ())
 
 
-(defclass gradient-boost-ensemble-parameters (random-forest-parameters)
+(defclass gradient-boost-ensemble-parameters (ensemble-parameters)
   ((%shrinkage :initarg :shrinkage
                :reader shrinkage)
    (%shrinkage-change :initarg :shrinkage-change
