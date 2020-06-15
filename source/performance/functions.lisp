@@ -12,25 +12,26 @@
       (cl-ds.alg:on-each
        (lambda (train.test)
          (bind (((train . test) train.test)
-                (sampled-weights (if (null weights)
-                                     nil
-                                     (map '(vector double-float)
-                                          (lambda (i) (aref weights i))
-                                          train)))
+                ((:flet sampled-weights (sample))
+                 (if (null weights)
+                     nil
+                     (map '(vector double-float)
+                          (lambda (i) (aref weights i))
+                          sample)))
                 (model (statistical-learning.mp:make-model
                         model-parameters
                         (statistical-learning.data:sample train-data
                                             :data-points train)
                         (statistical-learning.data:sample target-data
                                                           :data-points train)
-                        :weights sampled-weights))
+                        :weights (sampled-weights train)))
                 (test-target-data (statistical-learning.data:sample target-data
-                                                      :data-points test))
+                                                                    :data-points test))
                 (test-train-data (statistical-learning.data:sample train-data
-                                                     :data-points test))
+                                                                   :data-points test))
                 (test-predictions (statistical-learning.mp:predict model
-                                                     test-train-data
-                                                     parallel)))
+                                                                   test-train-data
+                                                                   parallel)))
            (performance-metric model-parameters
                                test-target-data
                                test-predictions))))
