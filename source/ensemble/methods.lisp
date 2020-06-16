@@ -2,7 +2,7 @@
 
 
 (defmethod initialize-instance :after
-    ((instance ensemble-parameters)
+    ((instance ensemble)
      &rest initargs)
   (declare (ignore initargs))
   (let* ((trees-count (trees-count instance))
@@ -52,7 +52,7 @@
              :format-control "You can't request parallel creation of both the forest and the individual trees at the same time."))))
 
 
-(defmethod initialize-instance :after ((instance gradient-boost-ensemble-parameters)
+(defmethod initialize-instance :after ((instance gradient-boost-ensemble)
                                        &rest initargs)
   (declare (ignore initargs))
   (let ((shrinkage (shrinkage instance))
@@ -70,19 +70,19 @@
              :format-control "SHRINKAGE-CHANGE value implies that SHRINKAGE will eventually go below zero."))))
 
 
-(defmethod statistical-learning.mp:predict ((random-forest ensemble)
+(defmethod statistical-learning.mp:predict ((model ensemble-model)
                                             data
                                             &optional parallel)
   (check-type data statistical-learning.data:data-matrix)
-  (let* ((trees (trees random-forest))
-         (parameters (statistical-learning.mp:parameters random-forest))
+  (let* ((trees (trees model))
+         (parameters (statistical-learning.mp:parameters model))
          (tree-parameters (tree-parameters parameters))
          (result (trees-predict tree-parameters trees data parallel)))
     result))
 
 
 (defmethod weights-calculator
-    ((training-parameters random-forest-parameters)
+    ((training-parameters random-forest)
      (tree-parameters sl.perf:classification)
      parallel
      weights
@@ -117,7 +117,7 @@
 
 
 (defmethod weights-calculator
-    ((training-parameters random-forest-parameters)
+    ((training-parameters random-forest)
      (tree-parameters sl.perf:regression)
      parallel
      weights
@@ -145,7 +145,7 @@
       weights)))
 
 
-(defmethod statistical-learning.mp:make-model ((parameters random-forest-parameters)
+(defmethod statistical-learning.mp:make-model ((parameters random-forest)
                                                train-data
                                                target-data
                                                &key weights)
@@ -188,13 +188,13 @@
         (fit-tree-batch trees-view attributes-view parameters
                         train-data target-data weights)
         (funcall weights-calculator trees-view base))
-      (make 'random-forest
+      (make 'random-forest-model
             :trees trees
             :parameters parameters
             :target-attributes-count target-data-attributes))))
 
 
-(defmethod statistical-learning.mp:make-model ((parameters gradient-boost-ensemble-parameters)
+(defmethod statistical-learning.mp:make-model ((parameters gradient-boost-ensemble)
                                                train-data
                                                target-data
                                                &key weights)
@@ -274,13 +274,13 @@
                                                   new-state
                                                   target-data)
               state new-state))
-      (make 'gradient-boost-ensemble
+      (make 'gradient-boost-ensemble-model
             :trees trees
             :parameters parameters
             :target-attributes-count target-data-attributes))))
 
 
-(defmethod statistical-learning.performance:performance-metric ((parameters ensemble-parameters)
+(defmethod statistical-learning.performance:performance-metric ((parameters ensemble)
                                                                 target
                                                                 predictions
                                                                 &key weights)
@@ -290,13 +290,13 @@
                                                        :weights weights))
 
 
-(defmethod statistical-learning.performance:average-performance-metric ((parameters ensemble-parameters)
+(defmethod statistical-learning.performance:average-performance-metric ((parameters ensemble)
                                                                         metrics)
   (statistical-learning.performance:average-performance-metric (tree-parameters parameters)
                                                                metrics))
 
 
-(defmethod statistical-learning.performance:errors ((parameters ensemble-parameters)
+(defmethod statistical-learning.performance:errors ((parameters ensemble)
                                                     target
                                                     predictions)
   (statistical-learning.performance:errors (tree-parameters parameters)

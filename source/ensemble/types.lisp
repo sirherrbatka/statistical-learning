@@ -1,7 +1,7 @@
 (cl:in-package #:statistical-learning.ensemble)
 
 
-(defclass ensemble-parameters ()
+(defclass ensemble ()
   ((%trees-count :initarg :trees-count
                  :reader trees-count
                  :type positive-integer)
@@ -18,11 +18,11 @@
                      :reader tree-parameters)))
 
 
-(defclass random-forest-parameters (ensemble-parameters)
+(defclass random-forest (ensemble)
   ())
 
 
-(defclass gradient-boost-ensemble-parameters (ensemble-parameters)
+(defclass gradient-boost-ensemble (ensemble)
   ((%shrinkage :initarg :shrinkage
                :reader shrinkage)
    (%shrinkage-change :initarg :shrinkage-change
@@ -32,7 +32,7 @@
    :shrinkage-change 0.0d0))
 
 
-(defclass ensemble (statistical-learning.mp:fundamental-model)
+(defclass ensemble-model (statistical-learning.mp:fundamental-model)
   ((%trees :initarg :trees
            :reader trees
            :type simple-vector)
@@ -40,9 +40,9 @@
                              :reader target-attributes-count)))
 
 
-(defclass random-forest (ensemble)
+(defclass random-forest-model (ensemble-model)
   ())
 
 
-(defclass gradient-boost-ensemble (ensemble)
+(defclass gradient-boost-ensemble-model (ensemble-model)
   ())

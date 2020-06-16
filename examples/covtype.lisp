@@ -97,7 +97,7 @@
         :parallel nil))
 
 (defparameter *forest-parameters*
-  (make 'statistical-learning.ensemble:random-forest-parameters
+  (make 'statistical-learning.ensemble:random-forest
         :trees-count 50
         :parallel t
         :tree-batch-size 5
@@ -114,7 +114,7 @@
 
 (print (statistical-learning.performance:accuracy *confusion-matrix*)) ; 0.8117216167652304d0
 
-(print (~> (make 'statistical-learning.ensemble:gradient-boost-ensemble-parameters
+(print (~> (make 'statistical-learning.ensemble:gradient-boost-ensemble
                  :trees-count 50
                  :parallel t
                  :tree-batch-size 5

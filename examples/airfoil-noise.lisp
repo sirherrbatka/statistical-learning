@@ -38,7 +38,7 @@
         :parallel nil))
 
 (defparameter *forest-parameters*
-  (make 'statistical-learning.ensemble:random-forest-parameters
+  (make 'statistical-learning.ensemble:random-forest
         :trees-count 500
         :parallel t
         :tree-batch-size 5
@@ -56,7 +56,7 @@
 (print *mean-error*) ; 16.943994007564303d0 (squared error, root equal 4.11630829841064d0)
 
 (print (statistical-learning.performance:cross-validation
-        (make 'statistical-learning.ensemble:gradient-boost-ensemble-parameters
+        (make 'statistical-learning.ensemble:gradient-boost-ensemble
               :trees-count 500
               :parallel t
               :tree-batch-size 10
