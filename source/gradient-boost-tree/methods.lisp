@@ -150,9 +150,9 @@
 
 
 (defmethod target ((parameters regression) target-data expected-value)
-  (statistical-learning.data:map-data-matrix (lambda (x)
-                                               (- x expected-value))
-                                             target-data))
+  (sl.data:map-data-matrix (lambda (x)
+                             (- x expected-value))
+                           target-data))
 
 
 (defmethod sl.tp:make-leaf* ((training-parameters classification-implementation)
@@ -165,9 +165,9 @@
     (make-instance
      'sl.tp:fundamental-leaf-node
      :support (sl.data:data-points-count target-data)
-     :predictions (~>> (statistical-learning.data:reduce-data-points #'+ target-data)
-                       (statistical-learning.data:map-data-matrix (lambda (x)
-                                                                    (/ x data-points-count))))
+     :predictions (~>> (sl.data:reduce-data-points #'+ target-data)
+                       (sl.data:map-data-matrix (lambda (x)
+                                                  (/ x data-points-count))))
      :loss score)))
 
 
@@ -180,12 +180,12 @@
                         (sl.data:make-data-matrix 1)))
     (for i from 0 below (sl.data:data-points-count data))
     (iterate
-      (for j from 0 below (statistical-learning.data:attributes-count data))
+      (for j from 0 below (sl.data:attributes-count data))
       (incf (sl.data:mref result 0
                           (truncate (sl.data:mref data i 0)))))
     (finally
      (iterate
-       (for j from 0 below (statistical-learning.data:attributes-count data))
+       (for j from 0 below (sl.data:attributes-count data))
        (for avg = (/ #1=(sl.data:mref result 0 j)
                      (sl.data:data-points-count data)))
        (setf #1# avg))
