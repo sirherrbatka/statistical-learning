@@ -62,17 +62,17 @@
       (cl-ds.alg:on-each
        (lambda (train.test)
          (bind (((train . test) train.test)
-                (train-train-data (statistical-learning.data:sample train-data
-                                                       :data-points train))
-                (train-target-data (statistical-learning.data:sample target-data
-                                                       :data-points train))
-                (model (statistical-learning.mp:make-model model-parameters
-                                             train-train-data
-                                             train-target-data))
-                (test-target-data (statistical-learning.data:sample target-data
-                                                      :data-points test))
-                (test-train-data (statistical-learning.data:sample train-data
-                                                     :data-points test)))
+                (train-train-data (sl.data:sample train-data
+                                                  :data-points train))
+                (train-target-data (sl.data:sample target-data
+                                                   :data-points train))
+                (model (sl.mp:make-model model-parameters
+                                         train-train-data
+                                         train-target-data))
+                (test-target-data (sl.data:sample target-data
+                                                  :data-points test))
+                (test-train-data (sl.data:sample train-data
+                                                 :data-points test)))
            (attributes-importance* model test-train-data
                                    test-target-data parallel))))
       cl-ds.alg:array-elementwise
@@ -81,7 +81,7 @@
 
 (defun make-confusion-matrix (number-of-classes)
   (make-array (list number-of-classes number-of-classes)
-              :element-type 'fixnum))
+              :element-type 'double-float))
 
 
 (defun number-of-classes (confusion-matrix)

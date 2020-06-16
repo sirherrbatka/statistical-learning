@@ -56,10 +56,12 @@
     (:training-data training-data)))
 
 
-(defmethod split* :around (training-parameters training-state leaf)
+(defmethod split* :around ((training-parameters fundamental-tree-training-parameters)
+                           training-state leaf)
   (let* ((training-data (training-data training-state))
          (depth (depth training-state))
          (attribute-indexes (attribute-indexes training-state))
+         (loss (loss leaf))
          (maximal-depth (maximal-depth training-parameters))
          (minimal-size (minimal-size training-parameters)))
     (declare (type statistical-learning.data:data-matrix training-data)
@@ -67,7 +69,8 @@
     (if (or (< (statistical-learning.data:data-points-count training-data)
                (* 2 minimal-size))
             (emptyp attribute-indexes)
-            (>= depth maximal-depth))
+            (>= depth maximal-depth)
+            (<= loss (minimal-difference training-parameters)))
         nil
         (call-next-method))))
 
@@ -85,38 +88,20 @@
             (leaf-for (left-node node) data index)))))
 
 
-(defmethod statistical-learning.mp:predict ((model fundamental-tree-node) data
-                              &optional parallel)
-  (declare (ignore parallel))
-  ;; TODO should be able to work in parallel
-  (statistical-learning.data:check-data-points data)
-  (statistical-learning.data:bind-data-matrix-dimensions
-      ((data-points attributes data))
-    (iterate
-      (with result = nil)
-      (with slice = (statistical-learning.data:make-data-matrix 1 attributes))
-      (for i from 0 below data-points)
-      (iterate
-        (for j from 0 below attributes)
-        (setf (statistical-learning.data:mref slice 0 j) (statistical-learning.data:mref data i j)))
-      (for leaf = (leaf-for model slice 0))
-      (for prediction = (statistical-learning.mp:predict leaf slice))
-      (when (null result)
-        (setf result (~>> (statistical-learning.data:attributes-count prediction)
-                          (statistical-learning.data:make-data-matrix data-points))))
-      (iterate
-        (for j from 0 below attributes)
-        (setf (statistical-learning.data:mref slice i j) (statistical-learning.data:mref prediction 0 j)))
-      (finally (return result)))))
+(defmethod statistical-learning.mp:predict ((model tree-model)
+                                            data
+                                            &optional parallel)
+  (~> (contribute-predictions model data nil parallel)
+      extract-predictions))
 
 
-(defmethod shared-initialize :after
+(defmethod initialize-instance :after
     ((instance fundamental-tree-training-parameters)
-     slot-names
      &rest initargs)
-  (declare (ignore slot-names initargs))
+  (declare (ignore initargs))
   (let ((maximal-depth (maximal-depth instance))
         (minimal-size (minimal-size instance))
+        (minimal-difference (minimal-difference instance))
         (trials-count (trials-count instance)))
     (parallel instance) ; here just to check if slot is bound
     (unless (integerp maximal-depth)
@@ -150,3 +135,97 @@
   (declare (ignore initargs))
   (force-tree object)
   object)
+
+
+(defmethod sl.tp:split*
+    ((training-parameters fundamental-tree-training-parameters)
+     training-state
+     leaf)
+  (declare (optimize (speed 0) (safety 0)))
+  (bind ((training-data (training-data training-state))
+         (trials-count (trials-count training-parameters))
+         (minimal-difference (minimal-difference training-parameters))
+         (score (loss leaf))
+         (minimal-size (minimal-size training-parameters))
+         (parallel (parallel training-parameters))
+         (attributes (attribute-indexes training-state)))
+    (declare (type fixnum trials-count)
+             (type double-float score minimal-difference)
+             (type boolean parallel))
+    (iterate
+      (declare (type fixnum attempt left-length right-length
+                     optimal-left-length optimal-right-length
+                     optimal-attribute data-size)
+               (type double-float
+                     left-score right-score
+                     minimal-score optimal-threshold))
+      (with optimal-left-length = -1)
+      (with optimal-right-length = -1)
+      (with optimal-attribute = -1)
+      (with minimal-score = most-positive-double-float)
+      (with minimal-left-score = most-positive-double-float)
+      (with minimal-right-score = most-positive-double-float)
+      (with optimal-threshold = most-positive-double-float)
+      (with data-size = (sl.data:data-points-count training-data))
+      (with split-array = (sl.opt:make-split-array data-size))
+      (with optimal-array = (sl.opt:make-split-array data-size))
+      (for attempt from 0 below trials-count)
+      (for (values attribute threshold) = (random-test attributes training-data))
+      (for (values left-length right-length) = (fill-split-array
+                                                training-data
+                                                attribute
+                                                threshold
+                                                split-array))
+      (when (or (< left-length minimal-size)
+                (< right-length minimal-size))
+        (next-iteration))
+      (for (values left-score right-score) = (calculate-loss*
+                                              training-parameters
+                                              training-state
+                                              split-array))
+      (for split-score = (+ (* (/ left-length data-size) left-score)
+                            (* (/ right-length data-size) right-score)))
+      (when (< split-score minimal-score)
+        (setf minimal-score split-score
+              optimal-threshold threshold
+              optimal-attribute attribute
+              optimal-left-length left-length
+              optimal-right-length right-length
+              minimal-left-score left-score
+              minimal-right-score right-score)
+        (rotatef split-array optimal-array))
+      (finally
+       (let ((difference (- (the double-float score)
+                            (the double-float minimal-score))))
+         (declare (type double-float difference))
+         (when (< difference minimal-difference)
+           (return nil))
+         (let ((new-attributes (subsample-vector attributes
+                                                 optimal-attribute)))
+           (return (make 'fundamental-tree-node
+                         :left-node (make-simple-node
+                                     training-parameters
+                                     training-state
+                                     optimal-array
+                                     minimal-left-score
+                                     optimal-left-length
+                                     sl.opt:left
+                                     parallel
+                                     training-state
+                                     new-attributes
+                                     optimal-attribute)
+                         :right-node (make-simple-node
+                                      training-parameters
+                                      training-state
+                                      optimal-array
+                                      minimal-right-score
+                                      optimal-right-length
+                                      sl.opt:right
+                                      nil
+                                      training-state
+                                      new-attributes
+                                      optimal-attribute)
+                         :support data-size
+                         :loss score
+                         :attribute (aref attributes optimal-attribute)
+                         :attribute-value optimal-threshold))))))))

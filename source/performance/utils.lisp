@@ -40,3 +40,11 @@
       (for feature-importance = (if (zerop sd) 0.0d0 (/ mean-change sd)))
       (setf (aref result i) feature-importance)
       (finally (return result)))))
+
+
+(defun sum-matrices (matrix result)
+  (iterate
+    (for i from 0 below (array-total-size matrix))
+    (incf (row-major-aref result i)
+          (row-major-aref matrix i)))
+  result)

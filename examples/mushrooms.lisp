@@ -84,10 +84,10 @@
               ("e" 0.0d0))))))
 
 (defparameter *training-parameters*
-  (make 'statistical-learning.algorithms:single-impurity-classification
+  (make 'statistical-learning.dt:classification
+        :optimized-function (sl.opt:gini-impurity 2)
         :maximal-depth 8
         :minimal-difference 0.0001d0
-        :number-of-classes 2
         :minimal-size 10
         :trials-count 80
         :parallel nil))
@@ -104,15 +104,15 @@
 
 (defparameter *confusion-matrix*
   (statistical-learning.performance:cross-validation *forest-parameters*
-                                       4
-                                       *train-data*
-                                       *target-data*
-                                       t))
+                                                     4
+                                                     *train-data*
+                                                     *target-data*
+                                                     t))
 
 (print (statistical-learning.performance:accuracy *confusion-matrix*)) ; 1.0
 
 (print (statistical-learning.performance:attributes-importance *forest-parameters*
-                                                 4
-                                                 *train-data*
-                                                 *target-data*
-                                                 t))
+                                                               4
+                                                               *train-data*
+                                                               *target-data*
+                                                               t))

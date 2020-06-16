@@ -2,7 +2,10 @@
 
 
 (defclass fundamental-node ()
-  ())
+  ((%loss :initarg :loss
+          :accessor loss)
+   (%support :initarg :support
+             :accessor support)))
 
 
 (defclass fundamental-tree-node (fundamental-node)
@@ -17,13 +20,16 @@
 
 
 (defclass fundamental-leaf-node (fundamental-node)
-  ())
+  ((%predictions :initarg :predictions
+                 :accessor predictions)))
 
 
 (defclass fundamental-tree-training-parameters
     (statistical-learning.mp:fundamental-model-parameters)
   ((%maximal-depth :initarg :maximal-depth
                    :reader maximal-depth)
+   (%minimal-difference :initarg :minimal-difference
+                        :reader minimal-difference)
    (%minimal-size :initarg :minimal-size
                   :reader minimal-size)
    (%trials-count :initarg :trials-count
@@ -72,4 +78,11 @@
 
 (defclass contributed-predictions ()
   ((%training-parameters :initarg :training-parameters
-                         :reader training-parameters)))
+                         :reader training-parameters)
+   (%contributions-count :initarg :contributions-count
+                         :accessor contributions-count)
+   (%indexes :initarg :indexes
+             :reader indexes)
+   (%sums :initarg :sums
+          :reader sums))
+  (:default-initargs :contributions-count 0))

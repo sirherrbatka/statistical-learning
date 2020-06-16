@@ -1,14 +1,6 @@
 (cl:in-package #:statistical-learning.tree-protocol)
 
 
-(defmacro training-state-clone (training-state &rest arguments)
-  (once-only (training-state)
-    `(progn
-       (check-type ,training-state fundamental-training-state)
-       (cl-ds.utils:quasi-clone* ,training-state
-         ,@arguments))))
-
-
 (defun force-tree (model)
   (let ((root (root model)))
     (write-root (force-tree* (lparallel:force root))
@@ -29,9 +21,12 @@
 
 
 (defun split (training-state leaf)
-  (split* (training-parameters training-state)
-          training-state
-          leaf))
+  (let ((result (split* (training-parameters training-state)
+                        training-state
+                        leaf)))
+    (if (null result)
+        leaf
+        result)))
 
 
 (defun leafs-for* (node data)
@@ -76,3 +71,9 @@
 (defun extract-predictions (state)
   (extract-predictions* (training-parameters state)
                         state))
+
+
+(defun calculate-loss (state split-array)
+  (calculate-loss* (training-parameters state)
+                   state
+                   split-array))

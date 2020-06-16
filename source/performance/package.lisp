@@ -12,12 +12,13 @@
    #:average-performance-metric
    #:cross-validation
    #:f1-score
-   #:fundamental-model-parameters
    #:make-confusion-matrix
    #:performance-metric
    #:precision
    #:recall
    #:errors
    #:specificity
+   #:classification
+   #:regression
    #:two-class-confusion-matrix-from-general-confusion-matrix
    ))

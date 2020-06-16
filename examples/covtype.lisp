@@ -88,10 +88,10 @@
                     :element-type 'double-float))
 
 (defparameter *training-parameters*
-  (make 'statistical-learning.algorithms:single-impurity-classification
+  (make 'statistical-learning.dt:classification
+        :optimized-function (sl.opt:gini-impurity *cover-types*)
         :maximal-depth 25
         :minimal-difference 0.00001d0
-        :number-of-classes *cover-types*
         :minimal-size 10
         :trials-count 50
         :parallel nil))
@@ -122,10 +122,10 @@
                  :shrinkage 0.2d0
                  :shrinkage-change (/ 0.2d0 75)
                  :tree-sample-rate 0.1
-                 :tree-parameters (make 'statistical-learning.alg:gradient-boost-classification
+                 :tree-parameters (make 'sl.gbt:classification
+                                        :optimized-function (sl.opt:k-logistic *cover-types*)
                                         :maximal-depth 25
                                         :minimal-size 10
-                                        :number-of-classes *cover-types*
                                         :minimal-difference 0.00001d0
                                         :trials-count 50
                                         :parallel nil))

@@ -29,6 +29,15 @@
                              (:file "functions")
                              (:file "methods")
                              (:file "documentation")))
+               (:module "optimization"
+                :components ((:file "package")
+                             (:file "generics")
+                             (:file "types")
+                             (:file "variables")
+                             (:file "utils")
+                             (:file "methods")
+                             (:file "functions")
+                             ))
                (:module "performance"
                 :components ((:file "package")
                              (:file "generics")
@@ -40,18 +49,28 @@
                              ))
                (:module "tree-protocol"
                 :components ((:file "package")
+                             (:file "macros")
                              (:file "generics")
                              (:file "types")
+                             (:file "variables")
+                             (:file "utils")
                              (:file "functions")
                              (:file "methods")
                              ))
-               (:module "algorithms"
+               (:module "decision-tree"
                 :components ((:file "package")
+                             (:file "generics")
                              (:file "types")
                              (:file "utils")
-                             (:file "generics")
-                             (:file "methods")
                              (:file "functions")
+                             (:file "methods")
+                             ))
+               (:module "gradient-boost-tree"
+                :components ((:file "package")
+                             (:file "generics")
+                             (:file "types")
+                             (:file "utils")
+                             (:file "methods")
                              ))
                (:module "ensemble"
                 :components ((:file "package")

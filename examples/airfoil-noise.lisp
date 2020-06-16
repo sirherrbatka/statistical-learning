@@ -29,7 +29,8 @@
                     :element-type 'double-float))
 
 (defparameter *training-parameters*
-  (make 'statistical-learning.algorithms:basic-regression
+  (make 'statistical-learning.dt:regression
+        :optimized-function (sl.opt:squared-error)
         :maximal-depth 4
         :minimal-difference 0.0001d0
         :minimal-size 5
@@ -63,7 +64,8 @@
               :shrinkage 0.2d0
               :shrinkage-change (/ 0.4d0 200)
               :tree-sample-rate 0.1
-              :tree-parameters (make 'statistical-learning.alg:gradient-boost-regression
+              :tree-parameters (make 'sl.gbt:regression
+                                     :optimized-function (sl.opt:squared-error)
                                      :maximal-depth 5
                                      :minimal-size 5
                                      :minimal-difference 0.00001d0

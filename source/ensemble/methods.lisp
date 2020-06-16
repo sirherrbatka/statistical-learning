@@ -71,8 +71,8 @@
 
 
 (defmethod statistical-learning.mp:predict ((random-forest ensemble)
-                              data
-                              &optional parallel)
+                                            data
+                                            &optional parallel)
   (check-type data statistical-learning.data:data-matrix)
   (let* ((trees (trees random-forest))
          (parameters (statistical-learning.mp:parameters random-forest))
@@ -83,7 +83,7 @@
 
 (defmethod weights-calculator
     ((training-parameters random-forest-parameters)
-     (tree-parameters statistical-learning.alg:classification)
+     (tree-parameters sl.perf:classification)
      parallel
      weights
      train-data
@@ -118,7 +118,7 @@
 
 (defmethod weights-calculator
     ((training-parameters random-forest-parameters)
-     (tree-parameters statistical-learning.alg:regression)
+     (tree-parameters sl.perf:regression)
      parallel
      weights
      train-data
@@ -146,9 +146,9 @@
 
 
 (defmethod statistical-learning.mp:make-model ((parameters random-forest-parameters)
-                                 train-data
-                                 target-data
-                                 &key weights)
+                                               train-data
+                                               target-data
+                                               &key weights)
   (statistical-learning.data:bind-data-matrix-dimensions
       ((train-data-data-points train-data-attributes train-data)
        (target-data-data-points target-data-attributes target-data))
@@ -165,8 +165,9 @@
                         :displaced-index-offset (min trees-count from)
                         :displaced-to array)))
       (when (null weights)
-        (setf weights (statistical-learning.data:make-data-matrix train-data-data-points 1
-                                                    1.0d0)))
+        (setf weights (sl.data:make-data-matrix train-data-data-points
+                                                1
+                                                1.0d0)))
       (setf weights-calculator (weights-calculator parameters tree-parameters
                                                    parallel weights
                                                    train-data target-data))
@@ -213,39 +214,40 @@
             (make-array (min trees-count (- to from))
                         :displaced-index-offset (min trees-count from)
                         :displaced-to array))
-           (expected-value (statistical-learning.alg:calculate-expected-value tree-parameters
-                                                                target-data))
+           (expected-value (statistical-learning.gradient-boost-tree:calculate-expected-value
+                            tree-parameters
+                            target-data))
            ((:flet fit-tree-batch (trees attributes shrinkage response))
             (funcall (if parallel #'lparallel:pmap-into #'map-into)
                      trees
                      (lambda (attributes)
-                       (bind ((sample (statistical-learning.data:select-random-indexes
+                       (bind ((sample (sl.data:select-random-indexes
                                        tree-sample-size
                                        train-data-data-points))
-                              (train (statistical-learning.data:sample train-data
-                                                                       :attributes attributes
-                                                                       :data-points sample))
-                              (target (statistical-learning.data:sample target-data
-                                                                        :data-points sample))
+                              (train (sl.data:sample train-data
+                                                     :attributes attributes
+                                                     :data-points sample))
+                              (target (sl.data:sample target-data
+                                                      :data-points sample))
                               (response (if (null response)
                                             nil
-                                            (statistical-learning.data:sample response
-                                                                :data-points sample))))
-                         (statistical-learning.mp:make-model tree-parameters
-                                                             train
-                                                             target
-                                                             :shrinkage shrinkage
-                                                             :attributes attributes
-                                                             :response response
-                                                             :weights (if (null weights)
-                                                                          nil
-                                                                          (map '(vector double-float)
-                                                                               (lambda (x) (aref weights x))
-                                                                               sample))
-                                                             :expected-value expected-value)))
+                                            (sl.data:sample response
+                                                            :data-points sample))))
+                         (sl.mp:make-model tree-parameters
+                                           train
+                                           target
+                                           :shrinkage shrinkage
+                                           :attributes attributes
+                                           :response response
+                                           :weights (if (null weights)
+                                                        nil
+                                                        (map '(vector double-float)
+                                                             (lambda (x) (aref weights x))
+                                                             sample))
+                                           :expected-value expected-value)))
                      attributes)))
-      (~>> (statistical-learning.data:selecting-random-indexes tree-attributes-count
-                                                 train-data-attributes)
+      (~>> (sl.data:selecting-random-indexes tree-attributes-count
+                                             train-data-attributes)
            (map-into attributes))
       (iterate
         (with shrinkage = (shrinkage parameters))
@@ -268,7 +270,9 @@
                                            parallel
                                            state))
         (decf shrinkage shrinkage-change)
-        (setf response (statistical-learning.alg:gradient-boost-response new-state target-data)
+        (setf response (sl.gbt:calculate-response tree-parameters
+                                                  new-state
+                                                  target-data)
               state new-state))
       (make 'gradient-boost-ensemble
             :trees trees
