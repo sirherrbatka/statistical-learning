@@ -75,19 +75,6 @@
         (call-next-method))))
 
 
-(defun leaf-for (node data index)
-  (declare (type statistical-learning.data:data-matrix data)
-           (type fixnum index))
-  (if (typep node 'fundamental-leaf-node)
-      node
-      (bind ((attribute-index (attribute node))
-             (attribute-value (attribute-value node)))
-        (if (> (statistical-learning.data:mref data index attribute-index)
-               attribute-value)
-            (leaf-for (right-node node) data index)
-            (leaf-for (left-node node) data index)))))
-
-
 (defmethod statistical-learning.mp:predict ((model tree-model)
                                             data
                                             &optional parallel)
@@ -141,7 +128,7 @@
     ((training-parameters fundamental-tree-training-parameters)
      training-state
      leaf)
-  (declare (optimize (speed 0) (safety 0)))
+  (declare (optimize (speed 3) (safety 0)))
   (bind ((training-data (training-data training-state))
          (trials-count (trials-count training-parameters))
          (minimal-difference (minimal-difference training-parameters))
@@ -150,6 +137,7 @@
          (parallel (parallel training-parameters))
          (attributes (attribute-indexes training-state)))
     (declare (type fixnum trials-count)
+             (type (simple-array fixnum (*)) attributes)
              (type double-float score minimal-difference)
              (type boolean parallel))
     (iterate

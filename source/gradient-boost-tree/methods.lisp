@@ -207,9 +207,9 @@
 (defmethod calculate-response ((parameters classification)
                                gathered-predictions
                                expected)
-  (sl.opt:response (optimized-function parameters)
-                   expected
-                   (sl.tp:sums gathered-predictions)))
+  (~>> (sl.tp:sums gathered-predictions)
+       (sl.opt:response (optimized-function parameters)
+                        expected)))
 
 
 (defmethod sl.opt:number-of-classes ((object classification))

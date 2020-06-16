@@ -77,3 +77,16 @@
   (calculate-loss* (training-parameters state)
                    state
                    split-array))
+
+
+(defun leaf-for (node data index)
+  (declare (type statistical-learning.data:data-matrix data)
+           (type fixnum index))
+  (if (typep node 'fundamental-leaf-node)
+      node
+      (bind ((attribute-index (attribute node))
+             (attribute-value (attribute-value node)))
+        (if (> (statistical-learning.data:mref data index attribute-index)
+               attribute-value)
+            (leaf-for (right-node node) data index)
+            (leaf-for (left-node node) data index)))))
