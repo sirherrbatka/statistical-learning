@@ -25,6 +25,7 @@
    #:fundamental-tree-node
    #:fundamental-tree-training-parameters
    #:indexes
+   #:initialize-leaf
    #:leaf-for
    #:leafp
    #:leafs-for
@@ -32,11 +33,8 @@
    #:loss
    #:make-leaf
    #:make-leaf*
-   #:initialize-leaf
-   #:make-training-state
-   #:split-training-state*
-   #:split-training-state
    #:make-node
+   #:make-training-state
    #:maximal-depth
    #:minimal-difference
    #:minimal-size
@@ -44,8 +42,12 @@
    #:predictions
    #:right-node
    #:root
+   #:sample-training-state
+   #:sample-training-state*
    #:split
    #:split*
+   #:split-training-state
+   #:split-training-state*
    #:sums
    #:support
    #:target-data

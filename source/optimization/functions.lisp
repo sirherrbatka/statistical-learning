@@ -2,7 +2,7 @@
 
 
 (defun make-split-array (length)
-  (make-array length :element-type 'boolean
+  (make-array length :element-type t
                      :initial-element nil))
 
 

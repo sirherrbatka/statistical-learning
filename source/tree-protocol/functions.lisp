@@ -123,3 +123,15 @@
                                    right-arguments
                                    attribute-index
                                    new-attributes))))
+
+
+(defun sample-training-state (state &key data-points
+                                      train-attributes
+                                      target-attributes
+                                      initargs)
+  (sample-training-state* (training-parameters state)
+                          state
+                          :data-points data-points
+                          :train-attributes train-attributes
+                          :target-attributes target-attributes
+                          :initarg initargs))

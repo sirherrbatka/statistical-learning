@@ -20,7 +20,7 @@
 
 
 (deftype split-array ()
-  `(simple-array boolean (*)))
+  `(simple-array t (*)))
 
 
 (deftype weights-data-matrix ()

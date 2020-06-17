@@ -45,21 +45,21 @@
 (defun fill-split-array (data attribute threshold array)
   (iterate
     (declare (type fixnum right-count left-count i)
-             (type boolean right-p)
+             (type boolean rightp)
              (optimize (speed 3) (safety 0)))
     (with right-count = 0)
     (with left-count = 0)
     (for i from 0 below (length array))
-    (for right-p = (> (statistical-learning.data:mref data i attribute) threshold))
-    (setf (aref array i) right-p)
-    (if right-p (incf right-count) (incf left-count))
+    (for rightp = (> (statistical-learning.data:mref data i attribute) threshold))
+    (setf (aref array i) rightp)
+    (if rightp (incf right-count) (incf left-count))
     (finally (return (values left-count right-count)))))
 
 
 (-> subsample-array (statistical-learning.data:data-matrix
                      fixnum
                      sl.opt:split-array
-                     boolean
+                     t
                      (or null fixnum))
     statistical-learning.data:data-matrix)
 (defun subsample-array (array length split-array position skipped-column)
@@ -75,7 +75,7 @@
           (declare (type fixnum j i))
           (with j = 0)
           (for i from 0 below data-points-count)
-          (when (eq position (aref split-array i))
+          (when (eql position (aref split-array i))
             (iterate
               (declare (type fixnum k p))
               (with p = 0)

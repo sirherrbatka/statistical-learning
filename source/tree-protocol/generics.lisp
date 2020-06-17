@@ -32,8 +32,15 @@
 (defgeneric make-training-state (parameters train-data target-data
                                  &rest initargs &key &allow-other-keys))
 (defgeneric split-training-state* (parameters state split-array
-                                   position size arguments
+                                   position size initargs
                                    &optional attribute-index attribute-indexes))
+(defgeneric sample-training-state* (parameters state
+                                    &key
+                                      data-points
+                                      train-attributes
+                                      target-attributes
+                                      initargs
+                                    &allow-other-keys))
 (defgeneric loss (state))
 (defgeneric (setf loss) (new-value state))
 (defgeneric calculate-loss* (parameters state split-array))

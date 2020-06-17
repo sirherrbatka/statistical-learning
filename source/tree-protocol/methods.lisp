@@ -259,3 +259,34 @@
                                          position nil)
            :attribute-indexes new-attributes
            (append arguments cloning-list))))
+
+
+(defmethod sample-training-state* ((parameters fundamental-tree-training-parameters)
+                                   state &key
+                                           data-points
+                                           train-attributes
+                                           target-attributes
+                                           initargs)
+  (bind ((cloning-list (cl-ds.utils:cloning-list state))
+         (training-data (training-data state))
+         (target-data (target-data state))
+         (weights (weights state))
+         (class (class-of state))
+         (attributes (attribute-indexes state))
+         (new-attributes (if (null train-attributes)
+                             attributes
+                             (map '(vector fixnum)
+                                  (rcurry #'aref attributes)
+                                  train-attributes))))
+    (apply #'make class
+           :weights (if (null weights)
+                        nil
+                        (sl.data:sample weights :data-points data-points))
+           :training-data (sl.data:sample training-data
+                                          :data-points data-points
+                                          :attributes train-attributes)
+           :target-data (sl.data:sample target-data
+                                        :data-points data-points
+                                        :attributes target-attributes)
+           :attribute-indexes new-attributes
+           (append initargs cloning-list))))
