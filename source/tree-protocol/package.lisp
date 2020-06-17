@@ -34,6 +34,8 @@
    #:make-leaf*
    #:initialize-leaf
    #:make-training-state
+   #:split-training-state*
+   #:split-training-state
    #:make-node
    #:maximal-depth
    #:minimal-difference

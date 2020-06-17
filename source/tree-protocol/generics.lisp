@@ -31,6 +31,9 @@
 (defgeneric initialize-leaf (training-parameters training-state leaf))
 (defgeneric make-training-state (parameters train-data target-data
                                  &rest initargs &key &allow-other-keys))
+(defgeneric split-training-state* (parameters state split-array
+                                   position size arguments
+                                   &optional attribute-index attribute-indexes))
 (defgeneric loss (state))
 (defgeneric (setf loss) (new-value state))
 (defgeneric calculate-loss* (parameters state split-array))

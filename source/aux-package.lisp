@@ -208,6 +208,7 @@
   alexandria:destructuring-case
   alexandria:destructuring-ccase
   alexandria:destructuring-ecase
+  alexandria:xor
 
   serapeum:~>
   serapeum:->

@@ -93,3 +93,33 @@
                attribute-value)
             (leaf-for (right-node node) data index)
             (leaf-for (left-node node) data index)))))
+
+
+(defun split-training-state (state split-array
+                             left-arguments right-arguments
+                             &key
+                               (left-size (count sl.opt:left split-array))
+                               (right-size (count sl.opt:right split-array))
+                             attribute-index)
+  (let* ((training-parameters (training-parameters state))
+         (attribute-indexes (attribute-indexes state))
+         (new-attributes (if (null attribute-index)
+                             attribute-indexes
+                             (subsample-vector attribute-indexes
+                                               attribute-index))))
+    (values (split-training-state* training-parameters
+                                   state
+                                   split-array
+                                   sl.opt:left
+                                   left-size
+                                   left-arguments
+                                   attribute-index
+                                   new-attributes)
+            (split-training-state* training-parameters
+                                   state
+                                   split-array
+                                   sl.opt:right
+                                   right-size
+                                   right-arguments
+                                   attribute-index
+                                   new-attributes))))

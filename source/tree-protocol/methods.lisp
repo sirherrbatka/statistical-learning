@@ -188,35 +188,35 @@
          (declare (type double-float difference))
          (when (< difference minimal-difference)
            (return nil))
-         (let ((new-attributes (subsample-vector attributes
-                                                 optimal-attribute)))
-           (return (make 'fundamental-tree-node
-                         :left-node (make-simple-node
-                                     training-parameters
-                                     training-state
-                                     optimal-array
-                                     minimal-left-score
-                                     optimal-left-length
-                                     sl.opt:left
-                                     parallel
-                                     training-state
-                                     new-attributes
-                                     optimal-attribute)
-                         :right-node (make-simple-node
-                                      training-parameters
-                                      training-state
-                                      optimal-array
-                                      minimal-right-score
-                                      optimal-right-length
-                                      sl.opt:right
-                                      nil
-                                      training-state
-                                      new-attributes
-                                      optimal-attribute)
-                         :support data-size
-                         :loss score
-                         :attribute (aref attributes optimal-attribute)
-                         :attribute-value optimal-threshold))))))))
+         (bind ((new-depth (~> training-state depth 1+))
+                (new-attributes (subsample-vector attributes
+                                                  optimal-attribute))
+                ((:flet new-state (position size loss))
+                 (split-training-state* training-parameters
+                                        training-state
+                                        optimal-array
+                                        position
+                                        size
+                                        `(:depth ,new-depth :loss ,loss)
+                                        optimal-attribute
+                                        new-attributes))
+                ((:flet subtree (state &optional parallel))
+                 (if parallel
+                     (lparallel:future (~>> state make-leaf (split state)))
+                     (~>> state make-leaf (split state)))))
+           (return (make-node 'fundamental-tree-node
+                              :left-node (~> (new-state sl.opt:left
+                                                        optimal-left-length
+                                                        minimal-left-score)
+                                             subtree)
+                              :right-node (~> (new-state sl.opt:right
+                                                         optimal-right-length
+                                                         minimal-right-score)
+                                              (subtree parallel))
+                              :support data-size
+                              :loss score
+                              :attribute (aref attributes optimal-attribute)
+                              :attribute-value optimal-threshold))))))))
 
 
 (defmethod make-leaf* ((parameters fundamental-tree-training-parameters)
@@ -228,3 +228,34 @@
                                 train-data target-data
                                 &rest initargs &key &allow-other-keys)
   (apply #'make 'fundamental-training-state train-data target-data initargs))
+
+
+(defmethod split-training-state* ((parameters fundamental-tree-training-parameters)
+                                  state split-array
+                                  position size arguments
+                                  &optional attribute-index attribute-indexes)
+  (bind ((cloning-list (cl-ds.utils:cloning-list state))
+         (training-data (training-data state))
+         (target-data (target-data state))
+         (weights (weights state))
+         (class (class-of state))
+         (attributes (attribute-indexes state))
+         (new-attributes (or attribute-indexes
+                             (and attribute-index
+                                  (subsample-vector attributes
+                                                    attribute-index))
+                             attributes)))
+    (apply #'make class
+           :weights (if (null weights)
+                        nil
+                        (subsample-array weights size
+                                         split-array position
+                                         nil))
+           :training-data (subsample-array training-data
+                                           size split-array
+                                           position attribute-index)
+           :target-data (subsample-array target-data
+                                         size split-array
+                                         position nil)
+           :attribute-indexes new-attributes
+           (append arguments cloning-list))))
