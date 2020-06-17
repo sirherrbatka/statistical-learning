@@ -17,14 +17,22 @@
   ())
 
 
-(defclass classification-implementation (sl.dt:regression)
-  ()
+(defclass gradient-boosting-implementation (sl.dt:regression)
+  ((%gradient-parameters :initarg :gradient-parameters
+                         :reader gradient-parameters)
+   (%expected-value :initarg :expected-value
+                    :reader expected-value)
+   (%shrinkage :initarg :shrinkage
+               :reader shrinkage))
   (:default-initargs :optimized-function sl.opt:<squared-error>))
 
 
-(defclass regression-implementation (sl.dt:regression)
-  ()
-  (:default-initargs :optimized-function sl.opt:<squared-error>))
+(defclass classification-implementation (gradient-boosting-implementation)
+  ())
+
+
+(defclass regression-implementation (gradient-boosting-implementation)
+  ())
 
 
 (defclass gradient-boost-model (statistical-learning.tp:tree-model)

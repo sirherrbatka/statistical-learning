@@ -1,49 +1,58 @@
 (cl:in-package #:statistical-learning.gradient-boost-tree)
 
 
+
 (defmethod sl.tp:make-training-state ((parameters fundamental-gradient-boost-tree-parameters)
                                       train-data
                                       target-data
                                       &rest initargs
-                                      &key attributes weights response expected-value
+                                      &key attributes weights response expected-value shrinkage
                                       &allow-other-keys)
   (declare (ignore initargs))
-  (let* ((target (if (null response)
-                     (target parameters target-data expected-value)
-                     response))
-         (regression (implementation parameters)))
-    (sl.tp:make-training-state regression
-                               train-data target
-                               :attributes attributes
-                               :weights weights)))
+  (sl.tp:make-training-state (implementation parameters
+                                             :shrinkage shrinkage
+                                             :expected-value expected-value)
+                             train-data
+                             (if (null response)
+                                 (target parameters target-data expected-value)
+                                 response)
+                             :attributes attributes
+                             :weights weights))
 
 
-(defmethod statistical-learning.mp:make-model ((parameters fundamental-gradient-boost-tree-parameters)
-                                               train-data
-                                               target-data
-                                               &key attributes
-                                                 expected-value
-                                                 response
-                                                 shrinkage
-                                                 weights
-                                                 (state (sl.tp:make-training-state
-                                                         parameters
-                                                         train-data
-                                                         target-data
-                                                         :attributes attributes
-                                                         :weights weights
-                                                         :response response
-                                                         :expected-value expected-value))
-                                               &allow-other-keys)
-  (let* ((regression (sl.tp:training-parameters state))
-         (regression-model (sl.mp:make-model regression nil nil
-                                             :state state))
-         (tree (sl.tp:root regression-model)))
+(defmethod sl.mp:make-model ((parameters gradient-boosting-implementation)
+                             train-data
+                             target-data
+                             &key state &allow-other-keys)
+  (declare (ignore train-data target-data))
+  (let ((parameters (~> state sl.tp:training-parameters)))
     (make 'gradient-boost-model
-          :parameters parameters
-          :shrinkage shrinkage
-          :expected-value expected-value
-          :root tree)))
+          :parameters (gradient-parameters parameters)
+          :shrinkage (shrinkage parameters)
+          :expected-value (expected-value parameters)
+          :root (sl.tp:root (call-next-method)))))
+
+
+(defmethod sl.mp:make-model ((parameters fundamental-gradient-boost-tree-parameters)
+                             train-data
+                             target-data
+                             &key attributes
+                               expected-value
+                               response
+                               shrinkage
+                               weights
+                               (state (sl.tp:make-training-state
+                                       parameters
+                                       train-data
+                                       target-data
+                                       :attributes attributes
+                                       :weights weights
+                                       :shrinkage shrinkage
+                                       :response response
+                                       :expected-value expected-value))
+                             &allow-other-keys)
+  (sl.mp:make-model (sl.tp:training-parameters state)
+                    nil nil :state state))
 
 
 (defmethod sl.tp:contribute-predictions* ((parameters regression)
@@ -133,22 +142,26 @@
     (finally (return result))))
 
 
-(defmethod implementation ((parameters classification))
-  (make 'classification-implementation
-        :maximal-depth (sl.tp:maximal-depth parameters)
-        :minimal-difference (sl.tp:minimal-difference parameters)
-        :minimal-size (sl.tp:minimal-size parameters)
-        :trials-count (sl.tp:trials-count parameters)
-        :parallel (sl.tp:parallel parameters)))
+(defmethod implementation ((parameters classification) &rest initargs)
+  (apply #'make 'classification-implementation
+         :gradient-parameters parameters
+         :maximal-depth (sl.tp:maximal-depth parameters)
+         :minimal-difference (sl.tp:minimal-difference parameters)
+         :minimal-size (sl.tp:minimal-size parameters)
+         :trials-count (sl.tp:trials-count parameters)
+         :parallel (sl.tp:parallel parameters)
+         initargs))
 
 
-(defmethod implementation ((parameters regression))
-  (make 'regression-implementation
-        :maximal-depth (sl.tp:maximal-depth parameters)
-        :minimal-difference (sl.tp:minimal-difference parameters)
-        :minimal-size (sl.tp:minimal-size parameters)
-        :trials-count (sl.tp:trials-count parameters)
-        :parallel (sl.tp:parallel parameters)))
+(defmethod implementation ((parameters regression) &rest initargs)
+  (apply #'make 'regression-implementation
+         :gradient-parameters parameters
+         :maximal-depth (sl.tp:maximal-depth parameters)
+         :minimal-difference (sl.tp:minimal-difference parameters)
+         :minimal-size (sl.tp:minimal-size parameters)
+         :trials-count (sl.tp:trials-count parameters)
+         :parallel (sl.tp:parallel parameters)
+         initargs))
 
 
 (defmethod target ((parameters classification) target-data expected-value)

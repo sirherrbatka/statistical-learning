@@ -16,17 +16,16 @@
                                       &rest initargs
                                       &key weights attributes &allow-other-keys)
   (declare (ignore initargs))
-  (let* ((optimized-function (optimized-function parameters))
-         (state (make 'sl.tp:fundamental-training-state
-                      :training-parameters parameters
-                      :loss (sl.opt:loss optimized-function
-                                         target-data
-                                         weights)
-                      :weights weights
-                      :attribute-indexes attributes
-                      :target-data target-data
-                      :training-data train-data)))
-    state))
+  (let ((optimized-function (optimized-function parameters)))
+    (make 'sl.tp:fundamental-training-state
+          :training-parameters parameters
+          :loss (sl.opt:loss optimized-function
+                             target-data
+                             weights)
+          :weights weights
+          :attribute-indexes attributes
+          :target-data target-data
+          :training-data train-data)))
 
 
 (defmethod sl.mp:make-model ((parameters fundamental-decision-tree-parameters)
