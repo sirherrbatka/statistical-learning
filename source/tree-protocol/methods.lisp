@@ -217,3 +217,14 @@
                          :loss score
                          :attribute (aref attributes optimal-attribute)
                          :attribute-value optimal-threshold))))))))
+
+
+(defmethod make-leaf* ((parameters fundamental-tree-training-parameters)
+                       training-state)
+  (make 'fundamental-leaf-node))
+
+
+(defmethod make-training-state ((parameters fundamental-tree-training-parameters)
+                                train-data target-data
+                                &rest initargs &key &allow-other-keys)
+  (apply #'make 'fundamental-training-state train-data target-data initargs))

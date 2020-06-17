@@ -34,7 +34,8 @@
                (type statistical-learning.data:data-matrix target-data)
                (type fixnum left-count right-count))
       (iterate
-        (declare (type fixnum i))
+        (declare (type fixnum i)
+                 (type double-float value))
         (for i from 0 below (sl.data:data-points-count target-data))
         (for value = (sl.data:mref target-data i 0))
         (if (and split-array (eq right (aref split-array i)))
@@ -45,7 +46,7 @@
       (iterate
         (declare (type double-float
                        left-error right-error
-                       left-avg right-avg)
+                       left-avg right-avg value)
                  (type fixnum i))
         (with left-error = 0.0d0)
         (with right-error = 0.0d0)

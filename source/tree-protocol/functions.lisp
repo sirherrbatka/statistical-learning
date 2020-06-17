@@ -16,8 +16,11 @@
 
 (defun make-leaf (training-state)
   (check-type training-state fundamental-training-state)
-  (make-leaf* (training-parameters training-state)
-              training-state))
+  (let* ((parameters (training-parameters training-state))
+         (result (make-leaf* parameters
+                             training-state)))
+    (initialize-leaf parameters training-state result)
+    result))
 
 
 (defun split (training-state leaf)

@@ -32,6 +32,8 @@
    #:loss
    #:make-leaf
    #:make-leaf*
+   #:initialize-leaf
+   #:make-training-state
    #:make-node
    #:maximal-depth
    #:minimal-difference

@@ -10,10 +10,12 @@
                split-array))
 
 
-(defmethod sl.mp:make-model ((parameters fundamental-decision-tree-parameters)
-                             train-data
-                             target-data
-                             &key weights attributes)
+(defmethod sl.tp:make-training-state ((parameters fundamental-decision-tree-parameters)
+                                      train-data
+                                      target-data
+                                      &rest initargs
+                                      &key weights attributes &allow-other-keys)
+  (declare (ignore initargs))
   (let* ((optimized-function (optimized-function parameters))
          (state (make 'sl.tp:fundamental-training-state
                       :training-parameters parameters
@@ -24,14 +26,27 @@
                       :attribute-indexes attributes
                       :target-data target-data
                       :training-data train-data)))
-    (make 'sl.tp:tree-model
-          :parameters parameters
-          :root (~>> state sl.tp:make-leaf (sl.tp:split state)))))
+    state))
 
 
-(defmethod sl.tp:make-leaf* ((training-parameters classification)
-                             training-state)
-  (declare (optimize (speed 3)))
+(defmethod sl.mp:make-model ((parameters fundamental-decision-tree-parameters)
+                             train-data
+                             target-data
+                             &key weights attributes
+                               (state (sl.tp:make-training-state parameters
+                                                                 train-data
+                                                                 target-data
+                                                                 :weights weights
+                                                                 :attributes attributes)))
+  (make 'sl.tp:tree-model
+        :parameters parameters
+        :root (~>> state sl.tp:make-leaf (sl.tp:split state))))
+
+
+(defmethod sl.tp:initialize-leaf ((training-parameters classification)
+                                  training-state
+                                  leaf)
+  (declare (optimize (speed 3) (safety 0)))
   (let* ((target-data (sl.tp:target-data training-state))
          (number-of-classes (~> training-parameters
                                 optimized-function
@@ -46,30 +61,29 @@
       (for i from 0 below data-points-count)
       (for index = (truncate (sl.data:mref target-data i 0)))
       (incf (sl.data:mref predictions 0 index)))
-    (make-instance 'sl.tp:fundamental-leaf-node
-                   :support data-points-count
-                   :predictions predictions
-                   :loss score)))
+    (setf (sl.tp:support leaf) data-points-count
+          (sl.tp:predictions leaf) predictions
+          (sl.tp:loss leaf) score)))
 
 
-(defmethod sl.tp:make-leaf* ((training-parameters regression)
-                             training-state)
+(defmethod sl.tp:initialize-leaf ((training-parameters regression)
+                                  training-state
+                                  leaf)
   (declare (optimize (speed 3) (safety 0)))
   (let* ((target-data (sl.tp:target-data training-state))
          (score (sl.tp:loss training-state))
+         (sum 0.0d0)
          (data-points-count (sl.data:data-points-count target-data)))
-    (declare (type fixnum data-points-count))
+    (declare (type fixnum data-points-count)
+             (type double-float sum))
     (iterate
       (declare (type fixnum i)
                (type double-float sum))
-      (with sum = 0.0d0)
       (for i from 0 below data-points-count)
-      (incf sum (sl.data:mref target-data i 0))
-      (finally (return (make-instance
-                        'sl.tp:fundamental-leaf-node
-                        :support data-points-count
-                        :predictions (/ sum data-points-count)
-                        :loss score))))))
+      (incf sum (sl.data:mref target-data i 0)))
+    (setf (sl.tp:support leaf) data-points-count
+          (sl.tp:predictions leaf) (/ sum data-points-count)
+          (sl.tp:loss leaf) score)))
 
 
 (defmethod sl.tp:contribute-predictions* ((parameters regression)

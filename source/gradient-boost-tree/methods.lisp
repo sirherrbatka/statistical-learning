@@ -1,6 +1,23 @@
 (cl:in-package #:statistical-learning.gradient-boost-tree)
 
 
+(defmethod sl.tp:make-training-state ((parameters fundamental-gradient-boost-tree-parameters)
+                                      train-data
+                                      target-data
+                                      &rest initargs
+                                      &key attributes weights response expected-value
+                                      &allow-other-keys)
+  (declare (ignore initargs))
+  (let* ((target (if (null response)
+                     (target parameters target-data expected-value)
+                     response))
+         (regression (implementation parameters)))
+    (sl.tp:make-training-state regression
+                               train-data target
+                               :attributes attributes
+                               :weights weights)))
+
+
 (defmethod statistical-learning.mp:make-model ((parameters fundamental-gradient-boost-tree-parameters)
                                                train-data
                                                target-data
@@ -9,15 +26,18 @@
                                                  response
                                                  shrinkage
                                                  weights
+                                                 (state (sl.tp:make-training-state
+                                                         parameters
+                                                         train-data
+                                                         target-data
+                                                         :attributes attributes
+                                                         :weights weights
+                                                         :response response
+                                                         :expected-value expected-value))
                                                &allow-other-keys)
-  (let* ((target (if (null response)
-                     (target parameters target-data expected-value)
-                     response))
-         (regression (implementation parameters))
-         (regression-model (sl.mp:make-model regression
-                                             train-data target
-                                             :attributes attributes
-                                             :weights weights))
+  (let* ((regression (sl.tp:training-parameters state))
+         (regression-model (sl.mp:make-model regression nil nil
+                                             :state state))
          (tree (sl.tp:root regression-model)))
     (make 'gradient-boost-model
           :parameters parameters
@@ -155,20 +175,19 @@
                            target-data))
 
 
-(defmethod sl.tp:make-leaf* ((training-parameters classification-implementation)
-                             training-state)
+(defmethod sl.tp:initialize-leaf ((training-parameters classification-implementation)
+                                  training-state
+                                  leaf)
   (declare (optimize (speed 3) (safety 0)))
   (let* ((target-data (sl.tp:target-data training-state))
          (score (sl.tp:loss training-state))
          (data-points-count (sl.data:data-points-count target-data)))
     (declare (type fixnum data-points-count))
-    (make-instance
-     'sl.tp:fundamental-leaf-node
-     :support (sl.data:data-points-count target-data)
-     :predictions (~>> (sl.data:reduce-data-points #'+ target-data)
-                       (sl.data:map-data-matrix (lambda (x)
-                                                  (/ x data-points-count))))
-     :loss score)))
+    (setf (sl.tp:support leaf) data-points-count
+          (sl.tp:predictions leaf) (~>> (sl.data:reduce-data-points #'+ target-data)
+                                        (sl.data:map-data-matrix
+                                         (lambda (x) (/ x data-points-count))))
+          (sl.tp:loss leaf) score)))
 
 
 (defmethod calculate-expected-value ((parameters classification)

@@ -114,23 +114,24 @@
 
 (print (statistical-learning.performance:accuracy *confusion-matrix*)) ; 0.8117216167652304d0
 
-(print (~> (make 'statistical-learning.ensemble:gradient-boost-ensemble
-                 :trees-count 50
-                 :parallel t
-                 :tree-batch-size 5
-                 :tree-attributes-count 50
-                 :shrinkage 0.2d0
-                 :shrinkage-change (/ 0.2d0 75)
-                 :tree-sample-rate 0.1
-                 :tree-parameters (make 'sl.gbt:classification
-                                        :optimized-function (sl.opt:k-logistic *cover-types*)
-                                        :maximal-depth 25
-                                        :minimal-size 10
-                                        :minimal-difference 0.00001d0
-                                        :trials-count 50
-                                        :parallel nil))
-           (statistical-learning.performance:cross-validation 4
-                                                              *train-data*
-                                                              *target-data*
-                                                              t)
-           statistical-learning.performance:accuracy)) ; ~0.83 slightly better, but takes much more time…
+(~> (make 'statistical-learning.ensemble:gradient-boost-ensemble
+          :trees-count 50
+          :parallel t
+          :tree-batch-size 5
+          :tree-attributes-count 50
+          :shrinkage 0.2d0
+          :shrinkage-change (/ 0.2d0 75)
+          :tree-sample-rate 0.1
+          :tree-parameters (make 'sl.gbt:classification
+                                 :optimized-function (sl.opt:k-logistic *cover-types*)
+                                 :maximal-depth 25
+                                 :minimal-size 10
+                                 :minimal-difference 0.00001d0
+                                 :trials-count 50
+                                 :parallel nil))
+    (statistical-learning.performance:cross-validation 4
+                                                       *train-data*
+                                                       *target-data*
+                                                       t)
+    statistical-learning.performance:accuracy
+    print) ; ~0.83 slightly better, but takes much more time…

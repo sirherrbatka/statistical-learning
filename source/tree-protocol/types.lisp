@@ -5,7 +5,9 @@
   ((%loss :initarg :loss
           :accessor loss)
    (%support :initarg :support
-             :accessor support)))
+             :accessor support))
+  (:default-initargs :loss 0.0d0
+                     :support 0))
 
 
 (defclass fundamental-tree-node (fundamental-node)
@@ -21,7 +23,8 @@
 
 (defclass fundamental-leaf-node (fundamental-node)
   ((%predictions :initarg :predictions
-                 :accessor predictions)))
+                 :accessor predictions))
+  (:default-initargs :predictions nil))
 
 
 (defclass fundamental-tree-training-parameters

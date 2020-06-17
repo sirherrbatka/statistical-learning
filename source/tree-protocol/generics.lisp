@@ -28,6 +28,9 @@
 (defgeneric attribute-indexes (training-state))
 (defgeneric (setf attribute-indexes) (new-value training-state))
 (defgeneric make-leaf* (training-parameters training-state))
+(defgeneric initialize-leaf (training-parameters training-state leaf))
+(defgeneric make-training-state (parameters train-data target-data
+                                 &rest initargs &key &allow-other-keys))
 (defgeneric loss (state))
 (defgeneric (setf loss) (new-value state))
 (defgeneric calculate-loss* (parameters state split-array))

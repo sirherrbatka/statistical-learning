@@ -88,7 +88,7 @@
      weights
      train-data
      target-data)
-  (let* ((length (statistical-learning.data:data-points-count train-data))
+  (let* ((length (sl.data:data-points-count train-data))
          (state nil))
     (declare (type fixnum length))
     (lambda (prev-trees base)
@@ -123,7 +123,7 @@
      weights
      train-data
      target-data)
-  (let ((data-points-count (statistical-learning.data:data-points-count train-data))
+  (let ((data-points-count (sl.data:data-points-count train-data))
         (state nil))
     (declare (type fixnum data-points-count))
     (lambda (prev-trees base)
@@ -145,10 +145,10 @@
       weights)))
 
 
-(defmethod statistical-learning.mp:make-model ((parameters random-forest)
-                                               train-data
-                                               target-data
-                                               &key weights)
+(defmethod sl.mp:make-model ((parameters random-forest)
+                             train-data
+                             target-data
+                             &key weights)
   (statistical-learning.data:bind-data-matrix-dimensions
       ((train-data-data-points train-data-attributes train-data)
        (target-data-data-points target-data-attributes target-data))
@@ -171,8 +171,8 @@
       (setf weights-calculator (weights-calculator parameters tree-parameters
                                                    parallel weights
                                                    train-data target-data))
-      (~>> (statistical-learning.data:selecting-random-indexes tree-attributes-count
-                                                 train-data-attributes)
+      (~>> (sl.data:selecting-random-indexes tree-attributes-count
+                                             train-data-attributes)
            (map-into attributes))
       (iterate
         (for base from (+ 2 (/ trees-count tree-batch-size)) downto 0)
@@ -194,10 +194,10 @@
             :target-attributes-count target-data-attributes))))
 
 
-(defmethod statistical-learning.mp:make-model ((parameters gradient-boost-ensemble)
-                                               train-data
-                                               target-data
-                                               &key weights)
+(defmethod sl.mp:make-model ((parameters gradient-boost-ensemble)
+                             train-data
+                             target-data
+                             &key weights)
   (statistical-learning.data:bind-data-matrix-dimensions
       ((train-data-data-points train-data-attributes train-data)
        (target-data-data-points target-data-attributes target-data))
@@ -280,25 +280,25 @@
             :target-attributes-count target-data-attributes))))
 
 
-(defmethod statistical-learning.performance:performance-metric ((parameters ensemble)
-                                                                target
-                                                                predictions
-                                                                &key weights)
-  (statistical-learning.performance:performance-metric (tree-parameters parameters)
-                                                       target
-                                                       predictions
-                                                       :weights weights))
+(defmethod sl.perf:performance-metric ((parameters ensemble)
+                                       target
+                                       predictions
+                                       &key weights)
+  (sl.perf:performance-metric (tree-parameters parameters)
+                              target
+                              predictions
+                              :weights weights))
 
 
-(defmethod statistical-learning.performance:average-performance-metric ((parameters ensemble)
-                                                                        metrics)
-  (statistical-learning.performance:average-performance-metric (tree-parameters parameters)
-                                                               metrics))
+(defmethod sl.perf:average-performance-metric ((parameters ensemble)
+                                               metrics)
+  (sl.perf:average-performance-metric (tree-parameters parameters)
+                                      metrics))
 
 
-(defmethod statistical-learning.performance:errors ((parameters ensemble)
-                                                    target
-                                                    predictions)
-  (statistical-learning.performance:errors (tree-parameters parameters)
-                                           target
-                                           predictions))
+(defmethod sl.perf:errors ((parameters ensemble)
+                           target
+                           predictions)
+  (sl.perf:errors (tree-parameters parameters)
+                  target
+                  predictions))
