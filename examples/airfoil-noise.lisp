@@ -35,15 +35,15 @@
         :minimal-difference 0.0001d0
         :minimal-size 5
         :trials-count 50
-        :parallel nil))
+        :parallel t))
 
 (defparameter *forest-parameters*
   (make 'statistical-learning.ensemble:random-forest
         :trees-count 500
         :parallel t
-        :tree-batch-size 5
+        :tree-batch-size 500
         :tree-attributes-count 5
-        :tree-sample-rate 0.2
+        :tree-sample-rate 0.6
         :tree-parameters *training-parameters*))
 
 (defparameter *mean-error*
@@ -53,7 +53,7 @@
                                                      *target-data*
                                                      t))
 
-(print *mean-error*) ; 16.943994007564303d0 (squared error, root equal 4.11630829841064d0)
+(print *mean-error*) ; 19.14110529750509d0 (squared error)
 
 (print (statistical-learning.performance:cross-validation
         (make 'statistical-learning.ensemble:gradient-boost-ensemble
@@ -62,8 +62,8 @@
               :tree-batch-size 10
               :tree-attributes-count 5
               :shrinkage 0.2d0
-              :shrinkage-change (/ 0.4d0 200)
-              :tree-sample-rate 0.1
+              :shrinkage-change (/ 0.2d0 750)
+              :tree-sample-rate 0.5
               :tree-parameters (make 'sl.gbt:regression
                                      :optimized-function (sl.opt:squared-error)
                                      :maximal-depth 5
@@ -74,4 +74,4 @@
         4
         *train-data*
         *target-data*
-        t)) ; 3.8316703234121796d0 (also squared error, obviously a lot better)
+        t)) ; 3.97 (also squared error, obviously a lot better)

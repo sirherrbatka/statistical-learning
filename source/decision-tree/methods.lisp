@@ -23,7 +23,7 @@
                              target-data
                              weights)
           :weights weights
-          :attribute-indexes attributes
+          :attributes attributes
           :target-data target-data
           :training-data train-data)))
 
@@ -53,6 +53,10 @@
       (for i from 0 below data-points-count)
       (for index = (truncate (sl.data:mref target-data i 0)))
       (incf (sl.data:mref predictions 0 index)))
+    (iterate
+      (declare (type fixnum i index))
+      (for j from 0 below number-of-classes)
+      (setf #1=(sl.data:mref predictions 0 j) (/ #1# data-points-count)))
     (setf (sl.tp:support leaf) data-points-count
           (sl.tp:predictions leaf) predictions
           (sl.tp:loss leaf) score)))
@@ -128,11 +132,9 @@
                      (declare (type fixnum j))
                      (with leaf = (sl.tp:leaf-for root data data-point))
                      (with predictions = (sl.tp:predictions leaf))
-                     (with support = (sl.tp:support leaf))
                      (for j from 0 below number-of-classes)
                      (for class-support = (sl.data:mref predictions 0 j))
-                     (incf (sl.data:mref sums data-point j)
-                           (/ class-support support))))
+                     (incf (sl.data:mref sums data-point j) class-support)))
                  (sl.tp:indexes state))))
     (incf (sl.tp:contributions-count state))
     state))

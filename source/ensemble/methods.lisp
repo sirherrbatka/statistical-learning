@@ -90,6 +90,7 @@
       (declare (optimize (speed 3) (safety 0))
                (type vector prev-trees)
                (type fixnum base))
+      (declare (ignore base))
       (bind (((:values predictions new-state)
               (trees-predict tree-parameters
                              prev-trees
@@ -101,13 +102,14 @@
         (iterate
           (declare (type fixnum i))
           (for i from 0 below length)
-          (for expected = (statistical-learning.data:mref target-data i 0))
+          (for expected = (sl.data:mref target-data i 0))
           (for prediction = (statistical-learning.data:mref predictions
-                                              i
-                                              (truncate expected)))
-          (setf (statistical-learning.data:mref weights i 0) (- (log (max prediction
-                                                            double-float-epsilon)
-                                                       base))))
+                                                            i
+                                                            (truncate expected)))
+          (setf (sl.data:mref weights i 0)
+                (+ double-float-epsilon
+                   (abs (- (sl.data:mref predictions i 0)
+                           expected)))))
         weights))))
 
 
@@ -134,9 +136,9 @@
         (iterate
           (declare (type fixnum i))
           (for i from 0 below data-points-count)
-          (setf (statistical-learning.data:mref weights i 0)
-                (abs (- (statistical-learning.data:mref predictions i 0)
-                        (statistical-learning.data:mref target-data i 0))))))
+          (setf (sl.data:mref weights i 0)
+                (abs (- (sl.data:mref predictions i 0)
+                        (sl.data:mref target-data i 0))))))
       weights)))
 
 
@@ -171,6 +173,13 @@
                                              train-data-attributes)
            (map-into attributes))
       (iterate
+        (with all-attributes = (~>  train-data sl.data:attributes-count
+                                    sl.data:iota-vector))
+        (with tree-training-state =
+              (sl.mp:make-training-state tree-parameters
+                                         train-data
+                                         target-data
+                                         :attributes all-attributes))
         (for base from (+ 2 (/ trees-count tree-batch-size)) downto 0)
         (for index from 0
              below trees-count
@@ -181,9 +190,8 @@
         (for attributes-view = (array-view attributes
                                            :from index
                                            :to (+ index tree-batch-size)))
-        (fit-tree-batch trees-view attributes-view parameters
-                        train-data target-data weights)
-        (map nil #'sl.tp:force-tree trees-view)
+        (fit-tree-batch parameters trees-view attributes-view
+                        tree-training-state weights)
         (funcall weights-calculator trees-view base))
       (make 'random-forest-model
             :trees trees
@@ -196,14 +204,11 @@
   (bind ((train-data (sl.mp:training-data state))
          (weights (sl.mp:weights state))
          (target-data (sl.mp:target-data state))
-         (train-data-data-points (sl.data:data-points-count train-data))
          (train-data-attributes (sl.data:attributes-count train-data))
          (target-data-attributes (sl.data:attributes-count target-data))
          (tree-batch-size (tree-batch-size parameters))
          (tree-parameters (tree-parameters parameters))
          (trees-count (trees-count parameters))
-         (tree-sample-size (* train-data-data-points
-                              (tree-sample-rate parameters)))
          (parallel (parallel parameters))
          (tree-attributes-count (tree-attributes-count parameters))
          (trees (make-array trees-count))
@@ -214,40 +219,12 @@
                       :displaced-to array))
          (expected-value (statistical-learning.gradient-boost-tree:calculate-expected-value
                           tree-parameters
-                          target-data))
-         ((:flet fit-tree-batch (trees attributes shrinkage response))
-          (funcall (if parallel #'lparallel:pmap-into #'map-into)
-                   trees
-                   (lambda (attributes)
-                     (bind ((sample (sl.data:select-random-indexes
-                                     tree-sample-size
-                                     train-data-data-points))
-                            (train (sl.data:sample train-data
-                                                   :attributes attributes
-                                                   :data-points sample))
-                            (target (sl.data:sample target-data
-                                                    :data-points sample))
-                            (response (if (null response)
-                                          nil
-                                          (sl.data:sample response
-                                                          :data-points sample))))
-                       (sl.mp:make-model tree-parameters
-                                         train
-                                         target
-                                         :shrinkage shrinkage
-                                         :attributes attributes
-                                         :response response
-                                         :weights (if (null weights)
-                                                      nil
-                                                      (map '(vector double-float)
-                                                           (lambda (x) (aref weights x))
-                                                           sample))
-                                         :expected-value expected-value)))
-                   attributes)))
+                          target-data)))
     (~>> (sl.data:selecting-random-indexes tree-attributes-count
                                            train-data-attributes)
          (map-into attributes))
     (iterate
+      (with all-attributes = (sl.data:iota-vector train-data-attributes))
       (with shrinkage = (shrinkage parameters))
       (with shrinkage-change = (shrinkage-change parameters))
       (with response = nil)
@@ -261,8 +238,16 @@
       (for attributes-view = (array-view attributes
                                          :from index
                                          :to (+ index tree-batch-size)))
-      (fit-tree-batch trees-view attributes-view shrinkage response)
-      (map nil #'sl.tp:force-tree trees-view)
+      (for tree-training-state = (sl.mp:make-training-state tree-parameters
+                                                            train-data
+                                                            target-data
+                                                            :weights weights
+                                                            :expected-value expected-value
+                                                            :attributes all-attributes
+                                                            :response response
+                                                            :shrinkage shrinkage))
+      (fit-tree-batch parameters trees-view attributes-view
+                      tree-training-state nil)
       (for new-state = (contribute-trees tree-parameters
                                          trees-view
                                          train-data

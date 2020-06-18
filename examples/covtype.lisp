@@ -90,7 +90,7 @@
 (defparameter *training-parameters*
   (make 'statistical-learning.dt:classification
         :optimized-function (sl.opt:gini-impurity *cover-types*)
-        :maximal-depth 25
+        :maximal-depth 20
         :minimal-difference 0.00001d0
         :minimal-size 10
         :trials-count 50
@@ -98,21 +98,21 @@
 
 (defparameter *forest-parameters*
   (make 'statistical-learning.ensemble:random-forest
-        :trees-count 50
+        :trees-count 150
         :parallel t
-        :tree-batch-size 5
+        :tree-batch-size 150
         :tree-attributes-count 50
-        :tree-sample-rate 0.1
+        :tree-sample-rate 0.3
         :tree-parameters *training-parameters*))
 
 (defparameter *confusion-matrix*
   (statistical-learning.performance:cross-validation *forest-parameters*
-                                       4
-                                       *train-data*
-                                       *target-data*
-                                       t))
+                                                     4
+                                                     *train-data*
+                                                     *target-data*
+                                                     t))
 
-(print (statistical-learning.performance:accuracy *confusion-matrix*)) ; 0.8117216167652304d0
+(print (statistical-learning.performance:accuracy *confusion-matrix*)) ; 0.769
 
 (~> (make 'statistical-learning.ensemble:gradient-boost-ensemble
           :trees-count 50
@@ -121,7 +121,7 @@
           :tree-attributes-count 50
           :shrinkage 0.2d0
           :shrinkage-change (/ 0.2d0 75)
-          :tree-sample-rate 0.1
+          :tree-sample-rate 0.3
           :tree-parameters (make 'sl.gbt:classification
                                  :optimized-function (sl.opt:k-logistic *cover-types*)
                                  :maximal-depth 25
@@ -134,4 +134,4 @@
                                                        *target-data*
                                                        t)
     statistical-learning.performance:accuracy
-    print) ; ~0.83 slightly better, but takes much more time…
+    print) ; ~0.818 slightly better

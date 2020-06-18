@@ -43,7 +43,6 @@
 
 (defclass tree-training-state (sl.mp:fundamental-training-state)
   ((%attribute-indexes :initarg :attributes
-                       :initarg :attribute-indexes
                        :accessor attribute-indexes)
    (%depth :initarg :depth
            :accessor depth)
@@ -55,7 +54,10 @@
 (defclass tree-model (statistical-learning.mp:fundamental-model)
   ((%root :initarg :root
           :writer write-root
-          :reader root)))
+          :reader root)
+   (%forced :initarg :forced
+            :accessor forced))
+  (:default-initargs :forced nil))
 
 
 (defclass contributed-predictions ()

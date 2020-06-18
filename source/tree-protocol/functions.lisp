@@ -5,6 +5,7 @@
   (let ((root (root model)))
     (write-root (force-tree* (lparallel:force root))
                 model)
+    (setf (forced model) t)
     model))
 
 

@@ -1,51 +1,28 @@
 (cl:in-package #:statistical-learning.ensemble)
 
 
-(-> fit-tree-batch (vector
-                    vector
-                    t
-                    statistical-learning.data:data-matrix
-                    statistical-learning.data:data-matrix
-                    (or null statistical-learning.data:data-matrix))
-    t)
-(defun fit-tree-batch (trees
-                       all-attributes
-                       parameters
-                       train-data
-                       target-data
-                       weights)
-  (bind ((tree-parameters (tree-parameters parameters))
-         (parallel (parallel parameters))
+(defun fit-tree-batch (parameters trees all-attributes state sampling-weights)
+  (bind ((parallel (parallel parameters))
          (tree-sample-rate (tree-sample-rate parameters))
-         (data-points-count (statistical-learning.data:data-points-count train-data))
-         (tree-sample-size (ceiling (* tree-sample-rate data-points-count)))
-         (distribution (if (null weights)
+         (data-points-count (~> state sl.mp:training-data sl.data:data-points-count))
+         (tree-sample-size (floor (* tree-sample-rate data-points-count)))
+         (distribution (if (null sampling-weights)
                            nil
-                           (statistical-learning.random:discrete-distribution weights))))
+                           (sl.random:discrete-distribution sampling-weights)))
+         ((:flet make-model (attributes))
+          (bind ((sample (if (null distribution)
+                             (sl.data:select-random-indexes tree-sample-size
+                                                            data-points-count)
+                             (map-into (make-array tree-sample-size
+                                                   :element-type 'fixnum)
+                                       distribution)))
+                 (sub-state (sl.mp:sample-training-state state
+                                                         :data-points sample
+                                                         :train-attributes attributes)))
+            (sl.mp:make-model* (sl.mp:training-parameters sub-state) sub-state))))
     (funcall (if parallel #'lparallel:pmap-into #'map-into)
              trees
-             (lambda (attributes)
-               (bind ((sample (if (null distribution)
-                                  (statistical-learning.data:select-random-indexes tree-sample-size
-                                                                     data-points-count)
-                                  (map-into (make-array tree-sample-size
-                                                        :element-type 'fixnum)
-                                            distribution)))
-                      (train (statistical-learning.data:sample
-                              train-data
-                              :attributes attributes
-                              :data-points sample))
-                      (target (statistical-learning.data:sample
-                               target-data
-                               :data-points sample)))
-                 (assert (= (statistical-learning.data:attributes-count train)
-                            (length attributes)))
-                 (assert (= (statistical-learning.data:data-points-count target)
-                            (length sample)))
-                 (statistical-learning.mp:make-model tree-parameters
-                                       train
-                                       target
-                                       :attributes attributes)))
+             #'make-model
              all-attributes)))
 
 
