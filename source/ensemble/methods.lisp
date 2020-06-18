@@ -137,8 +137,9 @@
           (declare (type fixnum i))
           (for i from 0 below data-points-count)
           (setf (sl.data:mref weights i 0)
-                (abs (- (sl.data:mref predictions i 0)
-                        (sl.data:mref target-data i 0))))))
+                (+ double-float-epsilon
+                   (abs (- (sl.data:mref predictions i 0)
+                           (sl.data:mref target-data i 0)))))))
       weights)))
 
 
@@ -153,6 +154,7 @@
          (parallel (parallel parameters))
          (tree-attributes-count (tree-attributes-count parameters))
          (trees (make-array trees-count))
+         (samples (make-array trees-count))
          (attributes (make-array trees-count))
          (weights-calculator nil)
          ((:flet array-view (array &key (from 0) (to trees-count)))
@@ -162,10 +164,11 @@
     (statistical-learning.data:bind-data-matrix-dimensions
         ((train-data-data-points train-data-attributes train-data)
          (target-data-data-points target-data-attributes target-data))
-      (when (null weights)
-        (setf weights (sl.data:make-data-matrix train-data-data-points
-                                                1
-                                                1.0d0)))
+      (setf weights (if (null weights)
+                        (sl.data:make-data-matrix train-data-data-points
+                                                  1
+                                                  1.0d0)
+                        (copy-array weights)))
       (setf weights-calculator (weights-calculator parameters tree-parameters
                                                    parallel weights
                                                    train-data target-data))
@@ -190,8 +193,11 @@
         (for attributes-view = (array-view attributes
                                            :from index
                                            :to (+ index tree-batch-size)))
+        (for samples-view = (array-view samples
+                                        :from index
+                                        :to (+ index tree-batch-size)))
         (fit-tree-batch parameters trees-view attributes-view
-                        tree-training-state weights)
+                        tree-training-state weights samples-view)
         (funcall weights-calculator trees-view base))
       (make 'random-forest-model
             :trees trees
@@ -209,6 +215,7 @@
          (tree-batch-size (tree-batch-size parameters))
          (tree-parameters (tree-parameters parameters))
          (trees-count (trees-count parameters))
+         (samples (make-array trees-count))
          (parallel (parallel parameters))
          (tree-attributes-count (tree-attributes-count parameters))
          (trees (make-array trees-count))
@@ -238,6 +245,9 @@
       (for attributes-view = (array-view attributes
                                          :from index
                                          :to (+ index tree-batch-size)))
+      (for samples-view = (array-view samples
+                                      :from index
+                                      :to (+ index tree-batch-size)))
       (for tree-training-state = (sl.mp:make-training-state tree-parameters
                                                             train-data
                                                             target-data
@@ -247,7 +257,7 @@
                                                             :response response
                                                             :shrinkage shrinkage))
       (fit-tree-batch parameters trees-view attributes-view
-                      tree-training-state nil)
+                      tree-training-state nil samples-view)
       (for new-state = (contribute-trees tree-parameters
                                          trees-view
                                          train-data

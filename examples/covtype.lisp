@@ -134,4 +134,4 @@
                                                        *target-data*
                                                        t)
     statistical-learning.performance:accuracy
-    print) ; ~0.818 slightly better
+    print) ; 0.818 slightly better
