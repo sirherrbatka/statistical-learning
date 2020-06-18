@@ -70,7 +70,7 @@
                                      :minimal-size 5
                                      :minimal-difference 0.00001d0
                                      :trials-count 15
-                                     :parallel nil))
+                                     :parallel t))
         4
         *train-data*
         *target-data*

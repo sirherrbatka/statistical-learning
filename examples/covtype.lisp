@@ -128,7 +128,7 @@
                                  :minimal-size 10
                                  :minimal-difference 0.00001d0
                                  :trials-count 50
-                                 :parallel nil))
+                                 :parallel t))
     (statistical-learning.performance:cross-validation 4
                                                        *train-data*
                                                        *target-data*

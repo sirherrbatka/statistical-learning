@@ -1,7 +1,7 @@
 (cl:in-package #:statistical-learning.ensemble)
 
 
-(defclass ensemble ()
+(defclass ensemble (sl.mp:fundamental-model-parameters)
   ((%trees-count :initarg :trees-count
                  :reader trees-count
                  :type positive-integer)

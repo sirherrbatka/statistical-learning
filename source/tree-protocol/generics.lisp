@@ -7,8 +7,6 @@
 (defgeneric maximal-depth (training-parameters))
 (defgeneric depth (state))
 (defgeneric (setf depth) (new-value state))
-(defgeneric training-parameters (state))
-(defgeneric (setf training-parameters) (new-value state))
 (defgeneric make-node (node-class &rest arguments))
 (defgeneric trials-count (training-parameters))
 (defgeneric force-tree* (tree))
@@ -29,18 +27,9 @@
 (defgeneric (setf attribute-indexes) (new-value training-state))
 (defgeneric make-leaf* (training-parameters training-state))
 (defgeneric initialize-leaf (training-parameters training-state leaf))
-(defgeneric make-training-state (parameters train-data target-data
-                                 &rest initargs &key &allow-other-keys))
 (defgeneric split-training-state* (parameters state split-array
                                    position size initargs
                                    &optional attribute-index attribute-indexes))
-(defgeneric sample-training-state* (parameters state
-                                    &key
-                                      data-points
-                                      train-attributes
-                                      target-attributes
-                                      initargs
-                                    &allow-other-keys))
 (defgeneric loss (state))
 (defgeneric (setf loss) (new-value state))
 (defgeneric calculate-loss* (parameters state split-array))

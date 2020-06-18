@@ -5,19 +5,19 @@
                                   state
                                   split-array)
   (sl.opt:loss (optimized-function parameters)
-               (sl.tp:target-data state)
-               (sl.tp:weights state)
+               (sl.mp:target-data state)
+               (sl.mp:weights state)
                split-array))
 
 
-(defmethod sl.tp:make-training-state ((parameters fundamental-decision-tree-parameters)
+(defmethod sl.mp:make-training-state ((parameters fundamental-decision-tree-parameters)
                                       train-data
                                       target-data
                                       &rest initargs
                                       &key weights attributes &allow-other-keys)
   (declare (ignore initargs))
   (let ((optimized-function (optimized-function parameters)))
-    (make 'sl.tp:fundamental-training-state
+    (make 'sl.tp:tree-training-state
           :training-parameters parameters
           :loss (sl.opt:loss optimized-function
                              target-data
@@ -28,15 +28,8 @@
           :training-data train-data)))
 
 
-(defmethod sl.mp:make-model ((parameters fundamental-decision-tree-parameters)
-                             train-data
-                             target-data
-                             &key weights attributes
-                               (state (sl.tp:make-training-state parameters
-                                                                 train-data
-                                                                 target-data
-                                                                 :weights weights
-                                                                 :attributes attributes)))
+(defmethod sl.mp:make-model* ((parameters fundamental-decision-tree-parameters)
+                              state)
   (make 'sl.tp:tree-model
         :parameters parameters
         :root (~>> state sl.tp:make-leaf (sl.tp:split state))))
@@ -46,7 +39,7 @@
                                   training-state
                                   leaf)
   (declare (optimize (speed 3) (safety 0)))
-  (let* ((target-data (sl.tp:target-data training-state))
+  (let* ((target-data (sl.mp:target-data training-state))
          (number-of-classes (~> training-parameters
                                 optimized-function
                                 sl.opt:number-of-classes))
@@ -69,7 +62,7 @@
                                   training-state
                                   leaf)
   (declare (optimize (speed 3) (safety 0)))
-  (let* ((target-data (sl.tp:target-data training-state))
+  (let* ((target-data (sl.mp:target-data training-state))
          (score (sl.tp:loss training-state))
          (sum 0.0d0)
          (data-points-count (sl.data:data-points-count target-data)))

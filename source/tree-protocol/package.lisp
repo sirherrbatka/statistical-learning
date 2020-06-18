@@ -21,7 +21,7 @@
    #:force-tree*
    #:fundamental-leaf-node
    #:fundamental-node
-   #:fundamental-training-state
+   #:tree-training-state
    #:fundamental-tree-node
    #:fundamental-tree-training-parameters
    #:indexes
@@ -34,7 +34,6 @@
    #:make-leaf
    #:make-leaf*
    #:make-node
-   #:make-training-state
    #:maximal-depth
    #:minimal-difference
    #:minimal-size
@@ -42,21 +41,15 @@
    #:predictions
    #:right-node
    #:root
-   #:sample-training-state
-   #:sample-training-state*
    #:split
    #:split*
    #:split-training-state
    #:split-training-state*
    #:sums
    #:support
-   #:target-data
-   #:training-data
-   #:training-parameters
    #:training-state-clone
    #:tree-model
    #:treep
    #:trials-count
    #:visit-nodes
-   #:weights
    ))

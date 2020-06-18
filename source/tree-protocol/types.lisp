@@ -41,36 +41,15 @@
               :reader parallel)))
 
 
-(defclass fundamental-split-candidate ()
-  ((%needs-split-p :initarg :needs-split-p
-                   :reader needs-split-p)
-   (%attribute :initarg :attribute
-               :accessor attribute)
-   (%attribute-value :initarg :attribute-value
-                     :accessor attribute-value)
-   (%left-node :initarg :left-node
-               :accessor left-node)
-   (%right-node :initarg :right-node
-                :accessor right-node)))
-
-
-(defclass fundamental-training-state ()
-  ((%training-parameters :initarg :training-parameters
-                         :accessor training-parameters)
-   (%attribute-indexes :initarg :attribute-indexes
+(defclass tree-training-state (sl.mp:fundamental-training-state)
+  ((%attribute-indexes :initarg :attributes
+                       :initarg :attribute-indexes
                        :accessor attribute-indexes)
-   (%target-data :initarg :target-data
-                 :accessor target-data)
    (%depth :initarg :depth
            :accessor depth)
    (%loss :initarg :loss
-          :accessor loss)
-   (%weights :initarg :weights
-             :accessor weights)
-   (%training-data :initarg :training-data
-                   :accessor training-data))
-  (:default-initargs :depth 0
-                     :weights nil))
+          :accessor loss))
+  (:default-initargs :depth 0))
 
 
 (defclass tree-model (statistical-learning.mp:fundamental-model)

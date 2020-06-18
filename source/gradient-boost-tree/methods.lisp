@@ -2,14 +2,14 @@
 
 
 
-(defmethod sl.tp:make-training-state ((parameters fundamental-gradient-boost-tree-parameters)
+(defmethod sl.mp:make-training-state ((parameters fundamental-gradient-boost-tree-parameters)
                                       train-data
                                       target-data
                                       &rest initargs
                                       &key attributes weights response expected-value shrinkage
                                       &allow-other-keys)
   (declare (ignore initargs))
-  (sl.tp:make-training-state (implementation parameters
+  (sl.mp:make-training-state (implementation parameters
                                              :shrinkage shrinkage
                                              :expected-value expected-value)
                              train-data
@@ -20,12 +20,10 @@
                              :weights weights))
 
 
-(defmethod sl.mp:make-model ((parameters gradient-boosting-implementation)
-                             train-data
-                             target-data
-                             &key state &allow-other-keys)
+(defmethod sl.mp:make-model* ((parameters gradient-boosting-implementation)
+                              state)
   (declare (ignore train-data target-data))
-  (let ((parameters (~> state sl.tp:training-parameters)))
+  (let ((parameters (~> state sl.mp:training-parameters)))
     (make 'gradient-boost-model
           :parameters (gradient-parameters parameters)
           :shrinkage (shrinkage parameters)
@@ -33,26 +31,10 @@
           :root (sl.tp:root (call-next-method)))))
 
 
-(defmethod sl.mp:make-model ((parameters fundamental-gradient-boost-tree-parameters)
-                             train-data
-                             target-data
-                             &key attributes
-                               expected-value
-                               response
-                               shrinkage
-                               weights
-                               (state (sl.tp:make-training-state
-                                       parameters
-                                       train-data
-                                       target-data
-                                       :attributes attributes
-                                       :weights weights
-                                       :shrinkage shrinkage
-                                       :response response
-                                       :expected-value expected-value))
-                             &allow-other-keys)
-  (sl.mp:make-model (sl.tp:training-parameters state)
-                    nil nil :state state))
+(defmethod sl.mp:make-model* ((parameters fundamental-gradient-boost-tree-parameters)
+                              state)
+  (sl.mp:make-model* (sl.mp:training-parameters state)
+                     state))
 
 
 (defmethod sl.tp:contribute-predictions* ((parameters regression)
@@ -192,7 +174,7 @@
                                   training-state
                                   leaf)
   (declare (optimize (speed 3) (safety 0)))
-  (let* ((target-data (sl.tp:target-data training-state))
+  (let* ((target-data (sl.mp:target-data training-state))
          (score (sl.tp:loss training-state))
          (data-points-count (sl.data:data-points-count target-data)))
     (declare (type fixnum data-points-count))

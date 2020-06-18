@@ -8,6 +8,15 @@
    #:fundamental-model
    #:fundamental-model-parameters
    #:make-model
+   #:make-model*
    #:parameters
    #:predict
+   #:make-training-state
+   #:sample-training-state
+   #:sample-training-state*
+   #:training-parameters
+   #:fundamental-training-state
+   #:target-data
+   #:training-data
+   #:weights
    ))

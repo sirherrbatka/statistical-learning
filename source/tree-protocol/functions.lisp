@@ -15,8 +15,8 @@
 
 
 (defun make-leaf (training-state)
-  (check-type training-state fundamental-training-state)
-  (let* ((parameters (training-parameters training-state))
+  (check-type training-state tree-training-state)
+  (let* ((parameters (sl.mp:training-parameters training-state))
          (result (make-leaf* parameters
                              training-state)))
     (initialize-leaf parameters training-state result)
@@ -24,7 +24,7 @@
 
 
 (defun split (training-state leaf)
-  (let ((result (split* (training-parameters training-state)
+  (let ((result (split* (sl.mp:training-parameters training-state)
                         training-state
                         leaf)))
     (if (null result)
@@ -64,7 +64,7 @@
 
 
 (defun contribute-predictions (model data state parallel)
-  (contribute-predictions* (training-parameters model)
+  (contribute-predictions* (sl.mp:training-parameters model)
                            model
                            data
                            state
@@ -101,7 +101,7 @@
                                (left-size (count sl.opt:left split-array))
                                (right-size (count sl.opt:right split-array))
                              attribute-index)
-  (let* ((training-parameters (training-parameters state))
+  (let* ((training-parameters (sl.mp:training-parameters state))
          (attribute-indexes (attribute-indexes state))
          (new-attributes (if (null attribute-index)
                              attribute-indexes
@@ -123,15 +123,3 @@
                                    right-arguments
                                    attribute-index
                                    new-attributes))))
-
-
-(defun sample-training-state (state &key data-points
-                                      train-attributes
-                                      target-attributes
-                                      initargs)
-  (sample-training-state* (training-parameters state)
-                          state
-                          :data-points data-points
-                          :train-attributes train-attributes
-                          :target-attributes target-attributes
-                          :initarg initargs))
