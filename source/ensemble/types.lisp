@@ -22,6 +22,10 @@
   ())
 
 
+(defclass dynamic-random-forest (ensemble)
+  ())
+
+
 (defclass gradient-boost-ensemble (ensemble)
   ((%shrinkage :initarg :shrinkage
                :reader shrinkage)

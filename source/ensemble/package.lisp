@@ -6,6 +6,7 @@
   (:nicknames #:sl.ensemble)
   (:export
    #:ensemble-model
+   #:dynamic-random-forest
    #:random-forest
    #:random-forest-model
    #:gradient-boost-ensemble

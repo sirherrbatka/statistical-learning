@@ -6,29 +6,31 @@
             distribution))
 
 
-(defun bootstrap-sample (tree-sample-size data-points-count distribution)
+(defun bootstrap-sample (tree-sample-size data-points-count
+                         distribution)
   (if (null distribution)
       (sl.data:select-random-indexes tree-sample-size
                                      data-points-count)
       (weighted-sample tree-sample-size distribution)))
 
 
-(defun sample-to-dict)
-
-
-(defun fit-tree-batch (parameters trees all-attributes state sampling-weights samples)
+(defun fit-tree-batch (parameters trees all-attributes
+                       state sampling-weights samples)
   (bind ((parallel (parallel parameters))
          (tree-sample-rate (tree-sample-rate parameters))
-         (data-points-count (~> state sl.mp:training-data sl.data:data-points-count))
+         (data-points-count (~> state sl.mp:training-data
+                                sl.data:data-points-count))
          (tree-sample-size (floor (* tree-sample-rate data-points-count)))
          (distribution (if (null sampling-weights)
                            nil
                            (sl.random:discrete-distribution sampling-weights)))
          ((:flet make-model (attributes sample))
-          (bind ((sub-state (sl.mp:sample-training-state state
-                                                         :data-points sample
-                                                         :train-attributes attributes)))
-            (sl.mp:make-model* (sl.mp:training-parameters sub-state) sub-state))))
+          (bind ((sub-state (sl.mp:sample-training-state
+                             state
+                             :data-points sample
+                             :train-attributes attributes)))
+            (sl.mp:make-model* (sl.mp:training-parameters sub-state)
+                               sub-state))))
     (map-into samples (curry #'bootstrap-sample
                              tree-sample-size data-points-count distribution))
     (funcall (if parallel #'lparallel:pmap-into #'map-into)

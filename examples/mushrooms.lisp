@@ -93,7 +93,7 @@
         :parallel nil))
 
 (defparameter *forest-parameters*
-  (make 'statistical-learning.ensemble:random-forest
+  (make 'statistical-learning.ensemble:dynamic-random-forest
         :trees-count 200
         :parallel t
         :tree-batch-size 5
