@@ -84,6 +84,7 @@
      train-data
      target-data)
   (let* ((length (sl.data:data-points-count train-data))
+         (indexes (sl.data:iota-vector length))
          (counts (make-array `(,length 2)
                              :element-type 'fixnum
                              :initial-element 0)))
@@ -93,38 +94,42 @@
                (optimize (speed 3) (safety 0)))
       (cl-ds.utils:transform #'cl-ds.alg:to-hash-table
                              samples)
-      (iterate
-        (declare (type fixnum index))
-        (for index from 0 below length)
-        (for expected = (sl.data:mref target-data
-                                      index
-                                      0))
-        (iterate
-          (for tree in-vector prev-trees)
-          (for sample in-vector samples)
-          (when (gethash index sample) (next-iteration))
-          (for leaf = (sl.tp:leaf-for (sl.tp:root tree)
-                                      train-data
-                                      index))
-          (for predictions = (sl.tp:predictions leaf))
-          (for prediction =
-               (iterate
-                 (declare (type fixnum i))
-                 (for i from 0
-                      below (sl.data:attributes-count predictions))
-                 (finding i maximizing
-                          (sl.data:mref predictions 0 i))))
-          (incf (aref counts index 0))
-          (when (= prediction expected)
-            (incf (aref counts index 1)))))
-      (iterate
-        (declare (type fixnum index))
-        (for index from 0 below length)
-        (for total = (aref counts index 0))
-        (unless (zerop total)
-          (setf (sl.data:mref weights index 0)
-                (- 1.0d0 (/ (aref counts index 1)
-                            total)))))
+      (funcall (if parallel #'lparallel:pmap #'map)
+               nil
+               (lambda (index &aux (expected (sl.data:mref target-data
+                                                           index
+                                                           0)))
+                 (declare (type fixnum index)
+                          (type double-float expected))
+                 (iterate
+                   (for tree in-vector prev-trees)
+                   (for sample in-vector samples)
+                   (when (gethash index sample) (next-iteration))
+                   (for leaf = (sl.tp:leaf-for (sl.tp:root tree)
+                                               train-data
+                                               index))
+                   (for predictions = (sl.tp:predictions leaf))
+                   (for prediction =
+                        (iterate
+                          (declare (type fixnum i))
+                          (for i from 0
+                               below (sl.data:attributes-count predictions))
+                          (finding i maximizing
+                                   (sl.data:mref predictions 0 i))))
+                   (incf (aref counts index 0))
+                   (when (= prediction expected)
+                     (incf (aref counts index 1)))))
+               indexes)
+      (funcall (if parallel #'lparallel:pmap #'map)
+               nil
+               (lambda (index &aux (total (aref counts index 0)))
+                 (declare (type fixnum index)
+                          (type fixnum total))
+                 (unless (zerop total)
+                   (setf (sl.data:mref weights index 0)
+                         (- 1.0d0 (/ (the fixnum (aref counts index 1))
+                                     total)))))
+               indexes)
       weights)))
 
 
@@ -220,9 +225,8 @@
           (make-array (min trees-count (- to from))
                       :displaced-index-offset (min trees-count from)
                       :displaced-to array))
-         (expected-value (statistical-learning.gradient-boost-tree:calculate-expected-value
-                          tree-parameters
-                          target-data)))
+         (expected-value (sl.gbt:calculate-expected-value tree-parameters
+                                                          target-data)))
     (~>> (sl.data:selecting-random-indexes tree-attributes-count
                                            train-data-attributes)
          (map-into attributes))

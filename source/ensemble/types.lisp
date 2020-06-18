@@ -22,7 +22,7 @@
   ())
 
 
-(defclass dynamic-random-forest (ensemble)
+(defclass dynamic-random-forest (random-forest)
   ())
 
 

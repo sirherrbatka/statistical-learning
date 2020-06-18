@@ -112,7 +112,7 @@
                                                      *target-data*
                                                      t))
 
-(print (statistical-learning.performance:accuracy *confusion-matrix*)) ; 0.809
+(print (statistical-learning.performance:accuracy *confusion-matrix*)) ; 0.82
 
 (~> (make 'statistical-learning.ensemble:gradient-boost-ensemble
           :trees-count 50
@@ -134,4 +134,4 @@
                                                        *target-data*
                                                        t)
     statistical-learning.performance:accuracy
-    print) ; 0.818 slightly better
+    print) ; 0.818
