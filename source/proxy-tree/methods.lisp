@@ -56,11 +56,9 @@
          ((:flet adjust-leaf (leaf.indexes))
           (bind (((leaf . indexes) leaf.indexes)
                  (no-fill-pointer (cl-ds.utils:remove-fill-pointer indexes)))
-            (~> (sl.mp:sample-training-state adjust
-                                             :data-points no-fill-pointer)
-                (sl.tp:initialize-leaf inner
-                                       _
-                                       leaf)))))
+            (~> adjust
+                (sl.mp:sample-training-state :data-points no-fill-pointer)
+                (sl.tp:initialize-leaf inner _ leaf)))))
     (~> (cl-ds:iota-range :to (sl.data:data-points-count values-training-data))
         (cl-ds.alg:on-each #'assign-leaf)
         (cl-ds.alg:group-by :key #'cdr :test 'eq)
