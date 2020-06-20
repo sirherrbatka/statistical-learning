@@ -97,7 +97,7 @@
 
 
 (defun split-training-state (state split-array
-                             left-arguments right-arguments
+                             left-initargs right-initargs
                              &key
                                (left-size (count sl.opt:left split-array))
                                (right-size (count sl.opt:right split-array))
@@ -113,7 +113,7 @@
                                    split-array
                                    sl.opt:left
                                    left-size
-                                   left-arguments
+                                   left-initargs
                                    attribute-index
                                    new-attributes)
             (split-training-state* training-parameters
@@ -121,6 +121,6 @@
                                    split-array
                                    sl.opt:right
                                    right-size
-                                   right-arguments
+                                   right-initargs
                                    attribute-index
                                    new-attributes))))

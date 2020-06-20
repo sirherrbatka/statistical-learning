@@ -57,6 +57,14 @@
                              (:file "functions")
                              (:file "methods")
                              ))
+               (:module "proxy-tree"
+                :components ((:file "package")
+                             (:file "generics")
+                             (:file "macros")
+                             (:file "types")
+                             (:file "utils")
+                             (:file "functions")
+                             (:file "methods")))
                (:module "decision-tree"
                 :components ((:file "package")
                              (:file "generics")

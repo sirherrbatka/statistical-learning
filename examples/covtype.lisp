@@ -94,13 +94,13 @@
         :minimal-difference 0.00001d0
         :minimal-size 10
         :trials-count 50
-        :parallel nil))
+        :parallel t))
 
 (defparameter *forest-parameters*
   (make 'statistical-learning.ensemble:dynamic-random-forest
-        :trees-count 150
+        :trees-count 250
         :parallel t
-        :tree-batch-size 25
+        :tree-batch-size 10
         :tree-attributes-count 50
         :tree-sample-rate 0.2
         :tree-parameters *training-parameters*))

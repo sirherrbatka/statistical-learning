@@ -95,11 +95,11 @@
 (defparameter *forest-parameters*
   (make 'statistical-learning.ensemble:dynamic-random-forest
         :trees-count 200
-        :parallel t
+        :parallel nil
         :tree-batch-size 5
         :tree-attributes-count 35
         :tree-sample-rate 0.2
-        :tree-parameters *training-parameters*))
+        :tree-parameters (sl.pt:honest *training-parameters*)))
 
 
 (defparameter *confusion-matrix*
@@ -109,7 +109,7 @@
                                                      *target-data*
                                                      t))
 
-(print (statistical-learning.performance:accuracy *confusion-matrix*)) ; 1.0
+(print (statistical-learning.performance:accuracy *confusion-matrix*)) ; 0.9816
 
 (print (statistical-learning.performance:attributes-importance *forest-parameters*
                                                                4

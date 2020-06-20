@@ -7,11 +7,10 @@
   (declare (ignore initargs))
   (let* ((trees-count (trees-count instance))
          (tree-batch-size (tree-batch-size instance))
-         (parallel (parallel instance))
          (tree-attributes-count (tree-attributes-count instance))
          (tree-sample-rate (tree-sample-rate instance))
          (tree-parameters (tree-parameters instance)))
-    (unless (< 0 tree-sample-rate 1.0)
+    (unless (< 0.0 tree-sample-rate 1.0)
       (error 'cl-ds:argument-value-out-of-bounds
              :value tree-sample-rate
              :bounds '(< 0 tree-sample-rate 1.0)
@@ -94,6 +93,7 @@
                (optimize (speed 3) (safety 0)))
       (cl-ds.utils:transform #'cl-ds.alg:to-hash-table
                              samples)
+      (map nil #'sl.tp:force-tree prev-trees)
       (funcall (if parallel #'lparallel:pmap #'map)
                nil
                (lambda (index &aux (expected (sl.data:mref target-data
@@ -104,6 +104,7 @@
                  (iterate
                    (for tree in-vector prev-trees)
                    (for sample in-vector samples)
+                   (incf (aref counts index 0))
                    (when (gethash index sample) (next-iteration))
                    (for leaf = (sl.tp:leaf-for (sl.tp:root tree)
                                                train-data
@@ -116,7 +117,6 @@
                                below (sl.data:attributes-count predictions))
                           (finding i maximizing
                                    (sl.data:mref predictions 0 i))))
-                   (incf (aref counts index 0))
                    (when (= prediction expected)
                      (incf (aref counts index 1)))))
                indexes)
@@ -178,13 +178,7 @@
                                              train-data-attributes)
            (map-into attributes))
       (iterate
-        (with all-attributes = (~>  train-data sl.data:attributes-count
-                                    sl.data:iota-vector))
-        (with tree-training-state =
-              (sl.mp:make-training-state tree-parameters
-                                         train-data
-                                         target-data
-                                         :attributes all-attributes))
+        (with state-initargs = '())
         (for index from 0
              below trees-count
              by tree-batch-size)
@@ -198,7 +192,8 @@
                                         :from index
                                         :to (+ index tree-batch-size)))
         (fit-tree-batch parameters trees-view attributes-view
-                        tree-training-state weights samples-view)
+                        state-initargs train-data
+                        target-data weights samples-view)
         (funcall weights-calculator trees-view samples-view))
       (make 'random-forest-model
             :trees trees
@@ -231,7 +226,6 @@
                                            train-data-attributes)
          (map-into attributes))
     (iterate
-      (with all-attributes = (sl.data:iota-vector train-data-attributes))
       (with shrinkage = (shrinkage parameters))
       (with shrinkage-change = (shrinkage-change parameters))
       (with response = nil)
@@ -248,16 +242,12 @@
       (for samples-view = (array-view samples
                                       :from index
                                       :to (+ index tree-batch-size)))
-      (for tree-training-state = (sl.mp:make-training-state tree-parameters
-                                                            train-data
-                                                            target-data
-                                                            :weights weights
-                                                            :expected-value expected-value
-                                                            :attributes all-attributes
-                                                            :response response
-                                                            :shrinkage shrinkage))
       (fit-tree-batch parameters trees-view attributes-view
-                      tree-training-state nil samples-view)
+                      `(:weights ,weights
+                        :expected-value ,expected-value
+                        :response ,response
+                        :shrinkage ,shrinkage)
+                      train-data target-data nil samples-view)
       (for new-state = (contribute-trees tree-parameters
                                          trees-view
                                          train-data

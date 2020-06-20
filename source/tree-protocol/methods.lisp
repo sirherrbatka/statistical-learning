@@ -305,3 +305,18 @@
                                 (curry #'aref (attribute-indexes state))
                                 train-attributes))
            (append initargs cloning-list))))
+
+
+(defmethod sl.mp:make-training-state :around
+    ((parameters fundamental-tree-training-parameters)
+     train-data
+     target-data
+     &rest initargs &key attributes data-points &allow-other-keys)
+  (~> (apply #'call-next-method
+             parameters train-data target-data
+             :attributes (~> train-data
+                             sl.data:attributes-count
+                             sl.data:iota-vector)
+             initargs)
+      (sl.mp:sample-training-state :data-points data-points
+                                   :train-attributes attributes)))

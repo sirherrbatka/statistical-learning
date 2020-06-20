@@ -12,7 +12,7 @@
 
 (defclass fundamental-training-state ()
   ((%training-parameters :initarg :training-parameters
-                         :reader training-parameters)
+                         :accessor training-parameters)
    (%target-data :initarg :target-data
                  :reader target-data)
    (%weights :initarg :weights
