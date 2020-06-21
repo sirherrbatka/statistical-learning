@@ -45,7 +45,7 @@
       (average-performance model-parameters average-performance-function _)))
 
 
-(defun attributes-importance* (model train-data target-data &key parallel)
+(defun attributes-importance* (model train-data target-data &key parallel weights)
   (let* ((predictions (statistical-learning.mp:predict model train-data parallel))
          (model-parameters (statistical-learning.mp:parameters model))
          (errors (errors model-parameters
@@ -56,7 +56,8 @@
                                                      errors
                                                      train-data
                                                      target-data
-                                                     parallel)))
+                                                     parallel
+                                                     weights)))
 
 
 (defun attributes-importance (model-parameters number-of-folds

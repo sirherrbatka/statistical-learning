@@ -15,7 +15,8 @@
 
 (defun calculate-features-importance-from-permutations
     (model model-parameters errors
-     test-train-data test-target-data parallel)
+     test-train-data test-target-data
+     parallel weights)
   (statistical-learning.data:check-data-points test-train-data test-target-data)
   (let* ((attributes-count (statistical-learning.data:attributes-count test-train-data))
          (error-differences (make-array (array-dimensions errors)
@@ -31,10 +32,16 @@
       (for permutated = (permutate-attribute test-train-data i indexes))
       (for predictions = (statistical-learning.mp:predict model permutated parallel))
       (for permutated-errors = (errors model-parameters test-target-data predictions))
-      (map-into error-differences
-                (lambda (a b) (max 0.0d0 (- a b)))
-                permutated-errors
-                errors)
+      (if (null weights)
+          (map-into error-differences
+                    (lambda (a b) (max 0.0d0 (- a b)))
+                    permutated-errors
+                    errors)
+          (map-into error-differences
+                    (lambda (a b w) (* w (max 0.0d0 (- a b))))
+                    permutated-errors
+                    errors
+                    weights))
       (for mean-change = (mean error-differences))
       (for sd = (alexandria:standard-deviation error-differences :biased nil))
       (for feature-importance = (if (zerop sd) 0.0d0 (/ mean-change sd)))
