@@ -35,10 +35,12 @@
            (if (null performance-function)
                (performance-metric model-parameters
                                    test-target-data
-                                   test-predictions)
+                                   test-predictions
+                                   :weights weights)
                (funcall performance-function
                         test-target-data
-                        test-predictions)))))
+                        test-predictions
+                        :weights weights)))))
       cl-ds.alg:to-vector
       (average-performance model-parameters average-performance-function _)))
 
