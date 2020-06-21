@@ -13,3 +13,9 @@
                                       target-attributes
                                       initargs
                                     &allow-other-keys))
+(defgeneric sample-training-state-info (parameters state
+                                        &key data-points
+                                          train-attributes
+                                          target-attributes
+                                        &allow-other-keys)
+  (:method-combination append :most-specific-last))

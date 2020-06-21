@@ -44,6 +44,7 @@
    #:split
    #:split*
    #:split-training-state
+   #:split-training-state-info
    #:split-training-state*
    #:sums
    #:support
@@ -51,5 +52,4 @@
    #:tree-model
    #:treep
    #:trials-count
-   #:visit-nodes
-   ))
+   #:visit-nodes))

@@ -39,15 +39,14 @@
                           :data-points (take half-data-points data-points)
                           initargs))
          (adjust (apply #'call-next-method
-                          parameters
-                          train-data
-                          target-data
-                          :attributes (~> train-data
-                                          sl.data:attributes-count
-                                          sl.data:iota-vector)
-
-                          :data-points (drop half-data-points data-points)
-                          initargs)))
+                        parameters
+                        train-data
+                        target-data
+                        :attributes (~> train-data
+                                        sl.data:attributes-count
+                                        sl.data:iota-vector)
+                        :data-points (drop half-data-points data-points)
+                        initargs)))
     (cons division adjust)))
 
 

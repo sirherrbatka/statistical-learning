@@ -13,6 +13,7 @@
    #:predict
    #:make-training-state
    #:sample-training-state
+   #:sample-training-state-info
    #:sample-training-state*
    #:training-parameters
    #:fundamental-training-state

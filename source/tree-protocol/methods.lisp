@@ -51,6 +51,35 @@
     (:attributes attribute-indexes)))
 
 
+(defmethod split-training-state-info append ((parameters fundamental-tree-training-parameters)
+                                             state
+                                             split-array
+                                             position
+                                             size
+                                             &optional attribute-index attribute-indexes)
+  (bind ((training-data (sl.mp:training-data state))
+         (target-data (sl.mp:target-data state))
+         (weights (sl.mp:weights state))
+         (attributes (attribute-indexes state))
+         (new-attributes (or attribute-indexes
+                             (and attribute-index
+                                  (subsample-vector attributes
+                                                    attribute-index))
+                             attributes)))
+    (list :weights (if (null weights)
+                       nil
+                       (subsample-array weights size
+                                        split-array position
+                                        nil))
+          :training-data (subsample-array training-data
+                                          size split-array
+                                          position attribute-index)
+          :target-data (subsample-array target-data
+                                        size split-array
+                                        position nil)
+          :attributes new-attributes)))
+
+
 (defmethod split* :around ((training-parameters fundamental-tree-training-parameters)
                            training-state leaf)
   (let* ((training-data (sl.mp:training-data training-state))
@@ -119,27 +148,6 @@
              :argument :trials-count
              :bounds '(< 0 :trials-count)
              :value trials-count))))
-
-
-(defmethod sl.mp:sample-training-state* ((parameters fundamental-tree-training-parameters)
-                                         state
-                                         &key data-points train-attributes target-attributes
-                                           initargs)
-  (apply #'make (class-of state)
-         :training-data (sl.data:sample (sl.mp:training-data state)
-                                        :data-points data-points
-                                        :attributes train-attributes)
-         :target-data (sl.data:sample (sl.mp:target-data state)
-                                      :data-points data-points
-                                      :attributes target-attributes)
-         :weights (if (null (sl.mp:weights state))
-                      nil
-                      (sl.data:sample (sl.mp:weights state)
-                                      :data-points data-points))
-         :attributes (if (null target-attributes)
-                         (attribute-indexes state)
-                         train-attributes)
-         (append initargs (cl-ds.utils:cloning-list state))))
 
 
 (defmethod make-leaf* ((parameters fundamental-tree-training-parameters)
@@ -248,63 +256,30 @@
 
 (defmethod split-training-state* ((parameters fundamental-tree-training-parameters)
                                   state split-array
-                                  position size arguments
+                                  position size initargs
                                   &optional attribute-index attribute-indexes)
   (bind ((cloning-list (cl-ds.utils:cloning-list state))
-         (training-data (sl.mp:training-data state))
-         (target-data (sl.mp:target-data state))
-         (weights (sl.mp:weights state))
-         (class (class-of state))
-         (attributes (attribute-indexes state))
-         (new-attributes (or attribute-indexes
-                             (and attribute-index
-                                  (subsample-vector attributes
-                                                    attribute-index))
-                             attributes)))
+         (class (class-of state)))
     (apply #'make class
-           :weights (if (null weights)
-                        nil
-                        (subsample-array weights size
-                                         split-array position
-                                         nil))
-           :training-data (subsample-array training-data
-                                           size split-array
-                                           position attribute-index)
-           :target-data (subsample-array target-data
-                                         size split-array
-                                         position nil)
-           :attributes new-attributes
-           (append arguments cloning-list))))
+           (append (split-training-state-info parameters
+                                              state
+                                              split-array
+                                              position
+                                              size
+                                              attribute-index
+                                              attribute-indexes)
+                   initargs
+                   cloning-list))))
 
 
-(defmethod sl.mp:sample-training-state* ((parameters fundamental-tree-training-parameters)
-                                         (state tree-training-state)
-                                         &key
-                                           data-points
-                                           train-attributes
-                                           target-attributes
-                                           initargs)
-  (let ((cloning-list (cl-ds.utils:cloning-list state))
-        (training-data (sl.mp:training-data state))
-        (target-data (sl.mp:target-data state))
-        (weights (sl.mp:weights state))
-        (class (class-of state)))
-    (apply #'make class
-           :weights (if (null weights)
-                        nil
-                        (sl.data:sample weights :data-points data-points))
-           :training-data (sl.data:sample training-data
-                                          :data-points data-points
-                                          :attributes train-attributes)
-           :target-data (sl.data:sample target-data
-                                        :data-points data-points
-                                        :attributes target-attributes)
-           :attributes (if (null train-attributes)
-                           (attribute-indexes state)
-                           (map '(vector fixnum)
-                                (curry #'aref (attribute-indexes state))
-                                train-attributes))
-           (append initargs cloning-list))))
+(defmethod sl.mp:sample-training-state-info append ((parameters fundamental-tree-training-parameters)
+                                                    state
+                                                    &key train-attributes)
+  (list :attributes (if (null train-attributes)
+                        (attribute-indexes state)
+                        (map '(vector fixnum)
+                             (curry #'aref (attribute-indexes state))
+                             train-attributes))))
 
 
 (defmethod sl.mp:make-training-state :around

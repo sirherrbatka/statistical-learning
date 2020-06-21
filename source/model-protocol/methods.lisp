@@ -52,3 +52,36 @@
          :training-data train-data
          :target-data target-data
          initargs))
+
+
+(defmethod sample-training-state-info append ((parameters fundamental-model-parameters)
+                                              state
+                                              &key
+                                              data-points
+                                              train-attributes
+                                              target-attributes
+                                              &allow-other-keys)
+  (list :training-data (sl.data:sample (sl.mp:training-data state)
+                                        :data-points data-points
+                                        :attributes train-attributes)
+        :target-data (sl.data:sample (sl.mp:target-data state)
+                                     :data-points data-points
+                                     :attributes target-attributes)
+        :weights (if (null (sl.mp:weights state))
+                     nil
+                     (sl.data:sample (sl.mp:weights state)
+                                     :data-points data-points))))
+
+
+(defmethod sample-training-state* ((parameters fundamental-model-parameters)
+                                   state
+                                   &key data-points train-attributes target-attributes initargs
+                                   &allow-other-keys)
+  (let ((cloning-list (cl-ds.utils:cloning-list state))
+        (class (class-of state)))
+    (apply #'make class
+           (append (sample-training-state-info parameters state
+                                               :target-attributes target-attributes
+                                               :train-attributes train-attributes
+                                               :data-points data-points)
+                   initargs cloning-list))))

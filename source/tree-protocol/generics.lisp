@@ -30,6 +30,11 @@
 (defgeneric split-training-state* (parameters state split-array
                                    position size initargs
                                    &optional attribute-index attribute-indexes))
+(defgeneric split-training-state-info (parameters state split-array
+                                       position size
+                                       &optional attribute-index
+                                         attribute-indexes)
+  (:method-combination append :most-specific-last))
 (defgeneric loss (state))
 (defgeneric (setf loss) (new-value state))
 (defgeneric calculate-loss* (parameters state split-array))
