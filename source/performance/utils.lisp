@@ -39,9 +39,7 @@
                     errors)
           (map-into error-differences
                     (lambda (a b w)
-                      (~> (- a b)
-                          (max 0.0d0)
-                          (* w)))
+                      (~> (- a b) (max 0.0d0) (* w)))
                     permutated-errors
                     errors
                     weights))
