@@ -30,23 +30,31 @@
                                       train-data
                                       target-data
                                       &rest initargs
-                                      &key attributes &allow-other-keys)
-  (cons attributes
-        (apply #'call-next-method
-               parameters
-               train-data
-               target-data
-               :attributes (~> train-data
-                               sl.data:attributes-count
-                               sl.data:iota-vector)
-               initargs)))
+                                      &key data-points &allow-other-keys)
+  (bind ((half-data-points (truncate (length data-points) 2))
+         (division (apply #'call-next-method
+                          parameters
+                          train-data
+                          target-data
+                          :data-points (take half-data-points data-points)
+                          initargs))
+         (adjust (apply #'call-next-method
+                          parameters
+                          train-data
+                          target-data
+                          :attributes (~> train-data
+                                          sl.data:attributes-count
+                                          sl.data:iota-vector)
+
+                          :data-points (drop half-data-points data-points)
+                          initargs)))
+    (cons division adjust)))
 
 
 (defmethod sl.mp:make-model* ((parameters honest-tree)
-                              attributes.training-state)
-  (bind (((attributes . training-state) attributes.training-state)
+                              division.adjust)
+  (bind (((division . adjust) division.adjust)
          (inner (inner parameters))
-         ((:values division adjust) (train/adjust attributes training-state))
          (values-training-data (sl.mp:training-data adjust))
          (model (sl.mp:make-model* inner division))
          (root (sl.tp:root model))
