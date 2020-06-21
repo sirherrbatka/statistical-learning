@@ -48,3 +48,9 @@
     (incf (row-major-aref result i)
           (row-major-aref matrix i)))
   result)
+
+
+(defun average-performance (model-parameters function data)
+  (if (null function)
+      (average-performance-metric model-parameters data)
+      (funcall function data)))

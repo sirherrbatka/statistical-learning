@@ -107,7 +107,7 @@
                                                      4
                                                      *train-data*
                                                      *target-data*
-                                                     t))
+                                                     :parallel t))
 
 (print (statistical-learning.performance:accuracy *confusion-matrix*)) ; 0.9816
 
@@ -115,4 +115,4 @@
                                                                4
                                                                *train-data*
                                                                *target-data*
-                                                               t))
+                                                               :parallel t))

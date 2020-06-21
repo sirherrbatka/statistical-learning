@@ -110,7 +110,7 @@
                                                      4
                                                      *train-data*
                                                      *target-data*
-                                                     t))
+                                                     :parallel t))
 
 (print (statistical-learning.performance:accuracy *confusion-matrix*)) ; 0.82
 
@@ -132,6 +132,6 @@
     (statistical-learning.performance:cross-validation 4
                                                        *train-data*
                                                        *target-data*
-                                                       t)
+                                                       :parallel t)
     statistical-learning.performance:accuracy
     print) ; 0.818

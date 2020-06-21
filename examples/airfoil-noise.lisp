@@ -51,7 +51,7 @@
                                                      4
                                                      *train-data*
                                                      *target-data*
-                                                     t))
+                                                     :parallel t))
 
 (print *mean-error*) ; 19.14110529750509d0 (squared error)
 
@@ -74,4 +74,4 @@
         4
         *train-data*
         *target-data*
-        t)) ; 3.97 (also squared error, obviously a lot better)
+        :parallel t)) ; 3.97 (also squared error, obviously a lot better)
