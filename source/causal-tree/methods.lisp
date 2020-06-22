@@ -205,3 +205,16 @@
 (defmethod sl.mp:make-training-state ((parameters causal)
                                       &rest initargs)
   (apply #'make 'causal-tree-training-state initargs))
+
+
+(defmethod initialize-instance :after ((state causal-tree-training-state)
+                                       &rest initargs &key &allow-other-keys)
+  (declare (ignore initargs))
+  (sl.data:check-data-points (sl.mp:train-data state)
+                             (sl.mp:target-data state)
+                             (treatment state))
+  (unless (= 1 (sl.data:attributes-count (treatment state)))
+    (error 'cl-ds:invalid-argument-value
+           :value (treatment state)
+           :argument :treatment
+           :format-arguments ":TREATMENT must have exactly 1 attribute.")))
