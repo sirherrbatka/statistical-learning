@@ -217,4 +217,4 @@
     (error 'cl-ds:invalid-argument-value
            :value (treatment state)
            :argument :treatment
-           :format-arguments ":TREATMENT must have exactly 1 attribute.")))
+           :format-control ":TREATMENT must have exactly 1 attribute.")))
