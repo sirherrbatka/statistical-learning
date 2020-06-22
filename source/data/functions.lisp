@@ -52,6 +52,9 @@
   (assert (or data-points attributes))
   (cl-ds.utils:cases ((null attributes)
                       (null data-points))
+    (when (and (null attributes)
+               (null data-points))
+      (return-from sample data-matrix))
     (iterate
       (declare (type fixnum i attributes-count data-points-count))
       (with attributes-count = (if (null attributes)
