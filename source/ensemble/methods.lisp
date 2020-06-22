@@ -145,6 +145,12 @@
     nil))
 
 
+(defmethod sl.mp:make-training-state ((parameters random-forest)
+                                      &rest initargs)
+  (apply #'sl.mp:make-training-state (tree-parameters parameters)
+         initargs))
+
+
 (defmethod sl.mp:make-model* ((parameters random-forest)
                               state)
   (bind ((train-data (sl.mp:train-data state))
@@ -192,8 +198,8 @@
                                         :from index
                                         :to (+ index tree-batch-size)))
         (fit-tree-batch parameters trees-view attributes-view
-                        state-initargs train-data
-                        target-data weights samples-view)
+                        state-initargs state
+                        weights samples-view)
         (funcall weights-calculator trees-view samples-view))
       (make 'random-forest-model
             :trees trees
@@ -201,10 +207,22 @@
             :target-attributes-count target-data-attributes))))
 
 
+(defmethod sl.mp:make-training-state ((parameters gradient-boost-ensemble)
+                                      &rest initargs
+                                      &key target-data)
+  (let* ((tree-parameters (tree-parameters parameters))
+         (expected-value (sl.gbt:calculate-expected-value tree-parameters
+                                                          target-data)))
+    (apply #'sl.mp:make-training-state
+           tree-parameters
+           :expected-value expected-value
+           :response nil
+           initargs)))
+
+
 (defmethod sl.mp:make-model* ((parameters gradient-boost-ensemble)
                               state)
   (bind ((train-data (sl.mp:train-data state))
-         (weights (sl.mp:weights state))
          (target-data (sl.mp:target-data state))
          (train-data-attributes (sl.data:attributes-count train-data))
          (target-data-attributes (sl.data:attributes-count target-data))
@@ -219,9 +237,7 @@
          ((:flet array-view (array &key (from 0) (to trees-count)))
           (make-array (min trees-count (- to from))
                       :displaced-index-offset (min trees-count from)
-                      :displaced-to array))
-         (expected-value (sl.gbt:calculate-expected-value tree-parameters
-                                                          target-data)))
+                      :displaced-to array)))
     (~>> (sl.data:selecting-random-indexes tree-attributes-count
                                            train-data-attributes)
          (map-into attributes))
@@ -242,12 +258,11 @@
       (for samples-view = (array-view samples
                                       :from index
                                       :to (+ index tree-batch-size)))
+      (for tree-state = (cl-ds.utils:quasi-clone* state
+                          :response response
+                          :shrinkage shrinkage))
       (fit-tree-batch parameters trees-view attributes-view
-                      `(:weights ,weights
-                        :expected-value ,expected-value
-                        :response ,response
-                        :shrinkage ,shrinkage)
-                      train-data target-data nil samples-view)
+                      '() tree-state nil samples-view)
       (for new-state = (contribute-trees tree-parameters
                                          trees-view
                                          train-data
