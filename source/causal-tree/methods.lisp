@@ -213,7 +213,7 @@
   (sl.data:check-data-points (sl.mp:train-data state)
                              (sl.mp:target-data state)
                              (treatment state))
-  (unless (= 1 (sl.data:attributes-count (treatment state)))
+  (unless (~> state treatment sl.data:attributes-count (= 1))
     (error 'cl-ds:invalid-argument-value
            :value (treatment state)
            :argument :treatment
