@@ -11,10 +11,8 @@
 
 
 (defmethod sl.mp:make-training-state ((parameters fundamental-decision-tree-parameters)
-                                      train-data
-                                      target-data
                                       &rest initargs
-                                      &key weights attributes &allow-other-keys)
+                                      &key train-data target-data weights attributes &allow-other-keys)
   (declare (ignore initargs))
   (let ((optimized-function (optimized-function parameters)))
     (make 'sl.tp:tree-training-state
@@ -25,7 +23,7 @@
           :weights weights
           :attributes attributes
           :target-data target-data
-          :training-data train-data)))
+          :train-data train-data)))
 
 
 (defmethod sl.mp:make-model* ((parameters fundamental-decision-tree-parameters)

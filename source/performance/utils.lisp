@@ -31,15 +31,16 @@
       (for i from 0 below attributes-count)
       (for permutated = (permutate-attribute test-train-data i indexes))
       (for predictions = (statistical-learning.mp:predict model permutated parallel))
-      (for permutated-errors = (errors model-parameters test-target-data predictions))
+      (for permutated-errors = (errors model-parameters
+                                       test-target-data
+                                       predictions))
       (if (null weights)
           (map-into error-differences
                     (lambda (a b) (max 0.0d0 (- a b)))
                     permutated-errors
                     errors)
           (map-into error-differences
-                    (lambda (a b w)
-                      (~> (- a b) (max 0.0d0) (* w)))
+                    (lambda (a b w) (~> (- a b) (max 0.0d0) (* w)))
                     permutated-errors
                     errors
                     weights))

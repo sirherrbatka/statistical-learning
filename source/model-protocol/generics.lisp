@@ -4,8 +4,7 @@
 (defgeneric make-model* (parameters training-state))
 (defgeneric predict (model data &optional parallel))
 (defgeneric parameters (model))
-(defgeneric make-training-state (parameters train-data target-data
-                                 &rest initargs &key &allow-other-keys))
+(defgeneric make-training-state (parameters &rest initargs &key &allow-other-keys))
 (defgeneric sample-training-state* (parameters state
                                     &key
                                       data-points

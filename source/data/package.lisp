@@ -5,6 +5,8 @@
   (:use #:cl #:statistical-learning.aux-package)
   (:nicknames #:sl.data)
   (:export
+   #:split-vector
+   #:split
    #:attributes-count
    #:bind-data-matrix-dimensions
    #:data-matrix

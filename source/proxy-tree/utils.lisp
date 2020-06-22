@@ -3,7 +3,7 @@
 
 (defun train/adjust (attributes training-state)
   (bind ((data-points-count (~> training-state
-                                sl.mp:training-data
+                                sl.mp:train-data
                                 sl.data:data-points-count))
          (half-data-points (truncate data-points-count 2))
          (randomized-indexes (~> data-points-count

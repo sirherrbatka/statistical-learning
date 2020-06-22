@@ -147,7 +147,7 @@
 
 (defmethod sl.mp:make-model* ((parameters random-forest)
                               state)
-  (bind ((train-data (sl.mp:training-data state))
+  (bind ((train-data (sl.mp:train-data state))
          (weights (sl.mp:weights state))
          (target-data (sl.mp:target-data state))
          (tree-batch-size (tree-batch-size parameters))
@@ -203,7 +203,7 @@
 
 (defmethod sl.mp:make-model* ((parameters gradient-boost-ensemble)
                               state)
-  (bind ((train-data (sl.mp:training-data state))
+  (bind ((train-data (sl.mp:train-data state))
          (weights (sl.mp:weights state))
          (target-data (sl.mp:target-data state))
          (train-data-attributes (sl.data:attributes-count train-data))

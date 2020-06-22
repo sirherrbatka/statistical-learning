@@ -41,16 +41,13 @@
   `((:training-parameters training-parameters)
     (:weights weights)
     (:target-data target-data)
-    (:training-data training-data)))
+    (:train-data training-data)))
 
 
 (defmethod make-training-state ((parameters fundamental-model-parameters)
-                                train-data target-data
                                 &rest initargs &key &allow-other-keys)
   (apply #'make 'fundamental-training-state
          :training-parameters parameters
-         :training-data train-data
-         :target-data target-data
          initargs))
 
 
@@ -61,9 +58,9 @@
                                               train-attributes
                                               target-attributes
                                               &allow-other-keys)
-  (list :training-data (sl.data:sample (sl.mp:training-data state)
-                                        :data-points data-points
-                                        :attributes train-attributes)
+  (list :train-data (sl.data:sample (sl.mp:train-data state)
+                                    :data-points data-points
+                                    :attributes train-attributes)
         :target-data (sl.data:sample (sl.mp:target-data state)
                                      :data-points data-points
                                      :attributes target-attributes)

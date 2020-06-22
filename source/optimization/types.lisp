@@ -19,9 +19,5 @@
                        :reader number-of-classes)))
 
 
-(deftype split-array ()
-  `(simple-array t (*)))
-
-
 (deftype weights-data-matrix ()
   `(simple-array double-float (* 1)))

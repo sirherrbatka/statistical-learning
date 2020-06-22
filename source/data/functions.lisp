@@ -115,3 +115,32 @@
                                        (mref result 0 j)
                                        (mref data-matrix i j)))))
     (finally (return result))))
+
+
+(-> split (data-matrix fixnum split-vector t (or null fixnum)) data-matrix)
+(defun split (data-matrix length split-array position skipped-column)
+  (declare (optimize (speed 3) (safety 0)))
+  (cl-ds.utils:cases ((null skipped-column))
+    (bind-data-matrix-dimensions
+        ((data-points-count attributes-count data-matrix))
+      (lret ((result (make-array `(,length ,(if (null skipped-column)
+                                                attributes-count
+                                                (1- attributes-count)))
+                                 :element-type 'double-float)))
+        (iterate
+          (declare (type fixnum j i))
+          (with j = 0)
+          (for i from 0 below data-points-count)
+          (when (eql position (aref split-array i))
+            (iterate
+              (declare (type fixnum k p))
+              (with p = 0)
+              (for k from 0 below attributes-count)
+              (when (eql skipped-column k)
+                (next-iteration))
+              (setf (mref result j p)
+                    (mref data-matrix i k)
+                    p (1+ p))
+              (finally (assert (= p (array-dimension result 1)))))
+            (incf j))
+          (finally (assert (= j length))))))))

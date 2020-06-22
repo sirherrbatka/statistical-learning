@@ -18,6 +18,6 @@
    #:training-parameters
    #:fundamental-training-state
    #:target-data
-   #:training-data
+   #:train-data
    #:weights
    ))

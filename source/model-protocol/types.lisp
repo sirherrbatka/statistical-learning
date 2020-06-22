@@ -17,6 +17,6 @@
                  :reader target-data)
    (%weights :initarg :weights
              :reader weights)
-   (%training-data :initarg :training-data
-                   :reader training-data))
+   (%train-data :initarg :train-data
+                :reader train-data))
   (:default-initargs :weights nil))

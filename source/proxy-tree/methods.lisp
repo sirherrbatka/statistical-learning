@@ -27,21 +27,15 @@
 
 
 (defmethod sl.mp:make-training-state ((parameters honest-tree)
-                                      train-data
-                                      target-data
                                       &rest initargs
-                                      &key data-points &allow-other-keys)
+                                      &key train-data data-points &allow-other-keys)
   (bind ((half-data-points (truncate (length data-points) 2))
          (division (apply #'call-next-method
                           parameters
-                          train-data
-                          target-data
                           :data-points (take half-data-points data-points)
                           initargs))
          (adjust (apply #'call-next-method
                         parameters
-                        train-data
-                        target-data
                         :attributes (~> train-data
                                         sl.data:attributes-count
                                         sl.data:iota-vector)
@@ -54,7 +48,7 @@
                               division.adjust)
   (bind (((division . adjust) division.adjust)
          (inner (inner parameters))
-         (values-training-data (sl.mp:training-data adjust))
+         (values-training-data (sl.mp:train-data adjust))
          (model (sl.mp:make-model* inner division))
          (root (sl.tp:root model))
          ((:flet assign-leaf (index))

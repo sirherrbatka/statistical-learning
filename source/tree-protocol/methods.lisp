@@ -18,10 +18,6 @@
   (check-type new-value (integer 0 *)))
 
 
-(defmethod (setf training-data) :before (new-value training-state)
-  (statistical-learning.data:check-data-points new-value))
-
-
 (defmethod treep ((node fundamental-tree-node))
   t)
 
@@ -57,7 +53,7 @@
                                              position
                                              size
                                              &optional attribute-index attribute-indexes)
-  (bind ((training-data (sl.mp:training-data state))
+  (bind ((training-data (sl.mp:train-data state))
          (target-data (sl.mp:target-data state))
          (weights (sl.mp:weights state))
          (attributes (attribute-indexes state))
@@ -68,21 +64,21 @@
                              attributes)))
     (list :weights (if (null weights)
                        nil
-                       (subsample-array weights size
-                                        split-array position
-                                        nil))
-          :training-data (subsample-array training-data
-                                          size split-array
-                                          position attribute-index)
-          :target-data (subsample-array target-data
-                                        size split-array
-                                        position nil)
+                       (sl.data:split weights size
+                                      split-array position
+                                      nil))
+          :train-data (sl.data:split training-data
+                                     size split-array
+                                     position attribute-index)
+          :target-data (sl.data:split target-data
+                                      size split-array
+                                      position nil)
           :attributes new-attributes)))
 
 
 (defmethod split* :around ((training-parameters fundamental-tree-training-parameters)
                            training-state leaf)
-  (let* ((training-data (sl.mp:training-data training-state))
+  (let* ((training-data (sl.mp:train-data training-state))
          (depth (depth training-state))
          (attribute-indexes (attribute-indexes training-state))
          (loss (loss leaf))
@@ -124,18 +120,15 @@
         (minimal-difference (minimal-difference instance))
         (trials-count (trials-count instance)))
     (parallel instance) ; here just to check if slot is bound
-    (unless (integerp maximal-depth)
-      (error 'type-error :expected 'integer
-                         :datum maximal-depth))
+    (check-type maximal-depth integer)
+    (check-type minimal-difference double-float)
     (unless (< 0 maximal-depth)
       (error 'cl-ds:argument-value-out-of-bounds
              :argument :maximal-depth
              :bounds '(< 0 :maximal-depth)
              :value maximal-depth))
-    (unless (integerp minimal-size)
-      (error 'type-error :expected 'integer
-                         :datum minimal-size))
-    (unless (<= 0 minimal-size)
+    (check-type minimal-size integer)
+    (unless (< 0 minimal-size)
       (error 'cl-ds:argument-value-out-of-bounds
              :argument :minimal-size
              :bounds '(<= 0 :minimal-size)
@@ -160,7 +153,7 @@
      training-state
      leaf)
   (declare (optimize (speed 3) (safety 0)))
-  (bind ((training-data (sl.mp:training-data training-state))
+  (bind ((training-data (sl.mp:train-data training-state))
          (trials-count (trials-count training-parameters))
          (minimal-difference (minimal-difference training-parameters))
          (score (loss leaf))
@@ -284,11 +277,9 @@
 
 (defmethod sl.mp:make-training-state :around
     ((parameters fundamental-tree-training-parameters)
-     train-data
-     target-data
-     &rest initargs &key attributes data-points &allow-other-keys)
+     &rest initargs &key train-data attributes data-points &allow-other-keys)
   (~> (apply #'call-next-method
-             parameters train-data target-data
+             parameters
              :attributes (~> train-data
                              sl.data:attributes-count
                              sl.data:iota-vector)

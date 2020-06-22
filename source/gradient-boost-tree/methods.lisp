@@ -3,19 +3,18 @@
 
 
 (defmethod sl.mp:make-training-state ((parameters fundamental-gradient-boost-tree-parameters)
-                                      train-data
-                                      target-data
                                       &rest initargs
-                                      &key attributes weights response expected-value shrinkage
+                                      &key attributes train-data
+                                        target-data weights response expected-value shrinkage
                                       &allow-other-keys)
   (declare (ignore initargs))
   (sl.mp:make-training-state (implementation parameters
                                              :shrinkage shrinkage
                                              :expected-value expected-value)
-                             train-data
-                             (if (null response)
-                                 (target parameters target-data expected-value)
-                                 response)
+                             :train-data train-data
+                             :target-data (if (null response)
+                                              (target parameters target-data expected-value)
+                                              response)
                              :attributes attributes
                              :weights weights))
 

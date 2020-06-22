@@ -40,7 +40,7 @@
 
 (-> fill-split-array (statistical-learning.data:data-matrix
                       fixnum double-float
-                      sl.opt:split-array)
+                      sl.data:split-vector)
     (values fixnum fixnum))
 (defun fill-split-array (data attribute threshold array)
   (iterate
@@ -54,40 +54,6 @@
     (setf (aref array i) rightp)
     (if rightp (incf right-count) (incf left-count))
     (finally (return (values left-count right-count)))))
-
-
-(-> subsample-array (statistical-learning.data:data-matrix
-                     fixnum
-                     sl.opt:split-array
-                     t
-                     (or null fixnum))
-    statistical-learning.data:data-matrix)
-(defun subsample-array (array length split-array position skipped-column)
-  (declare (optimize (speed 3) (safety 0)))
-  (cl-ds.utils:cases ((null skipped-column))
-    (statistical-learning.data:bind-data-matrix-dimensions
-        ((data-points-count attributes-count array))
-      (lret ((result (make-array `(,length ,(if (null skipped-column)
-                                                attributes-count
-                                                (1- attributes-count)))
-                                 :element-type 'double-float)))
-        (iterate
-          (declare (type fixnum j i))
-          (with j = 0)
-          (for i from 0 below data-points-count)
-          (when (eql position (aref split-array i))
-            (iterate
-              (declare (type fixnum k p))
-              (with p = 0)
-              (for k from 0 below attributes-count)
-              (when (eql skipped-column k)
-                (next-iteration))
-              (setf (statistical-learning.data:mref result j p)
-                    (statistical-learning.data:mref array i k)
-                    p (1+ p))
-              (finally (assert (= p (array-dimension result 1)))))
-            (incf j))
-          (finally (assert (= j length))))))))
 
 
 (defun subsample-vector (vector skipped-position)
