@@ -59,3 +59,8 @@
   (let ((state (contribute-trees tree-parameters trees data parallel state)))
     (values (statistical-learning.tp:extract-predictions state)
             state)))
+
+
+(defun treep (tree)
+  (and (not (null tree))
+       (~> tree sl.tp:root sl.tp:treep)))

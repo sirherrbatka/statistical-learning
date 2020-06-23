@@ -49,19 +49,8 @@
 (defmethod initialize-instance :after ((instance gradient-boost-ensemble)
                                        &rest initargs)
   (declare (ignore initargs))
-  (let ((shrinkage (shrinkage instance))
-        (shrinkage-change (shrinkage-change instance))
-        (tree-batch-size (tree-batch-size instance))
-        (trees-count (trees-count instance)))
-    (check-type shrinkage double-float)
-    (check-type shrinkage-change double-float)
-    (unless (< (* (/ trees-count tree-batch-size)
-                  shrinkage-change)
-               shrinkage)
-      (error 'cl-ds:incompatible-arguments
-             :parameters '(:shrinkage :shrinkage-change)
-             :values `(,shrinkage ,shrinkage-change)
-             :format-control "SHRINKAGE-CHANGE value implies that SHRINKAGE will eventually go below zero."))))
+  (let ((shrinkage (shrinkage instance)))
+    (check-type shrinkage positive-double-float)))
 
 
 (defmethod statistical-learning.mp:predict ((model ensemble-model)
@@ -165,17 +154,22 @@
   (bind ((train-data (sl.mp:train-data state))
          (weights (sl.mp:weights state))
          (target-data (sl.mp:target-data state))
+         (train-data-attributes (sl.data:attributes-count train-data))
          (tree-batch-size (tree-batch-size parameters))
          (tree-parameters (tree-parameters parameters))
          (trees-count (trees-count parameters))
          (parallel (parallel parameters))
          (tree-attributes-count (tree-attributes-count parameters))
-         (trees (make-array trees-count))
+         (trees (make-array trees-count
+                            :initial-element nil))
          (samples (make-array trees-count))
          (attributes (make-array trees-count))
          (weights-calculator nil)
+         (attributes-generator (sl.data:selecting-random-indexes
+                                tree-attributes-count
+                                train-data-attributes))
          ((:flet array-view (array &key (from 0) (to trees-count)))
-          (make-array (min trees-count (- to from))
+          (make-array (- (min trees-count to) from)
                       :displaced-index-offset (min trees-count from)
                       :displaced-to array)))
     (statistical-learning.data:bind-data-matrix-dimensions
@@ -189,27 +183,29 @@
       (setf weights-calculator (weights-calculator parameters tree-parameters
                                                    parallel weights
                                                    train-data target-data))
-      (~>> (sl.data:selecting-random-indexes tree-attributes-count
-                                             train-data-attributes)
-           (map-into attributes))
       (iterate
         (with state-initargs = '())
-        (for index from 0
-             below trees-count
-             by tree-batch-size)
-        (for trees-view = (array-view trees
-                                      :from index
-                                      :to (+ index tree-batch-size)))
-        (for attributes-view = (array-view attributes
-                                           :from index
-                                           :to (+ index tree-batch-size)))
-        (for samples-view = (array-view samples
+        (with index = 0)
+        (iterate
+          (while (< index trees-count))
+          (for trees-view = (array-view trees
                                         :from index
                                         :to (+ index tree-batch-size)))
-        (fit-tree-batch parameters trees-view attributes-view
-                        state-initargs state
-                        weights samples-view)
-        (funcall weights-calculator trees-view samples-view))
+          (for attributes-view = (array-view attributes
+                                             :from index
+                                             :to (+ index tree-batch-size)))
+          (map-into attributes-view attributes-generator)
+          (for samples-view = (array-view samples
+                                          :from index
+                                          :to (+ index tree-batch-size)))
+          (fit-tree-batch parameters trees-view attributes-view
+                          state-initargs state
+                          weights samples-view)
+          (funcall weights-calculator trees-view samples-view)
+          (incf index tree-batch-size))
+        (for swap-count = (cl-ds.utils:swap-if trees (complement #'treep)))
+        (until (zerop swap-count))
+        (decf index swap-count))
       (make 'random-forest-model
             :trees trees
             :parameters parameters
@@ -244,27 +240,29 @@
          (tree-attributes-count (tree-attributes-count parameters))
          (trees (make-array trees-count))
          (attributes (make-array trees-count))
+         (attributes-generator (sl.data:selecting-random-indexes
+                                tree-attributes-count
+                                train-data-attributes))
          ((:flet array-view (array &key (from 0) (to trees-count)))
-          (make-array (min trees-count (- to from))
+          (make-array (- (min trees-count to) from)
                       :displaced-index-offset (min trees-count from)
                       :displaced-to array)))
-    (~>> (sl.data:selecting-random-indexes tree-attributes-count
-                                           train-data-attributes)
-         (map-into attributes))
     (iterate
-      (with shrinkage = (shrinkage parameters))
-      (with shrinkage-change = (shrinkage-change parameters))
       (with response = nil)
       (with contributed = nil)
-      (for index from 0
+      (with shrinkage = (shrinkage parameters))
+      (for index
+           from 0
            below trees-count
            by tree-batch-size)
+      (while (< index trees-count))
       (for trees-view = (array-view trees
                                     :from index
                                     :to (+ index tree-batch-size)))
       (for attributes-view = (array-view attributes
                                          :from index
                                          :to (+ index tree-batch-size)))
+      (map-into attributes-view attributes-generator)
       (for samples-view = (array-view samples
                                       :from index
                                       :to (+ index tree-batch-size)))
@@ -276,7 +274,6 @@
                                                train-data
                                                parallel
                                                contributed))
-      (decf shrinkage shrinkage-change)
       (setf response (sl.gbt:calculate-response tree-parameters
                                                 new-contributed
                                                 target-data)

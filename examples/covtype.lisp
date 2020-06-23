@@ -100,7 +100,7 @@
   (make 'statistical-learning.ensemble:dynamic-random-forest
         :trees-count 250
         :parallel t
-        :tree-batch-size 10
+        :tree-batch-size 50
         :tree-attributes-count 50
         :tree-sample-rate 0.2
         :tree-parameters *training-parameters*))
@@ -120,7 +120,6 @@
           :tree-batch-size 5
           :tree-attributes-count 50
           :shrinkage 0.2d0
-          :shrinkage-change (/ 0.2d0 75)
           :tree-sample-rate 0.3
           :tree-parameters (make 'sl.gbt:classification
                                  :optimized-function (sl.opt:k-logistic *cover-types*)

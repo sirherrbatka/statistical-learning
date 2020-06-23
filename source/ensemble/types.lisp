@@ -39,12 +39,8 @@
 
 (defclass gradient-boost-ensemble (ensemble)
   ((%shrinkage :initarg :shrinkage
-               :reader shrinkage)
-   (%shrinkage-change :initarg :shrinkage-change
-                      :reader shrinkage-change))
-  (:default-initargs
-   :shrinkage 0.1d0
-   :shrinkage-change 0.0d0))
+               :reader shrinkage))
+  (:default-initargs :shrinkage 0.01d0))
 
 
 (defclass ensemble-model (statistical-learning.mp:fundamental-model)

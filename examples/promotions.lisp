@@ -47,18 +47,18 @@
 (defparameter *training-parameters*
   (make 'statistical-learning.dt:classification
         :optimized-function (sl.opt:gini-impurity 2)
-        :maximal-depth 5
-        :minimal-difference 0.00000001d0
-        :minimal-size 25
-        :trials-count 25
+        :maximal-depth 3
+        :minimal-difference 0.0d0
+        :minimal-size 50
+        :trials-count 15
         :parallel nil))
 
 (defparameter *forest-parameters*
   (make 'statistical-learning.ensemble:random-forest
         :trees-count 500
         :parallel t
-        :tree-batch-size 20
-        :tree-attributes-count 5
+        :tree-batch-size 100
+        :tree-attributes-count 3
         :tree-sample-rate 0.5
         :tree-parameters (~> *training-parameters*
                              (sl.pt:causal 10 10)
@@ -70,5 +70,5 @@
                     *target-data*
                     :treatment *treatment-data*))
 
-;; and here are the results. If cost of the purchase is $10 and the cost of the promotion is $0.10 we need to have at least 1% increase probability of purchase (1% of $10 is $0.10) to get an yield from the promotion.
+;; and here are the results. If cost of the purchase is $10 and the cost of the promotion is $0.10 we need to have at least 1% increase probability of purchase (1% of $10 is $0.10) to break even.
 (defparameter *gains* (sl.mp:predict *model* *train-data* t))
