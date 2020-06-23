@@ -44,10 +44,13 @@
     ((object tree-training-state))
   `((:depth depth)
     (:loss loss)
-    (:attributes attribute-indexes)))
+    (:attributes attribute-indexes)
+    (:weights sl.mp:weights)
+    (:target-data sl.mp:target-data)
+    (:train-data sl.mp:train-data)))
 
 
-(defmethod split-training-state-info append ((parameters fundamental-tree-training-parameters)
+(defmethod split-training-state-info append ((parameters standard-tree-training-parameters)
                                              state
                                              split-array
                                              position
@@ -67,9 +70,9 @@
                        (sl.data:split weights size
                                       split-array position
                                       nil))
-          :train-data (sl.data:split training-data
-                                     size split-array
-                                     position attribute-index)
+          :train-data (sl.data:split training-data size
+                                     split-array position
+                                     attribute-index)
           :target-data (sl.data:split target-data
                                       size split-array
                                       position nil)
@@ -77,11 +80,11 @@
 
 
 (defmethod split* :around ((training-parameters fundamental-tree-training-parameters)
-                           training-state leaf)
+                           training-state)
   (let* ((training-data (sl.mp:train-data training-state))
          (depth (depth training-state))
          (attribute-indexes (attribute-indexes training-state))
-         (loss (loss leaf))
+         (loss (loss training-state))
          (maximal-depth (maximal-depth training-parameters))
          (minimal-size (minimal-size training-parameters)))
     (declare (type statistical-learning.data:data-matrix training-data)
@@ -99,7 +102,9 @@
                                             (model tree-model)
                                             data
                                             state
-                                            parallel)
+                                            parallel
+                                            &optional leaf-key)
+  (declare (ignore leaf-key))
   (unless (forced model)
     (force-tree model)))
 
@@ -109,6 +114,17 @@
                                             &optional parallel)
   (~> (contribute-predictions model data nil parallel)
       extract-predictions))
+
+
+(defmethod initialize-instance :after ((instance tree-training-state)
+                                       &rest initargs)
+  (declare (ignore initargs))
+  (when (null (attribute-indexes instance))
+    (setf (attribute-indexes instance)
+          (~> instance
+              sl.mp:train-data
+              sl.data:attributes-count
+              sl.data:iota-vector))))
 
 
 (defmethod initialize-instance :after
@@ -143,20 +159,18 @@
              :value trials-count))))
 
 
-(defmethod make-leaf* ((parameters fundamental-tree-training-parameters)
-                       state)
-  (make 'fundamental-leaf-node))
+(defmethod make-leaf* ((parameters fundamental-tree-training-parameters))
+  (make 'standard-leaf-node))
 
 
 (defmethod sl.tp:split*
     ((training-parameters fundamental-tree-training-parameters)
-     training-state
-     leaf)
+     training-state)
   (declare (optimize (speed 3) (safety 0)))
   (bind ((training-data (sl.mp:train-data training-state))
          (trials-count (trials-count training-parameters))
          (minimal-difference (minimal-difference training-parameters))
-         (score (loss leaf))
+         (score (loss training-state))
          (minimal-size (minimal-size training-parameters))
          (parallel (parallel training-parameters))
          (attributes (attribute-indexes training-state)))
@@ -241,19 +255,16 @@
                               :right-node (subtree sl.opt:right
                                                    optimal-right-length
                                                    minimal-right-score)
-                              :support data-size
-                              :loss score
                               :attribute (aref attributes optimal-attribute)
                               :attribute-value optimal-threshold))))))))
 
 
-(defmethod split-training-state* ((parameters fundamental-tree-training-parameters)
+(defmethod split-training-state* ((parameters standard-tree-training-parameters)
                                   state split-array
                                   position size initargs
                                   &optional attribute-index attribute-indexes)
-  (bind ((cloning-list (cl-ds.utils:cloning-list state))
-         (class (class-of state)))
-    (apply #'make class
+  (bind ((cloning-list (cl-ds.utils:cloning-list state)))
+    (apply #'make (class-of state)
            (append (split-training-state-info parameters
                                               state
                                               split-array
@@ -267,22 +278,27 @@
 
 (defmethod sl.mp:sample-training-state-info append ((parameters fundamental-tree-training-parameters)
                                                     state
-                                                    &key train-attributes)
+                                                    &key train-attributes data-points target-attributes)
   (list :attributes (if (null train-attributes)
                         (attribute-indexes state)
                         (map '(vector fixnum)
                              (curry #'aref (attribute-indexes state))
-                             train-attributes))))
+                             train-attributes))
+        :train-data (sl.data:sample (sl.mp:train-data state)
+                                    :data-points data-points
+                                    :attributes train-attributes)
+        :target-data (sl.data:sample (sl.mp:target-data state)
+                                     :data-points data-points
+                                     :attributes target-attributes)
+        :weights (if (null (sl.mp:weights state))
+                     nil
+                     (sl.data:sample (sl.mp:weights state)
+                                     :data-points data-points))))
 
 
 (defmethod sl.mp:make-training-state :around
-    ((parameters fundamental-tree-training-parameters)
-     &rest initargs &key train-data attributes data-points &allow-other-keys)
-  (~> (apply #'call-next-method
-             parameters
-             :attributes (~> train-data
-                             sl.data:attributes-count
-                             sl.data:iota-vector)
-             initargs)
+    ((parameters standard-tree-training-parameters)
+     &rest initargs &key attributes data-points &allow-other-keys)
+  (~> (apply #'call-next-method parameters :data-points nil :attributes nil initargs)
       (sl.mp:sample-training-state :data-points data-points
                                    :train-attributes attributes)))

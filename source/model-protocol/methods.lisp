@@ -2,10 +2,8 @@
 
 
 (defmethod make-training-state :before ((model fundamental-model)
-                                        train-data
-                                        target-data
                                         &rest initargs
-                                        &key &allow-other-keys)
+                                        &key train-data target-data &allow-other-keys)
   (declare (ignore initargs))
   (statistical-learning.data:bind-data-matrix-dimensions
       ((train-data-points train-data-attributes train-data)
@@ -32,16 +30,14 @@
              :format-control "TARGET-DATA has no data-points."))))
 
 
-(defmethod predict :before ((model fundamental-model) data &optional parallel)
-  (statistical-learning.data:check-data-points data))
-
-
 (defmethod cl-ds.utils:cloning-information append
     ((object fundamental-training-state))
-  `((:training-parameters training-parameters)
-    (:weights weights)
-    (:target-data target-data)
-    (:train-data training-data)))
+  `((:training-parameters training-parameters)))
+
+
+(defmethod predict :before ((model fundamental-model) data &optional parallel)
+  (declare (ignore parallel))
+  (statistical-learning.data:check-data-points data))
 
 
 (defmethod make-training-state ((parameters fundamental-model-parameters)
@@ -51,34 +47,14 @@
          initargs))
 
 
-(defmethod sample-training-state-info append ((parameters fundamental-model-parameters)
-                                              state
-                                              &key
-                                              data-points
-                                              train-attributes
-                                              target-attributes
-                                              &allow-other-keys)
-  (list :train-data (sl.data:sample (sl.mp:train-data state)
-                                    :data-points data-points
-                                    :attributes train-attributes)
-        :target-data (sl.data:sample (sl.mp:target-data state)
-                                     :data-points data-points
-                                     :attributes target-attributes)
-        :weights (if (null (sl.mp:weights state))
-                     nil
-                     (sl.data:sample (sl.mp:weights state)
-                                     :data-points data-points))))
-
-
 (defmethod sample-training-state* ((parameters fundamental-model-parameters)
                                    state
                                    &key data-points train-attributes target-attributes initargs
                                    &allow-other-keys)
-  (let ((cloning-list (cl-ds.utils:cloning-list state))
-        (class (class-of state)))
-    (apply #'make class
-           (append (sample-training-state-info parameters state
-                                               :target-attributes target-attributes
-                                               :train-attributes train-attributes
-                                               :data-points data-points)
-                   initargs cloning-list))))
+  (apply #'make (class-of state)
+         (append (sample-training-state-info parameters state
+                                             :target-attributes target-attributes
+                                             :train-attributes train-attributes
+                                             :data-points data-points)
+                 initargs
+                 (cl-ds.utils:cloning-list state))))

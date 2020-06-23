@@ -18,3 +18,9 @@
                                           target-attributes
                                         &allow-other-keys)
   (:method-combination append :most-specific-last))
+
+(defgeneric training-parameters (state))
+(defgeneric (setf training-parameters) (new-value state))
+(defgeneric target-data (state))
+(defgeneric train-data (state))
+(defgeneric weights-data (state))

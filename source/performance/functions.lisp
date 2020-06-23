@@ -21,7 +21,7 @@
                 (model (statistical-learning.mp:make-model
                         model-parameters
                         (statistical-learning.data:sample train-data
-                                            :data-points train)
+                                                          :data-points train)
                         (statistical-learning.data:sample target-data
                                                           :data-points train)
                         :weights (sampled-weights train)))
@@ -61,7 +61,7 @@
 
 
 (defun attributes-importance (model-parameters number-of-folds
-                              train-data target-data &optional parallel)
+                              train-data target-data &key parallel)
   (statistical-learning.data:check-data-points train-data target-data)
   (~> train-data
       statistical-learning.data:data-points-count
@@ -81,7 +81,7 @@
                 (test-train-data (sl.data:sample train-data
                                                  :data-points test)))
            (attributes-importance* model test-train-data
-                                   test-target-data parallel))))
+                                   test-target-data :parallel parallel))))
       cl-ds.alg:array-elementwise
       cl-ds.math:average))
 

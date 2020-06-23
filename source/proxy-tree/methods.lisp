@@ -3,9 +3,8 @@
 
 (define-forwarding
   (sl.tp:extract-predictions* (predictions))
-  (sl.tp:contribute-predictions* (model data state parallel))
-  (sl.tp:make-leaf* (training-state))
-  (sl.tp:split* (state leaf))
+  (sl.tp:make-leaf* ())
+  (sl.tp:calculate-loss* (state split-array))
   (sl.tp:initialize-leaf (state leaf))
   (sl.tp:maximal-depth ())
   (sl.tp:minimal-size ())
@@ -14,6 +13,26 @@
   (sl.tp:trials-count ())
   (sl.perf:average-performance-metric (metrics))
   (sl.tp:parallel ()))
+
+
+(defmethod sl.tp:contribute-predictions* ((training-parameters proxy-tree)
+                                          model
+                                          data
+                                          state
+                                          parallel
+                                          &optional leaf-key)
+  (if (null leaf-key)
+      (sl.tp:contribute-predictions* (inner training-parameters)
+                                     model
+                                     data
+                                     state
+                                     parallel)
+      (sl.tp:contribute-predictions* (inner training-parameters)
+                                     model
+                                     data
+                                     state
+                                     parallel
+                                     leaf-key)))
 
 
 (defmethod sl.perf:performance-metric ((parameters proxy-tree)
@@ -26,95 +45,33 @@
                               :key weights))
 
 
-(defmethod sl.mp:make-training-state ((parameters honest-tree)
-                                      &rest initargs
-                                      &key train-data data-points &allow-other-keys)
-  (bind ((half-data-points (truncate (length data-points) 2))
-         (division (apply #'call-next-method
-                          parameters
-                          :data-points (take half-data-points data-points)
-                          initargs))
-         (adjust (apply #'call-next-method
-                        parameters
-                        :attributes (~> train-data
-                                        sl.data:attributes-count
-                                        sl.data:iota-vector)
-                        :data-points (drop half-data-points data-points)
-                        initargs)))
-    (cons division adjust)))
+(defmethod cl-ds.utils:cloning-information append ((state proxy-state))
+  `((:inner inner)))
 
 
-(defmethod sl.mp:make-model* ((parameters honest-tree)
-                              division.adjust)
-  (bind (((division . adjust) division.adjust)
-         (inner (inner parameters))
-         (values-training-data (sl.mp:train-data adjust))
-         (model (sl.mp:make-model* inner division))
-         (root (sl.tp:root model))
-         ((:flet assign-leaf (index))
-          (cons index
-                (sl.tp:leaf-for root values-training-data index)))
-         ((:flet adjust-leaf (leaf.indexes))
-          (bind (((leaf . indexes) leaf.indexes)
-                 (no-fill-pointer (cl-ds.utils:remove-fill-pointer indexes)))
-            (~> adjust
-                (sl.mp:sample-training-state :data-points no-fill-pointer)
-                (sl.tp:initialize-leaf inner _ leaf)))))
-    (~> (cl-ds:iota-range :to (sl.data:data-points-count values-training-data))
-        (cl-ds.alg:on-each #'assign-leaf)
-        (cl-ds.alg:group-by :key #'cdr :test 'eq)
-        (cl-ds.alg:to-vector :key #'car :element-type 'fixnum)
-        (cl-ds:traverse #'adjust-leaf))
-    model))
+(defmethod sl.mp:train-data ((state proxy-state))
+  (sl.mp:train-data (inner state)))
+
+
+(defmethod sl.mp:target-data ((state proxy-state))
+  (sl.mp:target-data (inner state)))
+
+
+(defmethod sl.mp:weights ((state proxy-state))
+  (sl.mp:weights (inner state)))
+
+
+(defmethod sl.tp:attribute-indexes ((state proxy-state))
+  (sl.tp:attribute-indexes (inner state)))
+
+
+(defmethod sl.tp:depth ((state proxy-state))
+  (sl.tp:depth (inner state)))
+
+
+(defmethod sl.tp:loss ((state proxy-state))
+  (sl.tp:loss (inner state)))
 
 
 (defmethod sl.mp:make-model* ((parameters proxy-tree) training-state)
-  (lret ((result (sl.mp:make-model* (inner parameters)
-                                    training-state)))))
-
-
-(defmethod sl.mp:make-training-state ((parameters proxy-tree)
-                                      train-data
-                                      target-data
-                                      &rest initargs
-                                      &key &allow-other-keys)
-  (lret ((result (apply #'sl.mp:make-training-state
-                        (inner parameters)
-                        train-data target-data initargs)))
-    (setf (sl.mp:training-parameters result) parameters)))
-
-
-(defmethod sl.tp:split-training-state* ((parameters proxy-tree)
-                                        state
-                                        split-array
-                                        position
-                                        size
-                                        initargs
-                                        &optional
-                                          attribute-index
-                                          attribute-indexes)
-  (lret ((result (sl.tp:split-training-state* (inner parameters)
-                                              state
-                                              split-array
-                                              position
-                                              size
-                                              initargs
-                                              attribute-index
-                                              attribute-indexes)))
-        (setf (sl.mp:training-parameters result) parameters)))
-
-
-(defmethod sl.mp:sample-training-state* ((parameters proxy-tree)
-                                         state
-                                         &key data-points
-                                           train-attributes
-                                           target-attributes
-                                           initargs)
-  (lret ((result (sl.mp:sample-training-state*
-                  (inner parameters)
-                  state
-                  :data-points data-points
-                  :train-attributes train-attributes
-                  :target-attributes target-attributes
-                  :initargs initargs)))
-    (setf (sl.mp:training-parameters result) parameters)))
+  (call-next-method))

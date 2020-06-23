@@ -2,7 +2,7 @@
 
 
 (defclass fundamental-gradient-boost-tree-parameters
-    (sl.tp:fundamental-tree-training-parameters)
+    (sl.tp:standard-tree-training-parameters)
   ((%optimized-function :initarg :optimized-function
                         :reader optimized-function)))
 

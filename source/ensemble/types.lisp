@@ -26,6 +26,17 @@
   ())
 
 
+(defclass ensemble-state (sl.mp:fundamental-training-state)
+  ((%all-args :initarg :all-args
+              :reader all-args)
+   (%train-data :initarg :train-data
+                :reader sl.mp:train-data)
+   (%target-data :initarg :target-data
+                 :reader sl.mp:target-data)
+   (%weights :initarg :weights
+             :reader sl.mp:weights)))
+
+
 (defclass gradient-boost-ensemble (ensemble)
   ((%shrinkage :initarg :shrinkage
                :reader shrinkage)

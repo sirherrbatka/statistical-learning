@@ -49,7 +49,6 @@
 (defun sample (data-matrix &key data-points attributes)
   (declare (optimize (speed 3) (safety 0)))
   (check-data-points data-matrix)
-  (assert (or data-points attributes))
   (cl-ds.utils:cases ((null attributes)
                       (null data-points))
     (when (and (null attributes)
@@ -122,7 +121,7 @@
 
 (-> split (data-matrix fixnum split-vector t (or null fixnum)) data-matrix)
 (defun split (data-matrix length split-array position skipped-column)
-  (declare (optimize (speed 3) (safety 0)))
+  (declare (optimize (debug 3) (safety 0)))
   (cl-ds.utils:cases ((null skipped-column))
     (bind-data-matrix-dimensions
         ((data-points-count attributes-count data-matrix))

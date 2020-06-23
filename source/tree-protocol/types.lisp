@@ -2,12 +2,7 @@
 
 
 (defclass fundamental-node ()
-  ((%loss :initarg :loss
-          :accessor loss)
-   (%support :initarg :support
-             :accessor support))
-  (:default-initargs :loss 0.0d0
-                     :support 0))
+  ())
 
 
 (defclass fundamental-tree-node (fundamental-node)
@@ -21,7 +16,11 @@
                      :accessor attribute-value)))
 
 
-(defclass fundamental-leaf-node (fundamental-node)
+(defclass fundamental-leaf-node ()
+  ())
+
+
+(defclass standard-leaf-node (fundamental-leaf-node fundamental-node)
   ((%predictions :initarg :predictions
                  :accessor predictions))
   (:default-initargs :predictions nil))
@@ -29,6 +28,10 @@
 
 (defclass fundamental-tree-training-parameters
     (statistical-learning.mp:fundamental-model-parameters)
+  ())
+
+
+(defclass standard-tree-training-parameters (fundamental-tree-training-parameters)
   ((%maximal-depth :initarg :maximal-depth
                    :reader maximal-depth)
    (%minimal-difference :initarg :minimal-difference
@@ -45,10 +48,16 @@
   ((%attribute-indexes :initarg :attributes
                        :accessor attribute-indexes)
    (%depth :initarg :depth
-           :accessor depth)
+           :reader depth)
    (%loss :initarg :loss
-          :accessor loss))
-  (:default-initargs :depth 0))
+          :reader loss)
+   (%target-data :initarg :target-data
+                 :reader sl.mp:target-data)
+   (%weights :initarg :weights
+             :reader sl.mp:weights)
+   (%train-data :initarg :train-data
+                :reader sl.mp:train-data))
+  (:default-initargs :depth 0 :attributes nil :weights nil))
 
 
 (defclass tree-model (statistical-learning.mp:fundamental-model)
@@ -62,7 +71,7 @@
 
 (defclass contributed-predictions ()
   ((%training-parameters :initarg :training-parameters
-                         :reader training-parameters)
+                         :reader sl.mp:training-parameters)
    (%contributions-count :initarg :contributions-count
                          :accessor contributions-count)
    (%indexes :initarg :indexes

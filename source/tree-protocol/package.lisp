@@ -24,12 +24,14 @@
    #:tree-training-state
    #:fundamental-tree-node
    #:fundamental-tree-training-parameters
+   #:standard-tree-training-parameters
    #:indexes
    #:initialize-leaf
    #:leaf-for
    #:leafp
    #:leafs-for
    #:left-node
+   #:standard-leaf-node
    #:loss
    #:make-leaf
    #:make-leaf*

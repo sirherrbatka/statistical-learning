@@ -14,10 +14,10 @@
 
 
 (defun make-model (parameters training-data target-data
-                   &rest initargs &key weights &allow-other-keys)
+                   &rest initargs &key &allow-other-keys)
   (make-model* parameters
                (apply #'make-training-state
                       parameters
-                      training-data
-                      target-data
+                      :train-data training-data
+                      :target-data target-data
                       initargs)))

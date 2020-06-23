@@ -57,13 +57,6 @@
                              (:file "functions")
                              (:file "methods")
                              ))
-               (:module "causal-tree"
-                :components ((:file "package")
-                             (:file "generics")
-                             (:file "types")
-                             (:file "utils")
-                             (:file "functions")
-                             (:file "methods")))
                (:module "proxy-tree"
                 :components ((:file "package")
                              (:file "generics")
@@ -71,7 +64,10 @@
                              (:file "types")
                              (:file "utils")
                              (:file "functions")
-                             (:file "methods")))
+                             (:file "methods")
+                             (:file "honest-tree")
+                             (:file "causal-tree")
+                             ))
                (:module "decision-tree"
                 :components ((:file "package")
                              (:file "generics")

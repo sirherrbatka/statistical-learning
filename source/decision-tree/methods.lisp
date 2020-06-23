@@ -42,7 +42,6 @@
                                 optimized-function
                                 sl.opt:number-of-classes))
          (data-points-count (sl.data:data-points-count target-data))
-         (score (sl.tp:loss training-state))
          (predictions (sl.data:make-data-matrix 1 number-of-classes)))
     (declare (type fixnum number-of-classes data-points-count)
              (type statistical-learning.data:data-matrix target-data predictions))
@@ -52,12 +51,10 @@
       (for index = (truncate (sl.data:mref target-data i 0)))
       (incf (sl.data:mref predictions 0 index)))
     (iterate
-      (declare (type fixnum i index))
+      (declare (type fixnum j))
       (for j from 0 below number-of-classes)
       (setf #1=(sl.data:mref predictions 0 j) (/ #1# data-points-count)))
-    (setf (sl.tp:support leaf) data-points-count
-          (sl.tp:predictions leaf) predictions
-          (sl.tp:loss leaf) score)))
+    (setf (sl.tp:predictions leaf) predictions)))
 
 
 (defmethod sl.tp:initialize-leaf ((training-parameters regression)
@@ -65,7 +62,6 @@
                                   leaf)
   (declare (optimize (speed 3) (safety 0)))
   (let* ((target-data (sl.mp:target-data training-state))
-         (score (sl.tp:loss training-state))
          (sum 0.0d0)
          (data-points-count (sl.data:data-points-count target-data)))
     (declare (type fixnum data-points-count)
@@ -75,16 +71,15 @@
                (type double-float sum))
       (for i from 0 below data-points-count)
       (incf sum (sl.data:mref target-data i 0)))
-    (setf (sl.tp:support leaf) data-points-count
-          (sl.tp:predictions leaf) (/ sum data-points-count)
-          (sl.tp:loss leaf) score)))
+    (setf (sl.tp:predictions leaf) (/ sum data-points-count))))
 
 
 (defmethod sl.tp:contribute-predictions* ((parameters regression)
                                           model
                                           data
                                           state
-                                          parallel)
+                                          parallel
+                                          &optional (leaf-key #'identity))
   (sl.data:bind-data-matrix-dimensions ((data-points-count attributes-count data))
     (when (null state)
       (setf state (make 'sl.tp:contributed-predictions
@@ -97,7 +92,7 @@
       (funcall (if parallel #'lparallel:pmap #'map)
                nil
                (lambda (data-point)
-                 (let* ((leaf (sl.tp:leaf-for root data data-point))
+                 (let* ((leaf (funcall leaf-key (sl.tp:leaf-for root data data-point)))
                         (predictions (sl.tp:predictions leaf)))
                    (incf (sl.data:mref sums data-point 0)
                          predictions)))
@@ -110,7 +105,8 @@
                                           model
                                           data
                                           state
-                                          parallel)
+                                          parallel
+                                          &optional (leaf-key #'identity))
   (sl.data:bind-data-matrix-dimensions ((data-points-count attributes-count data))
     (let ((number-of-classes (~> parameters
                                  optimized-function
@@ -128,7 +124,7 @@
                  (lambda (data-point)
                    (iterate
                      (declare (type fixnum j))
-                     (with leaf = (sl.tp:leaf-for root data data-point))
+                     (with leaf = (funcall leaf-key (sl.tp:leaf-for root data data-point)))
                      (with predictions = (sl.tp:predictions leaf))
                      (for j from 0 below number-of-classes)
                      (for class-support = (sl.data:mref predictions 0 j))

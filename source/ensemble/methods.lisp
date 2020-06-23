@@ -75,6 +75,10 @@
     result))
 
 
+(defmethod cl-ds.utils:cloning-information append ((state ensemble-state))
+  '((:all-args all-args)))
+
+
 (defmethod weights-calculator
     ((training-parameters dynamic-random-forest)
      (tree-parameters sl.perf:classification)
@@ -146,9 +150,14 @@
 
 
 (defmethod sl.mp:make-training-state ((parameters random-forest)
-                                      &rest initargs)
-  (apply #'sl.mp:make-training-state (tree-parameters parameters)
-         initargs))
+                                      &rest initargs
+                                      &key train-data target-data weights)
+  (make 'ensemble-state
+        :train-data train-data
+        :target-data target-data
+        :weights weights
+        :training-parameters parameters
+        :all-args initargs))
 
 
 (defmethod sl.mp:make-model* ((parameters random-forest)
@@ -209,15 +218,16 @@
 
 (defmethod sl.mp:make-training-state ((parameters gradient-boost-ensemble)
                                       &rest initargs
-                                      &key target-data)
+                                      &key target-data train-data weights)
   (let* ((tree-parameters (tree-parameters parameters))
          (expected-value (sl.gbt:calculate-expected-value tree-parameters
                                                           target-data)))
-    (apply #'sl.mp:make-training-state
-           tree-parameters
-           :expected-value expected-value
-           :response nil
-           initargs)))
+    (make 'ensemble-state
+          :all-args `(:expected-value ,expected-value ,@initargs)
+          :train-data train-data
+          :target-data target-data
+          :weights weights
+          :training-parameters parameters)))
 
 
 (defmethod sl.mp:make-model* ((parameters gradient-boost-ensemble)
@@ -245,7 +255,7 @@
       (with shrinkage = (shrinkage parameters))
       (with shrinkage-change = (shrinkage-change parameters))
       (with response = nil)
-      (with state = nil)
+      (with contributed = nil)
       (for index from 0
            below trees-count
            by tree-batch-size)
@@ -258,21 +268,19 @@
       (for samples-view = (array-view samples
                                       :from index
                                       :to (+ index tree-batch-size)))
-      (for tree-state = (cl-ds.utils:quasi-clone* state
-                          :response response
-                          :shrinkage shrinkage))
       (fit-tree-batch parameters trees-view attributes-view
-                      '() tree-state nil samples-view)
-      (for new-state = (contribute-trees tree-parameters
-                                         trees-view
-                                         train-data
-                                         parallel
-                                         state))
+                      `(:response ,response :shrinkage ,shrinkage)
+                      state nil samples-view)
+      (for new-contributed = (contribute-trees tree-parameters
+                                               trees-view
+                                               train-data
+                                               parallel
+                                               contributed))
       (decf shrinkage shrinkage-change)
       (setf response (sl.gbt:calculate-response tree-parameters
-                                                new-state
+                                                new-contributed
                                                 target-data)
-            state new-state))
+            contributed new-contributed))
     (make 'gradient-boost-ensemble-model
           :trees trees
           :parameters parameters

@@ -6,6 +6,7 @@
   (:nicknames #:sl.proxy-tree #:sl.pt)
   (:export
    #:honest
+   #:causal
    #:forward-call
    #:proxy-tree
    ))

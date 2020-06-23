@@ -6,7 +6,6 @@
 (defgeneric leafp (node))
 (defgeneric maximal-depth (training-parameters))
 (defgeneric depth (state))
-(defgeneric (setf depth) (new-value state))
 (defgeneric make-node (node-class &rest arguments))
 (defgeneric trials-count (training-parameters))
 (defgeneric force-tree* (tree))
@@ -20,12 +19,12 @@
 (defgeneric target-data (training-state))
 (defgeneric (setf target-data) (new-value training-state))
 (defgeneric parallel (training-parameters))
-(defgeneric split* (training-parameters training-state leaf))
+(defgeneric split* (training-parameters training-state))
 (defgeneric attribute-value (tree-node))
 (defgeneric (setf attribute-value) (new-value tree-node))
 (defgeneric attribute-indexes (training-state))
 (defgeneric (setf attribute-indexes) (new-value training-state))
-(defgeneric make-leaf* (training-parameters training-state))
+(defgeneric make-leaf* (training-parameters))
 (defgeneric initialize-leaf (training-parameters training-state leaf))
 (defgeneric split-training-state* (parameters state split-array
                                    position size initargs
@@ -36,12 +35,12 @@
                                          attribute-indexes)
   (:method-combination append :most-specific-last))
 (defgeneric loss (state))
-(defgeneric (setf loss) (new-value state))
 (defgeneric calculate-loss* (parameters state split-array))
-(defgeneric contribute-predictions* (parameters model data state parallel))
+(defgeneric contribute-predictions* (parameters model
+                                     data state parallel
+                                     &optional leaf-key))
 (defgeneric extract-predictions* (parameters state))
 (defgeneric weights (state))
-(defgeneric (setf weights) (new-value state))
 (defgeneric support (node))
 (defgeneric (setf support) (new-value node))
 (defgeneric predictions (node))

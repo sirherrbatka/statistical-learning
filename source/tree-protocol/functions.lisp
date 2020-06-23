@@ -9,27 +9,18 @@
     model))
 
 
-(defun split-candidate (training-state leaf)
-  (split-candidate* (training-parameters training-state)
-                    training-state
-                    leaf))
-
-
 (defun make-leaf (training-state)
-  (check-type training-state tree-training-state)
   (let* ((parameters (sl.mp:training-parameters training-state))
-         (result (make-leaf* parameters
-                             training-state)))
-    (initialize-leaf parameters training-state result)
+         (result (make-leaf* parameters)))
     result))
 
 
 (defun split (training-state leaf)
-  (let ((result (split* (sl.mp:training-parameters training-state)
-                        training-state
-                        leaf)))
+  (let* ((parameters (sl.mp:training-parameters training-state))
+         (result (split* parameters training-state)))
     (if (null result)
-        leaf
+        (progn (initialize-leaf parameters training-state leaf)
+               leaf)
         result)))
 
 
@@ -73,7 +64,7 @@
 
 
 (defun extract-predictions (state)
-  (extract-predictions* (training-parameters state)
+  (extract-predictions* (sl.mp:training-parameters state)
                         state))
 
 
@@ -102,6 +93,7 @@
                                (left-size (count sl.opt:left split-array))
                                (right-size (count sl.opt:right split-array))
                              attribute-index)
+  (declare (optimize (debug 3)))
   (let* ((training-parameters (sl.mp:training-parameters state))
          (attribute-indexes (attribute-indexes state))
          (new-attributes (if (null attribute-index)

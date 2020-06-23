@@ -20,20 +20,21 @@
   (declare (optimize (debug 3)))
   (bind ((parallel (parallel parameters))
          (tree-sample-rate (tree-sample-rate parameters))
+         (tree-parameters (tree-parameters parameters))
          (train-data (sl.mp:train-data state))
          (data-points-count (sl.data:data-points-count train-data))
          (tree-sample-size (floor (* tree-sample-rate data-points-count)))
+         (complete-initargs (append initargs (all-args state)))
          (distribution (if (null sampling-weights)
                            nil
                            (sl.random:discrete-distribution sampling-weights)))
-         (tree-parameters (tree-parameters parameters))
          ((:flet make-model (attributes sample))
-          (bind ((sub-state (sl.mp:sample-training-state state
-                                                         :initargs initargs
-                                                         :train-attributes attributes
-                                                         :data-points sample)))
-            (sl.mp:make-model* tree-parameters
-                               sub-state))))
+          (bind ((sub-state (apply #'sl.mp:make-training-state
+                                   tree-parameters
+                                   :data-points sample
+                                   :attributes attributes
+                                   complete-initargs)))
+            (sl.mp:make-model* tree-parameters sub-state))))
     (map-into samples (curry #'bootstrap-sample
                              tree-sample-size data-points-count distribution))
     (funcall (if parallel #'lparallel:pmap-into #'map-into)
