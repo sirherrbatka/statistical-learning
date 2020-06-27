@@ -70,5 +70,5 @@
                     *target-data*
                     :treatment *treatment-data*))
 
-;; and here are the results. If cost of the purchase is $10 and the cost of the promotion is $0.10 we need to have at least 1% increase probability of purchase (1% of $10 is $0.10) to break even.
+;; and here are the results. If profit from the purchase is $10 and the cost of the promotion is $0.10 we need to have at least 1% increase probability of purchase (1% of $10 is $0.10) to break even.
 (defparameter *gains* (sl.mp:predict *model* *train-data* t))
