@@ -61,7 +61,7 @@
         :tree-attributes-count 3
         :tree-sample-rate 0.5
         :tree-parameters (~> *training-parameters*
-                             (sl.pt:causal 10 10)
+                             (sl.pt:causal 10 2) ; 10 data points for promotion + 10 data points for no promotions required, 0 designates no promotion, 1 designates promotion
                              sl.pt:honest)))
 
 (defparameter *model*
@@ -70,5 +70,28 @@
                     *target-data*
                     :treatment *treatment-data*))
 
+(defparameter *predictions* (sl.mp:predict *model* *train-data* t))
+
+(defparameter *gains*
+  (iterate
+    (with result = (sl.data:make-data-matrix-like (aref *predictions* 0)))
+    (for i from 0 below (~> (aref *predictions* 0) array-total-size))
+    (setf (row-major-aref result i)
+          (- (row-major-aref (aref *predictions* 1) i)
+             (row-major-aref (aref *predictions* 0) i)))
+    (finally (return result))))
+
+(defparameter *purchase-profit* 10.0d0)
+(defparameter *promotion-cost* 0.10d0)
+
 ;; and here are the results. If profit from the purchase is $10 and the cost of the promotion is $0.10 we need to have at least 1% increase probability of purchase (1% of $10 is $0.10) to break even.
-(defparameter *gains* (sl.mp:predict *model* *train-data* t))
+(defparameter *expected-promotion-gain*
+  (iterate
+    (with data-points-count = (sl.data:data-points-count *gains*))
+    (with result = (make-array data-points-count
+                               :element-type 'double-float))
+    (for i from 0 below data-points-count)
+    (setf (aref result i) (- (* *purchase-profit*
+                                (sl.data:mref *gains* i 1))
+                             *promotion-cost*))
+    (finally (return result))))

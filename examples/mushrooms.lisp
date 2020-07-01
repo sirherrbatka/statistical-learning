@@ -38,6 +38,13 @@
 
 (defparameter *mushroom-types* 2)
 
+
+(defparameter *aggregation*
+  (vellum:aggregate-columns *data*
+                            (cl-ds.alg:to-vector)
+                            :alias 'vector))
+
+
 (defun column-encoder-hash-table (input)
   (vellum:with-table (input)
     (~> (cl-ds.alg:on-each input
@@ -57,7 +64,7 @@
          (sizes (serapeum:scan #'+ hash-tables :key #'hash-table-count :initial-value 0))
          (total-size (last-elt sizes))
          (result (statistical-learning.data:make-data-matrix (vellum:row-count table)
-                                               total-size))
+                                                             total-size))
          (index 0))
     (vellum:transform table
                       (vellum:body ()

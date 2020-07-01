@@ -4,8 +4,9 @@
 (defclass causal-tree (proxy-tree)
   ((%minimal-treatment-size :reader minimal-treatment-size
                             :initarg :minimal-treatment-size)
-   (%minimal-no-treatment-size :reader minimal-no-treatment-size
-                               :initarg :minimal-no-treatment-size)))
+   (%treatment-types-count :reader treatment-types-count
+                           :initarg :treatment-types-count))
+  (:treatment-types-count 2))
 
 
 (defclass causal-state (proxy-state)
@@ -14,36 +15,32 @@
 
 
 (defclass causal-leaf (sl.tp:fundamental-leaf-node)
-  ((%treatment-leaf :initarg :treatment-leaf
-                    :accessor treatment-leaf)
-   (%no-treatment-leaf :initarg :no-treatment-leaf
-                       :accessor no-treatment-leaf))
-  (:default-initargs :treatment-leaf nil
-                     :no-treatment-leaf nil))
+  ((%leafs :initarg :leafs
+           :accessor leafs))
+  (:default-initargs :leafs nil))
 
 
 (defmethod initialize-instance :after ((instance causal-tree) &rest initargs)
   (declare (ignore initargs))
   (bind ((minimal-treatment-size (minimal-treatment-size instance))
-         (minimal-no-treatment-size (minimal-no-treatment-size instance))
+         (treatment-types-count (treatment-types-count instance))
          (minimal-size (sl.tp:minimal-size instance)))
     (check-type minimal-treatment-size integer)
-    (check-type minimal-no-treatment-size integer)
-    (unless (>= minimal-size (+ minimal-treatment-size
-                                minimal-no-treatment-size))
+    (check-type treatment-types-count integer)
+    (unless (>= minimal-size (* 2 minimal-treatment-size))
       (error 'cl-ds:incompatible-arguments
              :parameters '(:minimal-size :minimal-no-treatment-size :minimal-treatment-size)
-             :values (list minimal-size minimal-no-treatment-size minimal-treatment-size)
+             :values (list minimal-size minimal-treatment-size)
              :format-control ":MINIMAL-SIZE must be at least equal to the sum of :MINIMAL-TREATMENT-SIZE and :MINIMAL-NO-TREATMENT-SIZE"))
-    (unless (< 0 minimal-no-treatment-size)
+    (unless (> treatment-types-count 1)
       (error 'cl-ds:argument-value-out-of-bounds
-             :argument :minimal-no-treatment-size
-             :bounds '(< 0 :minimal-no-treatment-size)
-             :value minimal-no-treatment-size))
-    (unless (< 0 minimal-treatment-size)
+             :argument :treatment-types-count
+             :value treatment-types-count
+             :bounds '(> :treatment-types-count 0)))
+    (unless (> minimal-treatment-size 0)
       (error 'cl-ds:argument-value-out-of-bounds
              :argument :minimal-treatment-size
-             :bounds '(< 0 :minimal-treatment-size)
+             :bounds '(> :minimal-treatment-size 0)
              :value minimal-treatment-size))))
 
 
@@ -97,15 +94,13 @@
 (defmethod sl.tp:split* :around ((training-parameters causal-tree)
                                  training-state)
   (let* ((treatment (treatment training-state))
-         (minimal-no-treatment-size (minimal-no-treatment-size training-parameters))
          (minimal-treatment-size (minimal-treatment-size training-parameters))
-         (total-size (length treatment))
-         (treatment-size (count t treatment))
-         (no-treatment-size (- total-size treatment-size)))
-    (if (or (< treatment-size (* 2 minimal-treatment-size))
-            (< no-treatment-size (* 2 minimal-no-treatment-size)))
-        nil
-        (call-next-method))))
+         (treatment-frequency (serapeum:frequencies treatment)))
+    (iterate
+      (for (key count) in-hashtable treatment-frequency)
+      (when (< count (* 2 minimal-treatment-size))
+        (leave nil))
+      (finally (return (call-next-method))))))
 
 
 (defmethod sl.tp:initialize-leaf ((parameters causal-tree)
@@ -114,39 +109,31 @@
   (bind ((inner (inner training-state))
          (treatment (treatment training-state))
          (inner-parameters (inner parameters))
-         (no-treatment-state (sl.tp:split-training-state* inner-parameters
+         (treatment-types-count (treatment-types-count parameters))
+         (leafs (make-array treatment-types-count))
+         ((:flet treatment-size (i))
+          (count i treatment)))
+    (iterate
+      (for i from 0 below treatment-types-count)
+      (for sub-leaf = (sl.tp:make-leaf* inner-parameters))
+      (for treatment-state = (sl.tp:split-training-state* inner-parameters
                                                           inner
                                                           treatment
-                                                          nil
-                                                          (count nil treatment)
+                                                          i
+                                                          (treatment-size i)
                                                           '()))
-         (treatment-state (sl.tp:split-training-state* inner-parameters
-                                                       inner
-                                                       treatment
-                                                       t
-                                                       (count t treatment)
-                                                       '()))
-         (no-treatment-leaf (sl.tp:make-leaf* inner-parameters))
-         (treatment-leaf (sl.tp:make-leaf* inner-parameters)))
-    (sl.tp:initialize-leaf inner-parameters
-                           no-treatment-state
-                           no-treatment-leaf)
-    (sl.tp:initialize-leaf inner-parameters
-                           treatment-state
-                           treatment-leaf)
-    (setf (treatment-leaf leaf) treatment-leaf
-          (no-treatment-leaf leaf) no-treatment-leaf)))
+      (sl.tp:initialize-leaf inner-parameters
+                             treatment-state
+                             sub-leaf)
+      (setf (aref leafs i) sub-leaf))
+    (setf (leafs leaf) leafs)))
 
 
 (defclass causal-contributed-predictions ()
   ((%training-parameters :initarg :training-parameters
                          :reader sl.mp:training-parameters)
-   (%treatment :initarg :treatment
-               :accessor treatment)
-   (%no-treatment :initarg :no-treatment
-                  :accessor no-treatment))
-  (:default-initargs :treatment nil
-                     :no-treatment nil))
+   (%results :initarg :results
+             :reader results)))
 
 
 (defmethod sl.mp:make-training-state ((parameters causal-tree)
@@ -158,33 +145,25 @@
                       (inner parameters)
                       initargs)
         :treatment (map 'vector
-                        (compose (curry #'= 1)
+                        (compose #'round
                                  (curry #'aref (cl-ds.utils:unfold-table treatment)))
                         data-points)))
 
 
 (defun causal (parameters
                minimal-treatment-size
-               minimal-no-treatment-size)
+               treatment-classes)
   (make 'causal-tree
         :minimal-treatment-size minimal-treatment-size
-        :minimal-no-treatment-size minimal-no-treatment-size
+        :treatment-types-count treatment-classes
         :inner parameters))
 
 
 (defmethod sl.tp:extract-predictions* ((parameters causal-tree)
                                        state)
-  (let* ((no-treatment-result (sl.tp:extract-predictions* (inner parameters)
-                                                          (no-treatment state)))
-         (treatment-result (sl.tp:extract-predictions* (inner parameters)
-                                                       (treatment state)))
-         (result (sl.data:make-data-matrix-like treatment-result)))
-    (iterate
-      (for i from 0 below (array-total-size result))
-      (setf (row-major-aref result i)
-            (- (row-major-aref treatment-result i)
-               (row-major-aref no-treatment-result i))))
-    result))
+  (map 'vector
+       (curry #'sl.tp:extract-predictions* (inner parameters))
+       (results state)))
 
 
 ;; this is simple, but slow
@@ -194,23 +173,25 @@
                                           state
                                           parallel
                                           &optional (leaf-key #'identity))
-  (when (null state)
-    (setf state (make 'causal-contributed-predictions
-                      :training-parameters parameters)))
-  (setf (treatment state) (sl.tp:contribute-predictions*
-                           (inner parameters)
-                           model
-                           data
-                           (treatment state)
-                           parallel
-                           (compose #'treatment-leaf leaf-key))
-        (no-treatment state) (sl.tp:contribute-predictions*
-                              (inner parameters)
+  (let ((treatment-types-count (treatment-types-count parameters)))
+    (when (null state)
+      (setf state (make 'causal-contributed-predictions
+                        :results (make-array treatment-types-count
+                                             :initial-element nil)
+                        :training-parameters parameters)))
+    (iterate
+      (with inner = (inner parameters))
+      (with results = (results state))
+      (for i from 0 below (treatment-types-count parameters))
+      (setf (aref results i) (sl.tp:contribute-predictions*
+                              inner
                               model
                               data
-                              (no-treatment state)
+                              (aref results i)
                               parallel
-                              (compose #'no-treatment-leaf leaf-key)))
+                              (compose (rcurry #'aref i)
+                                       #'leafs
+                                       leaf-key)))))
   state)
 
 
