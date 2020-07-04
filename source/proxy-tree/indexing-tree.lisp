@@ -21,6 +21,10 @@
    :index nil))
 
 
+(defmethod sl.tp:predictions ((node indexing-leaf))
+  (~> node inner sl.tp:predictions))
+
+
 (defmethod cl-ds.utils:cloning-information apppend ((state indexing-state))
   '((:index index)))
 
