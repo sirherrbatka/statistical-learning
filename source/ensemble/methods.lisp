@@ -68,74 +68,76 @@
   '((:all-args all-args)))
 
 
-(defmethod weights-calculator
-    ((training-parameters dynamic-random-forest)
-     (tree-parameters sl.perf:classification)
-     parallel
-     weights
-     train-data
-     target-data)
-  (let* ((length (sl.data:data-points-count train-data))
-         (indexes (sl.data:iota-vector length))
-         (counts (make-array `(,length 2)
-                             :element-type 'fixnum
-                             :initial-element 0)))
-    (declare (type fixnum length))
-    (lambda (prev-trees samples)
-      (declare (type vector samples prev-trees)
-               (optimize (speed 3) (safety 0)))
-      (cl-ds.utils:transform #'cl-ds.alg:to-hash-table
-                             samples)
-      (map nil #'sl.tp:force-tree prev-trees)
-      (funcall (if parallel #'lparallel:pmap #'map)
-               nil
-               (lambda (index &aux (expected (sl.data:mref target-data
-                                                           index
-                                                           0)))
-                 (declare (type fixnum index)
-                          (type double-float expected))
-                 (iterate
-                   (for tree in-vector prev-trees)
-                   (for sample in-vector samples)
-                   (incf (aref counts index 0))
-                   (when (gethash index sample) (next-iteration))
-                   (for leaf = (sl.tp:leaf-for (sl.tp:root tree)
-                                               train-data
-                                               index))
-                   (for predictions = (sl.tp:predictions leaf))
-                   (for prediction =
-                        (iterate
-                          (declare (type fixnum i))
-                          (for i from 0
-                               below (sl.data:attributes-count predictions))
-                          (finding i maximizing
-                                   (sl.data:mref predictions 0 i))))
-                   (when (= prediction expected)
-                     (incf (aref counts index 1)))))
-               indexes)
-      (funcall (if parallel #'lparallel:pmap #'map)
-               nil
-               (lambda (index &aux (total (aref counts index 0)))
-                 (declare (type fixnum index)
-                          (type fixnum total))
-                 (unless (zerop total)
-                   (setf (sl.data:mref weights index 0)
-                         (- 1.0d0 (/ (the fixnum (aref counts index 1))
-                                     total)))))
-               indexes)
-      weights)))
+(defmethod initialize-instance :after ((instance dynamic-weights-calculator)
+                                       &rest initargs
+                                       &key &allow-other-keys)
+  (declare (ignore initargs))
+  (let* ((weights (weights instance))
+         (data-points-count (sl.data:data-points-count weights)))
+    (setf (indexes instance) (sl.data:iota-vector data-points-count)
+          (counts instance) (make-array `(,data-points-count 2)
+                                        :element-type 'fixnum
+                                        :initial-element 0))))
 
 
-(defmethod weights-calculator
-    ((training-parameters random-forest)
-     tree-parameters
-     parallel
-     weights
-     train-data
-     target-data)
-  (lambda (prev-trees samples)
-    (declare (ignore prev-trees samples))
-    nil))
+(defmethod update-weights ((calculator static-weights-calculator)
+                           tree-parameters
+                           prev-trees
+                           samples)
+  nil)
+
+
+(defmethod update-weights ((calculator dynamic-weights-calculator)
+                           (tree-parameters sl.perf:classification)
+                           prev-trees
+                           samples)
+  (declare (type vector samples prev-trees)
+           (optimize (speed 3) (safety 0)))
+  (let ((indexes (indexes calculator))
+        (parallel (parallel calculator))
+        (train-data (train-data calculator))
+        (target-data (target-data calculator))
+        (weights (weights calculator))
+        (counts (counts calculator)))
+    (cl-ds.utils:transform #'cl-ds.alg:to-hash-table
+                           samples)
+    (map nil #'sl.tp:force-tree prev-trees)
+    (funcall (if parallel #'lparallel:pmap #'map)
+             nil
+             (lambda (index &aux (expected (sl.data:mref target-data
+                                                         index
+                                                         0)))
+               (declare (type fixnum index)
+                        (type double-float expected))
+               (iterate
+                 (for tree in-vector prev-trees)
+                 (for sample in-vector samples)
+                 (incf (aref counts index 0))
+                 (when (gethash index sample) (next-iteration))
+                 (for leaf = (sl.tp:leaf-for (sl.tp:root tree)
+                                             train-data
+                                             index))
+                 (for predictions = (sl.tp:predictions leaf))
+                 (for prediction =
+                      (iterate
+                        (declare (type fixnum i))
+                        (for i from 0
+                             below (sl.data:attributes-count predictions))
+                        (finding i maximizing
+                                 (sl.data:mref predictions 0 i))))
+                 (when (= prediction expected)
+                   (incf (aref counts index 1)))))
+             indexes)
+    (funcall (if parallel #'lparallel:pmap #'map)
+             nil
+             (lambda (index &aux (total (aref counts index 0)))
+               (declare (type fixnum index)
+                        (type fixnum total))
+               (unless (zerop total)
+                 (setf (sl.data:mref weights index 0)
+                       (- 1.0d0 (/ (the fixnum (aref counts index 1))
+                                   total)))))
+             indexes)))
 
 
 (defmethod sl.mp:make-training-state ((parameters random-forest)
@@ -180,9 +182,11 @@
                                                   1
                                                   1.0d0)
                         (copy-array weights)))
-      (setf weights-calculator (weights-calculator parameters tree-parameters
-                                                   parallel weights
-                                                   train-data target-data))
+      (setf weights-calculator (make (weights-calculator-class parameters)
+                                     :parallel parallel
+                                     :weights weights
+                                     :train-data train-data
+                                     :target-data target-data))
       (iterate
         (with state-initargs = '())
         (with index = 0)
@@ -201,7 +205,8 @@
           (fit-tree-batch parameters trees-view attributes-view
                           state-initargs state
                           weights samples-view)
-          (funcall weights-calculator trees-view samples-view)
+          (update-weights weights-calculator (sl.pt:inner tree-parameters)
+                          trees-view samples-view)
           (incf index tree-batch-size))
         (for swap-count = (cl-ds.utils:swap-if trees (complement #'treep)))
         (until (zerop swap-count))

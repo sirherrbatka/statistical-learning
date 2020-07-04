@@ -75,3 +75,7 @@
 
 (defmethod sl.mp:make-model* ((parameters proxy-tree) training-state)
   (call-next-method))
+
+
+(defmethod inner ((parameters sl.tp:fundamental-tree-training-parameters))
+  parameters)

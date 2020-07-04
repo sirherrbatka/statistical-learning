@@ -1,6 +1,31 @@
 (cl:in-package #:statistical-learning.ensemble)
 
 
+(defclass fundamental-weights-calculator ()
+  ((%weights :initarg :weights
+             :reader weights)
+   (%train-data :initarg :train-data
+                :reader train-data)
+   (%target-data :initarg :target-data
+                 :reader target-data)
+   (%parallel :initarg :parallel
+              :reader parallel)))
+
+
+(defclass dynamic-weights-calculator (fundamental-weights-calculator)
+  ((%indexes :initarg :indexes
+             :accessor indexes)
+   (%counts :initarg :counts
+            :accessor counts))
+  (:default-initargs
+   :indexes nil
+   :counts nil))
+
+
+(defclass static-weights-calculator (fundamental-weights-calculator)
+  ())
+
+
 (defclass ensemble (sl.mp:fundamental-model-parameters)
   ((%trees-count :initarg :trees-count
                  :reader trees-count
@@ -19,11 +44,10 @@
 
 
 (defclass random-forest (ensemble)
-  ())
-
-
-(defclass dynamic-random-forest (random-forest)
-  ())
+  ((%weights-calculator-class :initarg :weights-calculator-class
+                              :reader weights-calculator-class))
+  (:default-initargs
+   :weights-calculator-class 'static-weights-calculator))
 
 
 (defclass ensemble-state (sl.mp:fundamental-training-state)

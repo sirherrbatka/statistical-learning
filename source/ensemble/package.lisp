@@ -6,8 +6,10 @@
   (:nicknames #:sl.ensemble)
   (:export
    #:ensemble-model
-   #:dynamic-random-forest
    #:random-forest
+   #:dynamic-weights-calculator
+   #:static-weights-calculator
+   #:update-weights
    #:random-forest-model
    #:gradient-boost-ensemble
    #:gradient-boost-ensemble-model
