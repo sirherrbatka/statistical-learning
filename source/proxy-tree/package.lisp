@@ -7,6 +7,9 @@
   (:export
    #:honest
    #:causal
+   #:indexing
+   #:index
+   #:inner
    #:forward-call
    #:proxy-tree
    ))

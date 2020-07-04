@@ -67,6 +67,7 @@
                              (:file "methods")
                              (:file "honest-tree")
                              (:file "causal-tree")
+                             (:file "indexing-tree")
                              ))
                (:module "decision-tree"
                 :components ((:file "package")
