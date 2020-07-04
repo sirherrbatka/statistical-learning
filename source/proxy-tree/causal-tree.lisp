@@ -6,7 +6,8 @@
                             :initarg :minimal-treatment-size)
    (%treatment-types-count :reader treatment-types-count
                            :initarg :treatment-types-count))
-  (:treatment-types-count 2))
+  (:default-initargs
+   :treatment-types-count 2))
 
 
 (defclass causal-state (proxy-state)
