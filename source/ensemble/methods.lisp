@@ -205,7 +205,8 @@
           (fit-tree-batch parameters trees-view attributes-view
                           state-initargs state
                           weights samples-view)
-          (update-weights weights-calculator (sl.pt:inner tree-parameters)
+          (update-weights weights-calculator
+                          (sl.pt:inner tree-parameters)
                           trees-view samples-view)
           (incf index tree-batch-size))
         (for swap-count = (cl-ds.utils:swap-if trees (complement #'treep)))
