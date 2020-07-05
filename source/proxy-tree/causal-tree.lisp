@@ -17,8 +17,12 @@
 
 (defclass causal-leaf (sl.tp:fundamental-leaf-node)
   ((%leafs :initarg :leafs
-           :accessor leafs))
-  (:default-initargs :leafs nil))
+           :accessor leafs)
+   (%sizes :initarg :sizes
+           :accessor sizes))
+  (:default-initargs
+   :leafs nil
+   :sizes nil))
 
 
 (defmethod initialize-instance :after ((instance causal-tree) &rest initargs)
@@ -112,6 +116,8 @@
          (inner-parameters (inner parameters))
          (treatment-types-count (treatment-types-count parameters))
          (leafs (make-array treatment-types-count))
+         (sizes (make-array treatment-types-count
+                            :element-type 'fixnum))
          ((:flet treatment-size (i))
           (count i treatment)))
     (iterate
@@ -123,11 +129,15 @@
                                                           i
                                                           (treatment-size i)
                                                           '()))
+      (setf (aref sizes i) (~> treatment-state
+                               sl.mp:train-data
+                               sl.data:data-points-count))
       (sl.tp:initialize-leaf inner-parameters
                              treatment-state
                              sub-leaf)
       (setf (aref leafs i) sub-leaf))
-    (setf (leafs leaf) leafs)))
+    (setf (leafs leaf) leafs
+          (sizes leaf) sizes)))
 
 
 (defclass causal-contributed-predictions ()
