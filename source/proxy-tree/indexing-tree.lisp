@@ -147,3 +147,9 @@
 (defmethod sl.tp:extract-predictions* ((parameters indexing-tree)
                                        state)
   (results state))
+
+
+(defmethod sl.mp:make-model* ((parameters indexing-tree) state)
+  (make 'sl.tp:tree-model
+        :parameters parameters
+        :root (~>> state sl.tp:make-leaf (sl.tp:split state))))

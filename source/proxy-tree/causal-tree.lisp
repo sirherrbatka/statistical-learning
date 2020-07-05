@@ -116,8 +116,7 @@
          (inner-parameters (inner parameters))
          (treatment-types-count (treatment-types-count parameters))
          (leafs (make-array treatment-types-count))
-         (sizes (make-array treatment-types-count
-                            :element-type 'fixnum))
+         (sizes (make-array treatment-types-count))
          ((:flet treatment-size (i))
           (count i treatment)))
     (iterate
@@ -210,3 +209,24 @@
   (make 'sl.tp:tree-model
         :parameters parameters
         :root (~>> state sl.tp:make-leaf (sl.tp:split state))))
+
+
+(defmethod sl.tp:predictions ((leaf causal-leaf))
+  (iterate
+    (with leafs = (leafs leaf))
+    (with sizes = (sizes leaf))
+    (with total-size = (reduce #'+ sizes))
+    (with count = (length sizes))
+    (with result = nil)
+    (for i from 0 below count)
+    (for leaf = (svref leafs i))
+    (for size = (svref sizes i))
+    (for predictions = (sl.tp:predictions leaf))
+    (ensure result
+      (sl.data:make-data-matrix-like predictions))
+    (iterate
+      (for i from 0 below (array-total-size predictions))
+      (incf (row-major-aref result i)
+            (* (/ size total-size)
+               (row-major-aref predictions i))))
+    (finally (return result))))
