@@ -42,13 +42,14 @@
 
 
 (-> fill-split-array (fundamental-tree-training-parameters
-                      statistical-learning.data:data-matrix
+                      sl.data:double-float-data-matrix
                       fixnum double-float
                       sl.data:split-vector)
     (values fixnum fixnum))
-(defun fill-split-array (parameters
-                         data attribute threshold array)
+(defun fill-split-array (parameters data
+                         attribute threshold array)
   (declare (ignore parameters)
+           (type sl.data:double-float-data-matrix data)
            (optimize (speed 3) (safety 0)))
   (iterate
     (declare (type fixnum right-count left-count i)
@@ -56,7 +57,7 @@
     (with right-count = 0)
     (with left-count = 0)
     (for i from 0 below (length array))
-    (for rightp = (> (statistical-learning.data:mref data i attribute) threshold))
+    (for rightp = (> (sl.data:mref data i attribute) threshold))
     (setf (aref array i) rightp)
     (if rightp (incf right-count) (incf left-count))
     (finally (return (values left-count right-count)))))
