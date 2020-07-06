@@ -180,11 +180,9 @@
              (type boolean parallel))
     (iterate
       (declare (type fixnum attempt left-length right-length
-                     optimal-left-length optimal-right-length
-                     optimal-attribute data-size)
+                     optimal-left-length optimal-right-length data-size)
                (type double-float
-                     left-score right-score
-                     minimal-score optimal-threshold))
+                     left-score right-score minimal-score))
       (with optimal-left-length = -1)
       (with optimal-right-length = -1)
       (with optimal-attribute = -1)
@@ -196,8 +194,11 @@
       (with split-array = (sl.opt:make-split-array data-size))
       (with optimal-array = (sl.opt:make-split-array data-size))
       (for attempt from 0 below trials-count)
-      (for (values attribute threshold) = (random-test attributes training-data))
+      (for (values attribute threshold) = (random-test training-parameters
+                                                       attributes
+                                                       training-data))
       (for (values left-length right-length) = (fill-split-array
+                                                training-parameters
                                                 training-data
                                                 attribute
                                                 threshold

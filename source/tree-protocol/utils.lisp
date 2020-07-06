@@ -25,11 +25,14 @@
     (finally (return (values min max)))))
 
 
-(-> random-test ((simple-array fixnum (*)) sl.data:double-float-data-matrix)
+(-> random-test (fundamental-tree-training-parameters
+                 (simple-array fixnum (*))
+                 sl.data:double-float-data-matrix)
     (values fixnum double-float))
-(defun random-test (attributes data)
+(defun random-test (parameters attributes data)
   "Uses ExtraTree approach."
-  (declare (optimize (speed 3) (safety 0)))
+  (declare (optimize (speed 3) (safety 0))
+           (ignore parameters))
   (bind ((attributes-count (length attributes))
          (attribute-index (random attributes-count))
          ((:values min max) (data-min/max data attribute-index))
@@ -38,15 +41,18 @@
     (values attribute-index (if (= threshold max) min threshold))))
 
 
-(-> fill-split-array (statistical-learning.data:data-matrix
+(-> fill-split-array (fundamental-tree-training-parameters
+                      statistical-learning.data:data-matrix
                       fixnum double-float
                       sl.data:split-vector)
     (values fixnum fixnum))
-(defun fill-split-array (data attribute threshold array)
+(defun fill-split-array (parameters
+                         data attribute threshold array)
+  (declare (ignore parameters)
+           (optimize (speed 3) (safety 0)))
   (iterate
     (declare (type fixnum right-count left-count i)
-             (type boolean rightp)
-             (optimize (speed 3) (safety 0)))
+             (type boolean rightp))
     (with right-count = 0)
     (with left-count = 0)
     (for i from 0 below (length array))
