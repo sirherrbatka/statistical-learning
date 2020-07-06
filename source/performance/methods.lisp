@@ -4,7 +4,7 @@
 (defmethod performance-metric :before ((parameters sl.mp:fundamental-model-parameters)
                                        target predictions
                                        &key weights)
-  (check-type weights (or null sl.data:data-matrix))
+  (check-type weights (or null sl.data:double-float-data-matrix))
   (statistical-learning.data:check-data-points target predictions))
 
 

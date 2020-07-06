@@ -80,7 +80,7 @@
                                (left-size (count sl.opt:left split-array))
                                (right-size (count sl.opt:right split-array))
                              attribute-index)
-  (declare (optimize (debug 3)))
+  (declare (optimize (speed 3)))
   (let* ((training-parameters (sl.mp:training-parameters state))
          (attribute-indexes (attribute-indexes state))
          (new-attributes (if (null attribute-index)

@@ -1,17 +1,6 @@
 (cl:in-package #:statistical-learning.data)
 
 
-(defmacro bind-data-matrix-dimensions (bindings &body body)
-  (let ((variables (flatten (mapcar (curry #'take 2) bindings))))
-    `(bind ,(mapcar (lambda (binding)
-                      (list (take 2 binding)
-                            `(data-matrix-dimensions ,(third binding))))
-                    bindings)
-       (declare (type fixnum ,@variables)
-                (ignorable ,@variables))
-       ,@body)))
-
-
 (defmacro check-data-points (&rest data)
   `(progn
      ,@(iterate
@@ -24,3 +13,23 @@
                   :parameters '(,@data)
                   :values (list ,@data)
                   :format-control "All data-matrixes are supposed to have equal number of data-points.")))))
+
+
+(defmacro dispatch-data-matrix (datums &body body)
+  `(cl-ds.utils:cases ,(mapcar (lambda (x)
+                                 `(:variant (typep ,x 'universal-data-matrix)
+                                            (typep ,x 'double-float-data-matrix)))
+                               datums)
+     ,@body))
+
+
+(defmacro bind-data-matrix-dimensions (bindings &body body)
+  (let ((variables (flatten (mapcar (curry #'take 2) bindings))))
+    `(bind ,(mapcar (lambda (binding)
+                      (list (take 2 binding)
+                            `(data-matrix-dimensions ,(third binding))))
+                    bindings)
+       (declare (type fixnum ,@variables)
+                (ignorable ,@variables))
+       (dispatch-data-matrix (,@(mapcar #'third bindings))
+         ,@body))))

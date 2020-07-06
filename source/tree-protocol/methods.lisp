@@ -305,13 +305,13 @@
 
 
 (defmethod leaf-for ((node fundamental-node) data index)
-  (declare (type statistical-learning.data:data-matrix data)
+  (declare (type sl.data:double-float-data-matrix data)
            (type fixnum index))
   (labels ((impl (node)
              (if (treep node)
                  (bind ((attribute-index (attribute node))
                         (attribute-value (attribute-value node)))
-                   (if (> (statistical-learning.data:mref data index attribute-index)
+                   (if (> (sl.data:mref data index attribute-index)
                           attribute-value)
                        (impl (right-node node) )
                        (impl (left-node node))))

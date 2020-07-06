@@ -17,7 +17,7 @@
 (defun fit-tree-batch (parameters trees all-attributes
                        initargs state
                        sampling-weights samples)
-  (declare (optimize (debug 3)))
+  (declare (optimize (speed 3)))
   (bind ((parallel (parallel parameters))
          (tree-sample-rate (tree-sample-rate parameters))
          (tree-parameters (tree-parameters parameters))

@@ -8,6 +8,9 @@
    #:split-vector
    #:split
    #:attributes-count
+   #:universal-data-matrix
+   #:double-float-data-matrix
+   #:dispatch-data-matrix
    #:bind-data-matrix-dimensions
    #:data-matrix
    #:data-matrix-dimensions

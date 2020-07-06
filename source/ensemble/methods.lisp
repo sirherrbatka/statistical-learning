@@ -99,17 +99,21 @@
         (target-data (target-data calculator))
         (weights (weights calculator))
         (counts (counts calculator)))
+    (declare (type sl.data:data-matrix train-data)
+             (type (simple-array fixnum (* *)) counts)
+             (type sl.data:double-float-data-matrix target-data weights))
     (cl-ds.utils:transform #'cl-ds.alg:to-hash-table
                            samples)
     (map nil #'sl.tp:force-tree prev-trees)
     (funcall (if parallel #'lparallel:pmap #'map)
              nil
-             (lambda (index &aux (expected (sl.data:mref target-data
-                                                         index
-                                                         0)))
-               (declare (type fixnum index)
-                        (type double-float expected))
+             (lambda (index &aux )
+               (declare (type fixnum index))
                (iterate
+                 (declare (type double-float expected))
+                 (with expected = (sl.data:mref (the sl.data:double-float-data-matrix target-data)
+                                                index
+                                                0))
                  (for tree in-vector prev-trees)
                  (for sample in-vector samples)
                  (incf (aref counts index 0))
@@ -134,7 +138,8 @@
                (declare (type fixnum index)
                         (type fixnum total))
                (unless (zerop total)
-                 (setf (sl.data:mref weights index 0)
+                 (setf (sl.data:mref (the sl.data:double-float-data-matrix weights)
+                                     index 0)
                        (- 1.0d0 (/ (the fixnum (aref counts index 1))
                                    total)))))
              indexes)))

@@ -21,8 +21,8 @@
                  weights
                  &optional split-array)
   (declare (type (or null weights-data-matrix) weights)
-           (type sl.data:data-matrix target-data)
-           (type (or null split-array) split-array)
+           (type sl.data:double-float-data-matrix target-data)
+           (type (or null sl.data:split-vector) split-array)
            (optimize (speed 3) (safety 0) (debug 0)))
   (cl-ds.utils:cases ((null weights)
                       (null split-array))
@@ -77,7 +77,7 @@
                      expected
                      sums)
   (declare (optimize (speed 3) (safety 0))
-           (type statistical-learning.data:data-matrix sums expected))
+           (type sl.data:double-float-data-matrix sums expected))
   (iterate
     (declare (type fixnum i number-of-classes))
     (with number-of-classes = (sl.data:attributes-count sums))
@@ -100,8 +100,8 @@
                  weights
                  &optional split-array)
   (declare (type (or null weights-data-matrix) weights)
-           (type sl.data:data-matrix target-data)
-           (type (or null split-array) split-array)
+           (type sl.data:double-float-data-matrix target-data)
+           (type (or null sl.data:split-vector) split-array)
            (optimize (speed 3) (safety 0) (debug 0)))
   (cl-ds.utils:cases ((null split-array)
                       (null weights))

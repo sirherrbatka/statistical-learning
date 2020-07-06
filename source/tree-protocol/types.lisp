@@ -16,7 +16,7 @@
                      :accessor attribute-value)))
 
 
-(defclass fundamental-leaf-node ()
+(defclass fundamental-leaf-node (fundamental-node)
   ())
 
 

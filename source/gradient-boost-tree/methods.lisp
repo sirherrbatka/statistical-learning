@@ -48,6 +48,7 @@
     (let* ((sums (sl.tp:sums state))
            (shrinkage (shrinkage model))
            (root (sl.tp:root model)))
+      (declare (type sl.data:double-float-data-matrix sums))
       (funcall (if parallel #'lparallel:pmap #'map)
                nil
                (lambda (data-point)
@@ -99,7 +100,7 @@
   (iterate
     (declare (type fixnum i number-of-classes)
              (type double-float maximum sum)
-             (type sl.data:data-matrix sums result))
+             (type sl.data:double-float-data-matrix sums result))
     (with optimized-function = (optimized-function parameters))
     (with number-of-classes = (sl.opt:number-of-classes optimized-function))
     (with sums = (sl.tp:sums state))
@@ -148,6 +149,7 @@
 
 
 (defmethod target ((parameters classification) target-data expected-value)
+  (declare (type sl.data:double-float-data-matrix target-data))
   (iterate
     (with optimized-function = (optimized-function parameters))
     (with number-of-classes = (sl.opt:number-of-classes optimized-function))
@@ -178,25 +180,31 @@
   (let* ((target-data (sl.mp:target-data training-state))
          (data-points-count (sl.data:data-points-count target-data)))
     (declare (type fixnum data-points-count))
-    (setf (sl.tp:predictions leaf) (~>> (sl.data:reduce-data-points #'+ target-data)
+    (setf (sl.tp:predictions leaf) (~>> target-data
+                                        (sl.data:reduce-data-points #'+)
                                         (sl.data:map-data-matrix
                                          (lambda (x) (/ x data-points-count)))))))
 
 
 (defmethod calculate-expected-value ((parameters classification)
                                      data)
+  (declare (type sl.data:double-float-data-matrix data)
+           (optimize (speed 3)))
   (iterate
+    (declare (type fixnum i))
     (with result = (~>> parameters
                         optimized-function
                         sl.opt:number-of-classes
                         (sl.data:make-data-matrix 1)))
     (for i from 0 below (sl.data:data-points-count data))
     (iterate
+      (declare (type fixnum j))
       (for j from 0 below (sl.data:attributes-count data))
       (incf (sl.data:mref result 0
                           (truncate (sl.data:mref data i 0)))))
     (finally
      (iterate
+       (declare (type fixnum j))
        (for j from 0 below (sl.data:attributes-count data))
        (for avg = (/ #1=(sl.data:mref result 0 j)
                      (sl.data:data-points-count data)))
@@ -246,6 +254,7 @@
         :indexes (sl.data:iota-vector data-points-count)
         :training-parameters parameters
         :sums (iterate
+                (declare (type sl.data:double-float-data-matrix result))
                 (with number-of-classes = (sl.opt:number-of-classes parameters))
                 (with result = (sl.data:make-data-matrix data-points-count
                                                          number-of-classes))

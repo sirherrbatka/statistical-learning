@@ -6,7 +6,7 @@
   (+ (random (- max min)) min))
 
 
-(-> data-min/max (statistical-learning.data:data-matrix fixnum)
+(-> data-min/max (sl.data:double-float-data-matrix fixnum)
     (values double-float double-float))
 (defun data-min/max (data attribute)
   (declare (type statistical-learning.data:data-matrix data)
@@ -25,7 +25,7 @@
     (finally (return (values min max)))))
 
 
-(-> random-test ((simple-array fixnum (*)) statistical-learning.data:data-matrix)
+(-> random-test ((simple-array fixnum (*)) sl.data:double-float-data-matrix)
     (values fixnum double-float))
 (defun random-test (attributes data)
   "Uses ExtraTree approach."
