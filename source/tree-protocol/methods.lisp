@@ -302,3 +302,18 @@
   (~> (apply #'call-next-method parameters :data-points nil :attributes nil initargs)
       (sl.mp:sample-training-state :data-points data-points
                                    :train-attributes attributes)))
+
+
+(defmethod leaf-for ((node fundamental-node) data index)
+  (declare (type statistical-learning.data:data-matrix data)
+           (type fixnum index))
+  (labels ((impl (node)
+             (if (treep node)
+                 (bind ((attribute-index (attribute node))
+                        (attribute-value (attribute-value node)))
+                   (if (> (statistical-learning.data:mref data index attribute-index)
+                          attribute-value)
+                       (impl (right-node node) )
+                       (impl (left-node node))))
+                 node)))
+    (impl node)))

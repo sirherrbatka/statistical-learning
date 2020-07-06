@@ -49,3 +49,4 @@
 (defgeneric indexes (predictions))
 (defgeneric contributions-count (predictions))
 (defgeneric training-parameters (predictions))
+(defgeneric leaf-for (node data index))
