@@ -27,13 +27,12 @@
 (defgeneric make-leaf* (training-parameters))
 (defgeneric initialize-leaf (training-parameters training-state leaf))
 (defgeneric split-training-state* (parameters state split-array
-                                   position size initargs
-                                   &optional attribute-index attribute-indexes))
-(defgeneric split-training-state-info (parameters state split-array
-                                       position size
-                                       &optional attribute-index
-                                         attribute-indexes)
+                                   position size initargs point))
+(defgeneric split-training-state-info (splitter parameters state split-array
+                                       position size point)
   (:method-combination append :most-specific-last))
+(defgeneric pick-split* (splitter parameters state))
+(defgeneric fill-split-vector* (splitter parameters state point split-vector))
 (defgeneric loss (state))
 (defgeneric calculate-loss* (parameters state split-array))
 (defgeneric contribute-predictions* (parameters model
@@ -49,4 +48,4 @@
 (defgeneric indexes (predictions))
 (defgeneric contributions-count (predictions))
 (defgeneric training-parameters (predictions))
-(defgeneric leaf-for (node data index))
+(defgeneric leaf-for (splitter node data index))

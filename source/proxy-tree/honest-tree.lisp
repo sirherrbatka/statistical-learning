@@ -53,9 +53,11 @@
          (values-training-data (sl.mp:train-data adjust))
          (model (sl.mp:make-model* inner division))
          (root (sl.tp:root model))
+         (splitter (sl.tp:splitter parameters))
          ((:flet assign-leaf (index))
           (cons index
-                (sl.tp:leaf-for root values-training-data index)))
+                (sl.tp:leaf-for splitter root
+                                values-training-data index)))
          ((:flet adjust-leaf (leaf.indexes))
           (bind (((leaf . indexes) leaf.indexes)
                  (no-fill-pointer (cl-ds.utils:remove-fill-pointer indexes)))

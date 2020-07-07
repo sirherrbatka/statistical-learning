@@ -55,9 +55,7 @@
                                         position
                                         size
                                         initargs
-                                        &optional
-                                          attribute-index
-                                          attribute-indexes)
+                                        point)
   (cl-ds.utils:quasi-clone* state
     :treatment (split-treatment (treatment state)
                                 size
@@ -69,8 +67,7 @@
                                         position
                                         size
                                         initargs
-                                        attribute-index
-                                        attribute-indexes)))
+                                        point)))
 
 
 (defmethod sl.mp:sample-training-state* ((parameters causal-tree)

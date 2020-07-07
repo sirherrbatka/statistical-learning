@@ -88,11 +88,14 @@
                         :sums (sl.data:make-data-matrix data-points-count
                                                         1))))
     (let* ((sums (sl.tp:sums state))
+           (splitter (sl.tp:splitter parameters))
            (root (sl.tp:root model)))
       (funcall (if parallel #'lparallel:pmap #'map)
                nil
                (lambda (data-point)
-                 (let* ((leaf (funcall leaf-key (sl.tp:leaf-for root data data-point)))
+                 (let* ((leaf (~>> (sl.tp:leaf-for splitter root
+                                                   data data-point)
+                                   (funcall leaf-key)))
                         (predictions (sl.tp:predictions leaf)))
                    (incf (sl.data:mref sums data-point 0)
                          predictions)))
@@ -118,13 +121,16 @@
                           :sums (sl.data:make-data-matrix data-points-count
                                                           number-of-classes))))
       (let* ((sums (sl.tp:sums state))
+             (splitter (sl.tp:splitter parameters))
              (root (sl.tp:root model)))
         (funcall (if parallel #'lparallel:pmap #'map)
                  nil
                  (lambda (data-point)
                    (iterate
                      (declare (type fixnum j))
-                     (with leaf = (funcall leaf-key (sl.tp:leaf-for root data data-point)))
+                     (with leaf = (~>> (sl.tp:leaf-for splitter root
+                                                       data data-point)
+                                       (funcall leaf-key)))
                      (with predictions = (sl.tp:predictions leaf))
                      (for j from 0 below number-of-classes)
                      (for class-support = (sl.data:mref predictions 0 j))

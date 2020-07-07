@@ -50,32 +50,45 @@
     (:train-data sl.mp:train-data)))
 
 
-(defmethod split-training-state-info append ((parameters standard-tree-training-parameters)
-                                             state
-                                             split-array
-                                             position
-                                             size
-                                             &optional attribute-index attribute-indexes)
-  (bind ((training-data (sl.mp:train-data state))
-         (target-data (sl.mp:target-data state))
-         (weights (sl.mp:weights state))
-         (attributes (attribute-indexes state))
-         (new-attributes (or attribute-indexes
-                             (and attribute-index
-                                  (subsample-vector attributes
-                                                    attribute-index))
-                             attributes)))
+(defmethod split-training-state-info append
+    ((splitter fundamental-splitter)
+     (parameterr standard-tree-training-parameters)
+     state
+     split-array
+     position
+     size
+     point)
+  (declare (ignore point))
+  (bind ((target-data (sl.mp:target-data state))
+         (weights (sl.mp:weights state)))
     (list :weights (if (null weights)
                        nil
                        (sl.data:split weights size
                                       split-array position
                                       nil))
-          :train-data (sl.data:split training-data size
-                                     split-array position
-                                     attribute-index)
           :target-data (sl.data:split target-data
                                       size split-array
-                                      position nil)
+                                      position nil))))
+
+
+(defmethod split-training-state-info append
+    ((splitter random-attribute-splitter)
+     (parameters standard-tree-training-parameters)
+     state
+     split-array
+     position
+     size
+     point)
+  (bind ((attribute-index (car point))
+         (training-data (sl.mp:train-data state))
+         (attributes (attribute-indexes state))
+         (new-attributes (or (and attribute-index
+                                  (subsample-vector attributes
+                                                    attribute-index))
+                             attributes)))
+    (list :train-data (sl.data:split training-data size
+                                     split-array position
+                                     attribute-index)
           :attributes new-attributes)))
 
 
@@ -172,10 +185,8 @@
          (minimal-difference (minimal-difference training-parameters))
          (score (loss training-state))
          (minimal-size (minimal-size training-parameters))
-         (parallel (parallel training-parameters))
-         (attributes (attribute-indexes training-state)))
+         (parallel (parallel training-parameters)))
     (declare (type fixnum trials-count)
-             (type (simple-array fixnum (*)) attributes)
              (type double-float score minimal-difference)
              (type boolean parallel))
     (iterate
@@ -185,23 +196,18 @@
                      left-score right-score minimal-score))
       (with optimal-left-length = -1)
       (with optimal-right-length = -1)
-      (with optimal-attribute = -1)
+      (with optimal-point = nil)
       (with minimal-score = most-positive-double-float)
       (with minimal-left-score = most-positive-double-float)
       (with minimal-right-score = most-positive-double-float)
-      (with optimal-threshold = most-positive-double-float)
       (with data-size = (sl.data:data-points-count training-data))
       (with split-array = (sl.opt:make-split-array data-size))
       (with optimal-array = (sl.opt:make-split-array data-size))
       (for attempt from 0 below trials-count)
-      (for (values attribute threshold) = (random-test training-parameters
-                                                       attributes
-                                                       training-data))
-      (for (values left-length right-length) = (fill-split-array
-                                                training-parameters
-                                                training-data
-                                                attribute
-                                                threshold
+      (for point = (pick-split training-state))
+      (for (values left-length right-length) = (fill-split-vector
+                                                training-state
+                                                point
                                                 split-array))
       (when (or (< left-length minimal-size)
                 (< right-length minimal-size))
@@ -214,8 +220,7 @@
                             (* (/ right-length data-size) right-score)))
       (when (< split-score minimal-score)
         (setf minimal-score split-score
-              optimal-threshold threshold
-              optimal-attribute attribute
+              optimal-point point
               optimal-left-length left-length
               optimal-right-length right-length
               minimal-left-score left-score
@@ -228,8 +233,6 @@
          (when (< difference minimal-difference)
            (return nil))
          (bind ((new-depth (~> training-state depth 1+))
-                (new-attributes (subsample-vector attributes
-                                                  optimal-attribute))
                 ((:flet new-state (position size loss))
                  (split-training-state* training-parameters
                                         training-state
@@ -237,8 +240,7 @@
                                         position
                                         size
                                         `(:depth ,new-depth :loss ,loss)
-                                        optimal-attribute
-                                        new-attributes))
+                                        optimal-point))
                 ((:flet subtree-impl (position
                                       size
                                       loss
@@ -256,30 +258,30 @@
                               :right-node (subtree sl.opt:right
                                                    optimal-right-length
                                                    minimal-right-score)
-                              :attribute (aref attributes optimal-attribute)
-                              :attribute-value optimal-threshold))))))))
+                              :point optimal-point))))))))
 
 
 (defmethod split-training-state* ((parameters standard-tree-training-parameters)
                                   state split-array
                                   position size initargs
-                                  &optional attribute-index attribute-indexes)
+                                  point)
   (bind ((cloning-list (cl-ds.utils:cloning-list state)))
     (apply #'make (class-of state)
-           (append (split-training-state-info parameters
+           (append (split-training-state-info (splitter parameters)
+                                              parameters
                                               state
                                               split-array
                                               position
                                               size
-                                              attribute-index
-                                              attribute-indexes)
+                                              point)
                    initargs
                    cloning-list))))
 
 
-(defmethod sl.mp:sample-training-state-info append ((parameters fundamental-tree-training-parameters)
-                                                    state
-                                                    &key train-attributes data-points target-attributes)
+(defmethod sl.mp:sample-training-state-info append
+    ((parameters fundamental-tree-training-parameters)
+     state
+     &key train-attributes data-points target-attributes)
   (list :attributes (if (null train-attributes)
                         (attribute-indexes state)
                         (map '(vector fixnum)
@@ -305,16 +307,51 @@
                                    :train-attributes attributes)))
 
 
-(defmethod leaf-for ((node fundamental-node) data index)
+(defmethod leaf-for ((splitter random-attribute-splitter)
+                     (node fundamental-node)
+                     data index)
   (declare (type sl.data:double-float-data-matrix data)
            (type fixnum index))
   (labels ((impl (node)
              (if (treep node)
-                 (bind ((attribute-index (attribute node))
-                        (attribute-value (attribute-value node)))
+                 (bind (((attribute-index . attribute-value) (point node)))
                    (if (> (sl.data:mref data index attribute-index)
                           attribute-value)
-                       (impl (right-node node) )
-                       (impl (left-node node))))
+                       (~> node right-node impl)
+                       (~> node left-node impl)))
                  node)))
     (impl node)))
+
+
+(defmethod pick-split* ((splitter random-attribute-splitter) parameters state)
+  (random-test parameters
+               (attribute-indexes state)
+               (sl.mp:train-data state)))
+
+
+(defmethod fill-split-vector* ((splitter random-attribute-splitter)
+                               parameters
+                               state
+                               point
+                               split-vector)
+  (declare (type sl.data:split-vector split-vector)
+           (type cons point)
+           (optimize (speed 3) (safety 0)))
+  (bind ((attribute (car point))
+         (threshold (cdr point))
+         (data (sl.mp:train-data state))
+         (length (length split-vector)))
+    (declare (type sl.data:double-float-data-matrix data)
+             (type double-float threshold)
+             (type fixnum length attribute))
+    (assert (< attribute (sl.data:attributes-count data)))
+    (iterate
+      (declare (type fixnum right-count left-count i)
+               (type boolean rightp))
+      (with right-count = 0)
+      (with left-count = 0)
+      (for i from 0 below length)
+      (for rightp = (> (sl.data:mref data i attribute) threshold))
+      (setf (aref split-vector i) rightp)
+      (if rightp (incf right-count) (incf left-count))
+      (finally (return (values left-count right-count))))))

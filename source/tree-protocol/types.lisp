@@ -1,6 +1,14 @@
 (cl:in-package #:statistical-learning.tree-protocol)
 
 
+(defclass fundamental-splitter ()
+  ())
+
+
+(defclass random-attribute-splitter (fundamental-splitter)
+  ())
+
+
 (defclass fundamental-node ()
   ())
 
@@ -10,10 +18,8 @@
                :accessor left-node)
    (%right-node :initarg :right-node
                 :accessor right-node)
-   (%attribute :initarg :attribute
-               :accessor attribute)
-   (%attribute-value :initarg :attribute-value
-                     :accessor attribute-value)))
+   (%point :initarg :point
+           :accessor point)))
 
 
 (defclass fundamental-leaf-node (fundamental-node)
@@ -41,7 +47,11 @@
    (%trials-count :initarg :trials-count
                   :reader trials-count)
    (%parallel :initarg :parallel
-              :reader parallel)))
+              :reader parallel)
+   (%splitter :initarg :splitter
+              :reader splitter))
+  (:default-initargs
+   :splitter (make-instance 'random-attribute-splitter)))
 
 
 (defclass tree-training-state (sl.mp:fundamental-training-state)

@@ -35,9 +35,7 @@
                                         position
                                         size
                                         initargs
-                                        &optional
-                                          attribute-index
-                                          attribute-indexes)
+                                        point)
   (bind ((old-depth (sl.tp:depth state))
          (new-inner (sl.tp:split-training-state* (inner parameters)
                                                  (inner state)
@@ -45,15 +43,11 @@
                                                  position
                                                  size
                                                  initargs
-                                                 attribute-index
-                                                 attribute-indexes))
-         (index (index state))
-         (new-depth (sl.tp:depth new-inner)))
+                                                 point))
+         (index (index state)))
     (cl-ds.utils:quasi-clone* state
       :inner new-inner
-      :index (if (= new-depth old-depth)
-                 index
-                 (dpb (if position 1 0) (byte 1 old-depth) index)))))
+      :index (dpb (if position 1 0) (byte 1 old-depth) index))))
 
 
 (defmethod sl.mp:sample-training-state* ((parameters indexing-tree)
@@ -131,12 +125,14 @@
                                    make-array
                                    (map-into #'vect)))))
   (let ((root (sl.tp:root model))
+        (splitter (sl.tp:splitter parameters))
         (indexes (indexes state))
         (results (results state)))
     (funcall (if parallel #'lparallel:pmap #'map)
              nil
              (lambda (index)
-               (let* ((leaf (sl.tp:leaf-for root data index))
+               (let* ((leaf (sl.tp:leaf-for splitter root
+                                            data index))
                       (result (funcall leaf-key leaf)))
                  (vector-push-extend (aref results index)
                                      result)))

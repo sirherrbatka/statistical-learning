@@ -28,7 +28,7 @@
 (-> random-test (fundamental-tree-training-parameters
                  (simple-array fixnum (*))
                  sl.data:double-float-data-matrix)
-    (values fixnum double-float))
+    cons)
 (defun random-test (parameters attributes data)
   "Uses ExtraTree approach."
   (declare (optimize (speed 3) (safety 0))
@@ -38,7 +38,7 @@
          ((:values min max) (data-min/max data attribute-index))
          (threshold (if (= min max) min (random-uniform min max))))
     (assert (= attributes-count (statistical-learning.data:attributes-count data)))
-    (values attribute-index (if (= threshold max) min threshold))))
+    (list* attribute-index (if (= threshold max) min threshold))))
 
 
 (-> fill-split-array (fundamental-tree-training-parameters

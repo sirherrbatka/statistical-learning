@@ -46,13 +46,16 @@
     (when (null state)
       (setf state (contributed-predictions parameters model data-points-count)))
     (let* ((sums (sl.tp:sums state))
+           (splitter (sl.tp:splitter parameters))
            (shrinkage (shrinkage model))
            (root (sl.tp:root model)))
       (declare (type sl.data:double-float-data-matrix sums))
       (funcall (if parallel #'lparallel:pmap #'map)
                nil
                (lambda (data-point)
-                 (let* ((leaf (funcall leaf-key (sl.tp:leaf-for root data data-point)))
+                 (let* ((leaf (~>> (sl.tp:leaf-for splitter root
+                                                   data data-point)
+                                   (funcall leaf-key)))
                         (predictions (sl.tp:predictions leaf)))
                    (incf (sl.data:mref sums data-point 0)
                          (* shrinkage predictions))))
@@ -71,6 +74,7 @@
     (when (null state)
       (setf state (contributed-predictions parameters model data-points-count)))
     (let* ((sums (sl.tp:sums state))
+           (splitter (sl.tp:splitter parameters))
            (number-of-classes (sl.opt:number-of-classes parameters))
            (shrinkage (shrinkage model))
            (root (sl.tp:root model)))
@@ -79,7 +83,9 @@
                (lambda (data-point)
                  (iterate
                    (declare (type fixnum j))
-                   (with leaf = (funcall leaf-key (sl.tp:leaf-for root data data-point)))
+                   (with leaf = (~>> (sl.tp:leaf-for splitter root
+                                                     data data-point)
+                                     (funcall leaf-key)))
                    (with predictions = (sl.tp:predictions leaf))
                    (for j from 0 below number-of-classes)
                    (for gradient = (sl.data:mref predictions 0 j))

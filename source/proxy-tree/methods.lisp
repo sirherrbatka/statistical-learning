@@ -4,6 +4,7 @@
 (define-forwarding
   (sl.tp:extract-predictions* (predictions))
   (sl.tp:make-leaf* ())
+  (sl.tp:splitter ())
   (sl.tp:calculate-loss* (state split-array))
   (sl.tp:initialize-leaf (state leaf))
   (sl.tp:maximal-depth ())

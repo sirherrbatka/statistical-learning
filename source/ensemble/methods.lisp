@@ -95,6 +95,7 @@
            (optimize (speed 3) (safety 0)))
   (let ((indexes (indexes calculator))
         (parallel (parallel calculator))
+        (splitter (sl.tp:splitter tree-parameters))
         (train-data (train-data calculator))
         (target-data (target-data calculator))
         (weights (weights calculator))
@@ -118,7 +119,8 @@
                  (for sample in-vector samples)
                  (incf (aref counts index 0))
                  (when (gethash index sample) (next-iteration))
-                 (for leaf = (sl.tp:leaf-for (sl.tp:root tree)
+                 (for leaf = (sl.tp:leaf-for splitter
+                                             (sl.tp:root tree)
                                              train-data
                                              index))
                  (for predictions = (sl.tp:predictions leaf))

@@ -44,8 +44,7 @@
                    target
                    predictions)
   (declare (optimize (speed 3) (safety 0))
-           (type simple-vector predictions)
-           (type statistical-learning.data:data-matrix target))
+           (type sl.data:double-float-data-matrix target predictions))
   (let* ((data-points-count (sl.data:data-points-count target))
          (result (make-array data-points-count :element-type 'double-float)))
     (declare (type (simple-array double-float (*)) result))

@@ -24,18 +24,20 @@
         result)))
 
 
-(defun leafs-for* (node data)
+(defun leafs-for* (splitter node data)
   (declare (optimize (speed 3)))
   (statistical-learning.data:bind-data-matrix-dimensions ((length features-count data))
     (cl-ds:xpr (:i 0)
       (declare (type fixnum i))
       (when (< i length)
-        (cl-ds:send-recur (leaf-for node data i)
+        (cl-ds:send-recur (leaf-for splitter node data i)
                           :i (1+ i))))))
 
 
 (defun leafs-for (model data)
-  (leafs-for* (root model) data))
+  (leafs-for* (~> model sl.mp:training-parameters splitter)
+              (root model)
+              data))
 
 
 (defun visit-nodes* (tree-node function
@@ -103,3 +105,19 @@
                                    right-initargs
                                    attribute-index
                                    new-attributes))))
+
+
+(defun pick-split (state)
+  (let ((parameters (sl.mp:training-parameters state)))
+    (pick-split* (splitter parameters)
+                 parameters
+                 state)))
+
+
+(defun fill-split-vector (state point split-vector)
+  (let ((parameters (sl.mp:training-parameters state)))
+    (fill-split-vector* (splitter parameters)
+                        parameters
+                        state
+                        point
+                        split-vector)))
