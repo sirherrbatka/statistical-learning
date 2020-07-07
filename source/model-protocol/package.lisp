@@ -19,5 +19,6 @@
    #:fundamental-training-state
    #:target-data
    #:train-data
+   #:data-points
    #:weights
    ))

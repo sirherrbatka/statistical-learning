@@ -24,3 +24,5 @@
 (defgeneric target-data (state))
 (defgeneric train-data (state))
 (defgeneric weights-data (state))
+(defgeneric data-points (state))
+(defgeneric (setf data-points) (new-value state))

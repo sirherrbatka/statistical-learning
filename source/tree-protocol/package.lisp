@@ -31,7 +31,6 @@
    #:loss
    #:make-leaf
    #:make-leaf*
-   #:data-points
    #:make-node
    #:maximal-depth
    #:minimal-difference

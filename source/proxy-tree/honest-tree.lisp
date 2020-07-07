@@ -39,7 +39,7 @@
          (training-data (sl.mp:train-data inner-state))
          (inner-parameters (inner parameters))
          (data-points-count (~> inner-state
-                                sl.tp:data-points
+                                sl.mp:data-points
                                 length))
          (indexes (sl.data:reshuffle (sl.data:iota-vector data-points-count)))
          (division-indexes (take (truncate data-points-count 2)

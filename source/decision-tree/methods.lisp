@@ -7,7 +7,7 @@
   (sl.opt:loss (optimized-function parameters)
                (sl.mp:target-data state)
                (sl.mp:weights state)
-               (sl.tp:data-points state)
+               (sl.mp:data-points state)
                split-array))
 
 
@@ -43,7 +43,7 @@
                                   leaf)
   (declare (optimize (speed 3) (safety 0)))
   (let* ((target-data (sl.mp:target-data training-state))
-         (data-points (sl.tp:data-points training-state))
+         (data-points (sl.mp:data-points training-state))
          (number-of-classes (~> training-parameters
                                 optimized-function
                                 sl.opt:number-of-classes))
@@ -71,7 +71,7 @@
   (declare (optimize (speed 3) (safety 0)))
   (let* ((target-data (sl.mp:target-data training-state))
          (sum 0.0d0)
-         (data-points (sl.tp:data-points training-state))
+         (data-points (sl.mp:data-points training-state))
          (data-points-count (length data-points)))
     (declare (type fixnum data-points-count)
              (type (simple-array fixnum (*)) data-points)

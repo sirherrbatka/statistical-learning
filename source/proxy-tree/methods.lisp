@@ -82,5 +82,8 @@
   parameters)
 
 
-(defmethod sl.tp:data-points ((state proxy-state))
-  (~> state inner sl.tp:data-points))
+(defmethod sl.mp:data-points ((state proxy-state))
+  (~> state inner sl.mp:data-points))
+
+(defmethod (setf sl.mp:data-points) (new-value (state proxy-state))
+  (setf (sl.mp:data-points (inner state)) new-value))

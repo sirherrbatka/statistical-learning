@@ -93,7 +93,7 @@
 (defmethod sl.tp:split* :around ((training-parameters causal-tree)
                                  training-state)
   (let* ((treatment (treatment training-state))
-         (data-points (sl.tp:data-points training-state))
+         (data-points (sl.mp:data-points training-state))
          (minimal-treatment-size (minimal-treatment-size training-parameters))
          (treatment-frequency (make-hash-table)))
     (iterate
@@ -112,7 +112,7 @@
   (bind ((inner (inner training-state))
          (treatment (treatment training-state))
          (inner-parameters (inner parameters))
-         (data-points (sl.tp:data-points inner))
+         (data-points (sl.mp:data-points inner))
          (treatment-types-count (treatment-types-count parameters))
          (leafs (make-array treatment-types-count))
          (sizes (make-array treatment-types-count))

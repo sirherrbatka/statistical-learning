@@ -45,7 +45,7 @@
   `((:depth depth)
     (:loss loss)
     (:attributes attribute-indexes)
-    (:data-point-indexes data-points)
+    (:data-point-indexes sl.mp:data-points)
     (:weights sl.mp:weights)
     (:target-data sl.mp:target-data)
     (:train-data sl.mp:train-data)))
@@ -78,7 +78,7 @@
          (new-data-points (iterate
                             (declare (type (simple-array fixnum (*))
                                            old-indexes new-indexes))
-                            (with old-indexes = (data-points state))
+                            (with old-indexes = (sl.mp:data-points state))
                             (with new-indexes = (make-array size :element-type 'fixnum))
                             (with j = 0)
                             (for i from 0 below (length old-indexes))
@@ -94,7 +94,7 @@
 
 (defmethod split* :around ((training-parameters fundamental-tree-training-parameters)
                            training-state)
-  (let* ((indexes (data-points training-state))
+  (let* ((indexes (sl.mp:data-points training-state))
          (depth (depth training-state))
          (attribute-indexes (attribute-indexes training-state))
          (loss (loss training-state))
@@ -136,7 +136,7 @@
         sl.mp:train-data
         sl.data:attributes-count
         sl.data:iota-vector))
-  (ensure (data-points instance)
+  (ensure (sl.mp:data-points instance)
     (~> instance
         sl.mp:train-data
         sl.data:data-points-count
@@ -203,7 +203,7 @@
       (with minimal-left-score = most-positive-double-float)
       (with minimal-right-score = most-positive-double-float)
       (with data-size = (~> training-state
-                            data-points
+                            sl.mp:data-points
                             length))
       (with split-array = (sl.opt:make-split-array data-size))
       (with optimal-array = (sl.opt:make-split-array data-size))
@@ -290,7 +290,7 @@
                         (attribute-indexes state)
                         train-attributes)
         :data-point-indexes (if (null data-points)
-                                (data-points state)
+                                (sl.mp:data-points state)
                                 data-points)))
 
 
@@ -332,7 +332,7 @@
          (attribute-index (aref attributes (random attributes-count)))
          ((:values min max) (data-min/max data
                                           attribute-index
-                                          (data-points state)))
+                                          (sl.mp:data-points state)))
          (threshold (if (= min max) min (random-uniform min max))))
     (list* attribute-index (if (= threshold max) min threshold))))
 
@@ -344,11 +344,11 @@
                                split-vector)
   (declare (type sl.data:split-vector split-vector)
            (type cons point)
-           (optimize (debug 3) (safety 3)))
+           (optimize (speed 3) (safety 0)))
   (bind ((attribute (car point))
          (threshold (cdr point))
          (data (sl.mp:train-data state))
-         (data-point-indexes (data-points state))
+         (data-point-indexes (sl.mp:data-points state))
          (length (length split-vector)))
     (declare (type sl.data:double-float-data-matrix data)
              (type data-point-indexes (simple-array fixnum (*)))

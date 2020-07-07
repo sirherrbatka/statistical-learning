@@ -58,7 +58,7 @@
   ((%attribute-indexes :initarg :attributes
                        :accessor attribute-indexes)
    (%data-point-indexes :initarg :data-point-indexes
-                        :accessor data-points)
+                        :accessor sl.mp:data-points)
    (%depth :initarg :depth
            :reader depth)
    (%loss :initarg :loss

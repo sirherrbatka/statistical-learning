@@ -106,12 +106,13 @@
         :tree-sample-rate 0.2
         :tree-parameters *training-parameters*))
 
-(defparameter *confusion-matrix*
-  (statistical-learning.performance:cross-validation *forest-parameters*
-                                                     4
-                                                     *train-data*
-                                                     *target-data*
-                                                     :parallel t))
+(time
+ (defparameter *confusion-matrix*
+   (statistical-learning.performance:cross-validation *forest-parameters*
+                                                      4
+                                                      *train-data*
+                                                      *target-data*
+                                                      :parallel t)))
 
 (print (statistical-learning.performance:accuracy *confusion-matrix*)) ; 0.82
 
