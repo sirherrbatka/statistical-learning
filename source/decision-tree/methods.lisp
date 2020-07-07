@@ -7,6 +7,7 @@
   (sl.opt:loss (optimized-function parameters)
                (sl.mp:target-data state)
                (sl.mp:weights state)
+               (sl.tp:data-points state)
                split-array))
 
 
@@ -17,9 +18,12 @@
   (let ((optimized-function (optimized-function parameters)))
     (make 'sl.tp:tree-training-state
           :training-parameters parameters
-          :loss (sl.opt:loss optimized-function
-                             target-data
-                             weights)
+          :loss (~>> train-data
+                     sl.data:data-points-count
+                     sl.data:iota-vector
+                     (sl.opt:loss optimized-function
+                                  target-data
+                                  weights))
           :weights weights
           :attributes attributes
           :target-data target-data
@@ -28,9 +32,10 @@
 
 (defmethod sl.mp:make-model* ((parameters fundamental-decision-tree-parameters)
                               state)
-  (make 'sl.tp:tree-model
-        :parameters parameters
-        :root (~>> state sl.tp:make-leaf (sl.tp:split state))))
+  (let ((root (~>> state sl.tp:make-leaf (sl.tp:split state))))
+    (make 'sl.tp:tree-model
+          :parameters parameters
+          :root root)))
 
 
 (defmethod sl.tp:initialize-leaf ((training-parameters classification)
@@ -38,16 +43,19 @@
                                   leaf)
   (declare (optimize (speed 3) (safety 0)))
   (let* ((target-data (sl.mp:target-data training-state))
+         (data-points (sl.tp:data-points training-state))
          (number-of-classes (~> training-parameters
                                 optimized-function
                                 sl.opt:number-of-classes))
-         (data-points-count (sl.data:data-points-count target-data))
+         (data-points-count (length data-points))
          (predictions (sl.data:make-data-matrix 1 number-of-classes)))
     (declare (type fixnum number-of-classes data-points-count)
-             (type statistical-learning.data:data-matrix target-data predictions))
+             (type (simple-array fixnum (*)) data-points)
+             (type sl.data:double-float-data-matrix target-data predictions))
     (iterate
-      (declare (type fixnum i index))
-      (for i from 0 below data-points-count)
+      (declare (type fixnum j i index))
+      (for j from 0 below data-points-count)
+      (for i = (aref data-points j))
       (for index = (truncate (sl.data:mref target-data i 0)))
       (incf (sl.data:mref predictions 0 index)))
     (iterate
@@ -63,13 +71,16 @@
   (declare (optimize (speed 3) (safety 0)))
   (let* ((target-data (sl.mp:target-data training-state))
          (sum 0.0d0)
-         (data-points-count (sl.data:data-points-count target-data)))
+         (data-points (sl.tp:data-points training-state))
+         (data-points-count (length data-points)))
     (declare (type fixnum data-points-count)
+             (type (simple-array fixnum (*)) data-points)
              (type double-float sum))
     (iterate
-      (declare (type fixnum i)
+      (declare (type fixnum j i)
                (type double-float sum))
-      (for i from 0 below data-points-count)
+      (for j from 0 below data-points-count)
+      (for i = (aref data-points j))
       (incf sum (sl.data:mref target-data i 0)))
     (setf (sl.tp:predictions leaf) (/ sum data-points-count))))
 

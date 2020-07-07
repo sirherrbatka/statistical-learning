@@ -15,6 +15,10 @@
                :reader treatment)))
 
 
+(defmethod cl-ds.utils:cloning-information append ((object causal-state))
+  '((:treatment treatment)))
+
+
 (defclass causal-leaf (sl.tp:fundamental-leaf-node)
   ((%leafs :initarg :leafs
            :accessor leafs)
@@ -57,10 +61,6 @@
                                         initargs
                                         point)
   (cl-ds.utils:quasi-clone* state
-    :treatment (split-treatment (treatment state)
-                                size
-                                split-array
-                                position)
     :inner (sl.tp:split-training-state* (inner parameters)
                                         (inner state)
                                         split-array
@@ -78,9 +78,6 @@
                                            initargs
                                            target-attributes)
   (cl-ds.utils:quasi-clone* state
-    :treatment (map 'vector
-                    (curry #'aref (treatment state))
-                    data-points)
     :inner (sl.mp:sample-training-state* (inner parameters)
                                          (inner state)
                                          :data-points data-points
@@ -96,8 +93,12 @@
 (defmethod sl.tp:split* :around ((training-parameters causal-tree)
                                  training-state)
   (let* ((treatment (treatment training-state))
+         (data-points (sl.tp:data-points training-state))
          (minimal-treatment-size (minimal-treatment-size training-parameters))
-         (treatment-frequency (serapeum:frequencies treatment)))
+         (treatment-frequency (make-hash-table)))
+    (iterate
+      (for i in-vector data-points)
+      (incf (gethash (svref treatment i) treatment-frequency 0)))
     (iterate
       (for (key count) in-hashtable treatment-frequency)
       (when (< count (* 2 minimal-treatment-size))
@@ -111,27 +112,31 @@
   (bind ((inner (inner training-state))
          (treatment (treatment training-state))
          (inner-parameters (inner parameters))
+         (data-points (sl.tp:data-points inner))
          (treatment-types-count (treatment-types-count parameters))
          (leafs (make-array treatment-types-count))
          (sizes (make-array treatment-types-count))
+         (treatment-vector (map 'vector
+                                (curry #'aref treatment)
+                                data-points))
          ((:flet treatment-size (i))
-          (count i treatment)))
+          (count i treatment-vector)))
     (iterate
       (for i from 0 below treatment-types-count)
       (for sub-leaf = (sl.tp:make-leaf* inner-parameters))
+      (for treatment-size = (treatment-size i))
       (for treatment-state = (sl.tp:split-training-state* inner-parameters
                                                           inner
-                                                          treatment
+                                                          treatment-vector
                                                           i
-                                                          (treatment-size i)
-                                                          '()))
-      (setf (aref sizes i) (~> treatment-state
-                               sl.mp:train-data
-                               sl.data:data-points-count))
+                                                          treatment-size
+                                                          '()
+                                                          nil))
       (sl.tp:initialize-leaf inner-parameters
                              treatment-state
                              sub-leaf)
-      (setf (aref leafs i) sub-leaf))
+      (setf (aref sizes i) treatment-size
+            (aref leafs i) sub-leaf))
     (setf (leafs leaf) leafs
           (sizes leaf) sizes)))
 
@@ -145,16 +150,15 @@
 
 (defmethod sl.mp:make-training-state ((parameters causal-tree)
                                       &rest initargs
-                                      &key treatment data-points &allow-other-keys)
+                                      &key treatment &allow-other-keys)
   (make 'causal-state
         :training-parameters parameters
         :inner (apply #'sl.mp:make-training-state
                       (inner parameters)
                       initargs)
         :treatment (map 'vector
-                        (compose #'round
-                                 (curry #'aref (cl-ds.utils:unfold-table treatment)))
-                        data-points)))
+                        #'round
+                        (cl-ds.utils:unfold-table treatment))))
 
 
 (defun causal (parameters

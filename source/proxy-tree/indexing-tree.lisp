@@ -44,10 +44,13 @@
                                                  size
                                                  initargs
                                                  point))
-         (index (index state)))
+         (index (index state))
+         (new-depth (sl.tp:depth new-inner)))
     (cl-ds.utils:quasi-clone* state
       :inner new-inner
-      :index (dpb (if position 1 0) (byte 1 old-depth) index))))
+      :index (if (= new-depth old-depth)
+                 index
+                 (dpb (if position 1 0) (byte 1 old-depth) index)))))
 
 
 (defmethod sl.mp:sample-training-state* ((parameters indexing-tree)

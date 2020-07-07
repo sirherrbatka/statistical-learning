@@ -36,36 +36,37 @@
 (defmethod sl.mp:make-model* ((parameters honest-tree)
                               state)
   (bind ((inner-state (inner state))
+         (training-data (sl.mp:train-data inner-state))
          (inner-parameters (inner parameters))
          (data-points-count (~> inner-state
-                                sl.mp:train-data
-                                sl.data:data-points-count))
+                                sl.tp:data-points
+                                length))
          (indexes (sl.data:reshuffle (sl.data:iota-vector data-points-count)))
+         (division-indexes (take (truncate data-points-count 2)
+                                 indexes))
+         (adjust-indexes (drop (truncate data-points-count 2)
+                               indexes))
          (attributes (attributes state))
          (division (sl.mp:sample-training-state inner-state
                                                 :train-attributes attributes
-                                                :data-points (take (truncate data-points-count 2)
-                                                                   indexes)))
+                                                :data-points division-indexes))
          (adjust (sl.mp:sample-training-state inner-state
-                                              :data-points (drop (truncate data-points-count 2)
-                                                                 indexes)))
+                                              :data-points adjust-indexes))
          (inner (inner parameters))
-         (values-training-data (sl.mp:train-data adjust))
          (model (sl.mp:make-model* inner division))
          (root (sl.tp:root model))
          (splitter (sl.tp:splitter parameters))
          ((:flet assign-leaf (index))
           (cons index
                 (sl.tp:leaf-for splitter root
-                                values-training-data index)))
+                                training-data index)))
          ((:flet adjust-leaf (leaf.indexes))
           (bind (((leaf . indexes) leaf.indexes)
                  (no-fill-pointer (cl-ds.utils:remove-fill-pointer indexes)))
             (~> inner-parameters
                 (sl.mp:sample-training-state* adjust :data-points no-fill-pointer)
                 (sl.tp:initialize-leaf inner _ leaf)))))
-    (~> (cl-ds:iota-range :to (sl.data:data-points-count values-training-data))
-        (cl-ds.alg:on-each #'assign-leaf)
+    (~> (cl-ds.alg:on-each adjust-indexes #'assign-leaf)
         (cl-ds.alg:group-by :key #'cdr :test 'eq)
         (cl-ds.alg:to-vector :key #'car :element-type 'fixnum)
         (cl-ds:traverse #'adjust-leaf))

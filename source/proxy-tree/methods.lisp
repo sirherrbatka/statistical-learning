@@ -80,3 +80,7 @@
 
 (defmethod inner ((parameters sl.tp:fundamental-tree-training-parameters))
   parameters)
+
+
+(defmethod sl.tp:data-points ((state proxy-state))
+  (~> state inner sl.tp:data-points))

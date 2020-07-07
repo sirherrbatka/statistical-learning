@@ -57,6 +57,8 @@
 (defclass tree-training-state (sl.mp:fundamental-training-state)
   ((%attribute-indexes :initarg :attributes
                        :accessor attribute-indexes)
+   (%data-point-indexes :initarg :data-point-indexes
+                        :accessor data-points)
    (%depth :initarg :depth
            :reader depth)
    (%loss :initarg :loss
@@ -67,7 +69,10 @@
              :reader sl.mp:weights)
    (%train-data :initarg :train-data
                 :reader sl.mp:train-data))
-  (:default-initargs :depth 0 :attributes nil :weights nil))
+  (:default-initargs :depth 0
+                     :attributes nil
+                     :weights nil
+                     :data-point-indexes nil))
 
 
 (defclass tree-model (statistical-learning.mp:fundamental-model)
