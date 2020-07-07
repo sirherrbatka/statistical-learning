@@ -31,7 +31,7 @@
          ((:flet make-model (attributes sample))
           (bind ((sub-state (apply #'sl.mp:make-training-state
                                    tree-parameters
-                                   :data-points sample
+                                   :data-points (sort sample #'<)
                                    :attributes attributes
                                    complete-initargs)))
             (sl.mp:make-model* tree-parameters sub-state))))
