@@ -9,6 +9,11 @@
   ())
 
 
+(defclass distance-splitter (fundamental-splitter)
+  ((%distance-function :initarg :distance-function
+                       :reader distance-function)))
+
+
 (defclass fundamental-node ()
   ())
 
@@ -58,6 +63,7 @@
   ((%attribute-indexes :initarg :attributes
                        :accessor attribute-indexes)
    (%data-point-indexes :initarg :data-point-indexes
+                        :initarg :data-points
                         :accessor sl.mp:data-points)
    (%depth :initarg :depth
            :reader depth)

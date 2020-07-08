@@ -117,10 +117,10 @@
                                                      *target-data*
                                                      :parallel t))
 
-(print (statistical-learning.performance:accuracy *confusion-matrix*)) ; 0.9816
+(print (sl.performance:accuracy *confusion-matrix*)) ; 0.9816
 
-(print (statistical-learning.performance:attributes-importance *forest-parameters*
-                                                               4
-                                                               *train-data*
-                                                               *target-data*
-                                                               :parallel t))
+(print (sl.performance:attributes-importance *forest-parameters*
+                                             4
+                                             *train-data*
+                                             *target-data*
+                                             :parallel t))

@@ -121,3 +121,13 @@
                         state
                         point
                         split-vector)))
+
+
+(defun random-attribute-splitter ()
+  (make 'random-attribute-splitter))
+
+
+(defun distance-splitter (distance-function)
+  (ensure-functionf distance-function)
+  (make 'distance-splitter
+        :distance-function distance-function))

@@ -294,14 +294,6 @@
                                 data-points)))
 
 
-(defmethod sl.mp:make-training-state :around
-    ((parameters standard-tree-training-parameters)
-     &rest initargs &key attributes data-points &allow-other-keys)
-  (~> (apply #'call-next-method parameters :data-points nil :attributes nil initargs)
-      (sl.mp:sample-training-state :data-points data-points
-                                   :train-attributes attributes)))
-
-
 (defmethod leaf-for ((splitter random-attribute-splitter)
                      (node fundamental-node)
                      data index)

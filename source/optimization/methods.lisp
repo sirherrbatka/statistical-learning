@@ -4,10 +4,13 @@
 (defmethod response ((function squared-error-function)
                      expected
                      function-output)
-  (declare (optimize (speed 3) (safety 0)))
+  (declare (optimize (speed 3) (safety 0))
+           (type sl.data:double-float-data-matrix expected
+                 function-output))
   (sl.data:check-data-points expected function-output)
   (iterate
-    (declare (type fixnum i))
+    (declare (type fixnum i)
+             (type sl.data:double-float-data-matrix result))
     (with result = (sl.data:make-data-matrix-like expected))
     (for i from 0 below (sl.data:data-points-count result))
     (setf (sl.data:mref result i 0)
@@ -83,16 +86,16 @@
   (declare (optimize (speed 3) (safety 0))
            (type sl.data:double-float-data-matrix sums expected))
   (iterate
-    (declare (type fixnum i number-of-classes))
+    (declare (type fixnum i number-of-classes)
+             (type sl.data:double-float-data-matrix result))
     (with number-of-classes = (sl.data:attributes-count sums))
-    (with result = (statistical-learning.data:make-data-matrix-like sums))
+    (with result = (sl.data:make-data-matrix-like sums))
     (for i from 0 below (sl.data:data-points-count expected))
     (iterate
       (declare (type fixnum j))
       (for j from 0 below number-of-classes)
       (setf (sl.data:mref result i j)
-            (- (if (= (coerce j 'double-float)
-                      (sl.data:mref expected i 0))
+            (- (if (= j (sl.data:mref expected i 0))
                    1.0d0
                    0.0d0)
                (sl.data:mref sums i j))))

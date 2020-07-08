@@ -49,6 +49,8 @@
    #:split-training-state*
    #:split-training-state-info
    #:splitter
+   #:fill-split-vector*
+   #:pick-split*
    #:standard-leaf-node
    #:standard-tree-training-parameters
    #:sums

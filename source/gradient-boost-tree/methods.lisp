@@ -1,19 +1,22 @@
 (cl:in-package #:statistical-learning.gradient-boost-tree)
 
 
-
 (defmethod sl.mp:make-training-state ((parameters fundamental-gradient-boost-tree-parameters)
                                       &rest initargs
                                       &key attributes train-data
-                                        target-data weights response expected-value shrinkage
+                                        target-data weights response
+                                        expected-value shrinkage data-points
                                       &allow-other-keys)
   (declare (ignore initargs))
   (sl.mp:make-training-state (implementation parameters
                                              :shrinkage shrinkage
                                              :expected-value expected-value)
+                             :data-points data-points
                              :train-data train-data
                              :target-data (if (null response)
-                                              (target parameters target-data expected-value)
+                                              (target parameters
+                                                      target-data
+                                                      expected-value)
                                               response)
                              :attributes attributes
                              :weights weights))
@@ -21,8 +24,7 @@
 
 (defmethod sl.mp:make-model* ((parameters gradient-boosting-implementation)
                               state)
-  (declare (ignore train-data target-data))
-  (let ((parameters (~> state sl.mp:training-parameters)))
+  (let ((parameters (sl.mp:training-parameters state)))
     (make 'gradient-boost-model
           :parameters (gradient-parameters parameters)
           :shrinkage (shrinkage parameters)
@@ -135,6 +137,7 @@
 (defmethod implementation ((parameters classification) &rest initargs)
   (apply #'make 'classification-implementation
          :gradient-parameters parameters
+         :splitter (sl.tp:splitter parameters)
          :maximal-depth (sl.tp:maximal-depth parameters)
          :minimal-difference (sl.tp:minimal-difference parameters)
          :minimal-size (sl.tp:minimal-size parameters)
@@ -146,6 +149,7 @@
 (defmethod implementation ((parameters regression) &rest initargs)
   (apply #'make 'regression-implementation
          :gradient-parameters parameters
+         :splitter (sl.tp:splitter parameters)
          :maximal-depth (sl.tp:maximal-depth parameters)
          :minimal-difference (sl.tp:minimal-difference parameters)
          :minimal-size (sl.tp:minimal-size parameters)
@@ -155,17 +159,21 @@
 
 
 (defmethod target ((parameters classification) target-data expected-value)
-  (declare (type sl.data:double-float-data-matrix target-data))
+  (declare (type sl.data:double-float-data-matrix target-data expected-value)
+           (optimize (speed 3) (safety 0)))
   (iterate
+    (declare (type sl.data:double-float-data-matrix result)
+             (type fixnum i number-of-classes
+                   data-points-count target))
     (with optimized-function = (optimized-function parameters))
     (with number-of-classes = (sl.opt:number-of-classes optimized-function))
     (with data-points-count = (sl.data:data-points-count target-data))
-    (with result = (sl.data:make-data-matrix
-                    data-points-count
-                    number-of-classes))
+    (with result = (sl.data:make-data-matrix data-points-count
+                                             number-of-classes))
     (for i from 0 below data-points-count)
     (for target = (truncate (sl.data:mref target-data i 0)))
     (iterate
+      (declare (type fixnum j))
       (for j from 0 below number-of-classes)
       (setf (sl.data:mref result i j)
             (- (if (= target j) 1 0)
@@ -174,8 +182,7 @@
 
 
 (defmethod target ((parameters regression) target-data expected-value)
-  (sl.data:map-data-matrix (lambda (x)
-                             (- x expected-value))
+  (sl.data:map-data-matrix (lambda (x) (- x expected-value))
                            target-data))
 
 
@@ -183,13 +190,25 @@
                                   training-state
                                   leaf)
   (declare (optimize (speed 3) (safety 0)))
-  (let* ((target-data (sl.mp:target-data training-state))
-         (data-points-count (sl.data:data-points-count target-data)))
-    (declare (type fixnum data-points-count))
-    (setf (sl.tp:predictions leaf) (~>> target-data
-                                        (sl.data:reduce-data-points #'+)
-                                        (sl.data:map-data-matrix
-                                         (lambda (x) (/ x data-points-count)))))))
+  (iterate
+    (declare (type (simple-array fixnum (*)) data-points)
+             (type fixnum i j length number-of-classes)
+             (type sl.data:double-float-data-matrix result target-data))
+    (with target-data = (sl.mp:target-data training-state))
+    (with data-points = (sl.mp:data-points training-state))
+    (with length = (length data-points))
+    (with number-of-classes = (sl.data:attributes-count target-data))
+    (with result = (sl.data:make-data-matrix 1 number-of-classes))
+    (for i from 0 below length)
+    (for j = (aref data-points i))
+    (iterate
+      (declare (type fixnum j))
+      (for k from 0 below number-of-classes)
+      (incf (sl.data:mref result 0 k)
+            (sl.data:mref target-data j k)))
+    (finally (setf (sl.tp:predictions leaf) (sl.data:map-data-matrix
+                                             (lambda (x) (/ x length))
+                                             result)))))
 
 
 (defmethod calculate-expected-value ((parameters classification)
@@ -197,21 +216,19 @@
   (declare (type sl.data:double-float-data-matrix data)
            (optimize (speed 3)))
   (iterate
-    (declare (type fixnum i))
-    (with result = (~>> parameters
-                        optimized-function
-                        sl.opt:number-of-classes
-                        (sl.data:make-data-matrix 1)))
+    (declare (type fixnum i)
+             (type sl.data:double-float-data-matrix result))
+    (with number-of-classes = (~>> parameters
+                                   optimized-function
+                                   sl.opt:number-of-classes))
+    (with result = (sl.data:make-data-matrix 1 number-of-classes))
     (for i from 0 below (sl.data:data-points-count data))
-    (iterate
-      (declare (type fixnum j))
-      (for j from 0 below (sl.data:attributes-count data))
-      (incf (sl.data:mref result 0
-                          (truncate (sl.data:mref data i 0)))))
+    (incf (sl.data:mref result 0
+                        (truncate (sl.data:mref data i 0))))
     (finally
      (iterate
        (declare (type fixnum j))
-       (for j from 0 below (sl.data:attributes-count data))
+       (for j from 0 below number-of-classes)
        (for avg = (/ #1=(sl.data:mref result 0 j)
                      (sl.data:data-points-count data)))
        (setf #1# avg))
