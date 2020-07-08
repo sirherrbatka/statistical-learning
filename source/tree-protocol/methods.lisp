@@ -366,7 +366,6 @@
          (maximal-depth (maximal-depth training-parameters))
          (minimal-size (minimal-size training-parameters)))
     (declare (type (integer 1 *) minimal-size))
-    (nor (< (length indexes)
-            (* 2 minimal-size))
+    (nor (< (length indexes) (* 2 minimal-size))
          (>= depth maximal-depth)
          (<= loss (minimal-difference training-parameters)))))
