@@ -118,7 +118,7 @@
       (declare (type fixnum j i)
                (type (simple-array double-float (*))
                      left-sums right-sums)
-               (optimize (speed 3) (safety 1) (debug 1)))
+               (optimize (speed 3) (safety 0) (debug 0)))
       (with number-of-classes = (number-of-classes function))
       (with left-sums = (make-array number-of-classes
                                     :initial-element 0.0d0

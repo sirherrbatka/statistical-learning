@@ -196,33 +196,39 @@
                                      :target-data target-data))
       (cl-progress-bar:with-progress-bar (trees-count "Fitting random forest of ~a trees." trees-count)
         (iterate
-          (with state-initargs = '())
           (with index = 0)
-          (iterate
-            (while (< index trees-count))
-            (for trees-view = (array-view trees
+          (with prev-index = 0)
+          (with state-initargs = '())
+          (setf prev-index index)
+          (while (< index trees-count))
+          (for trees-view = (array-view trees
+                                        :from index
+                                        :to (+ index tree-batch-size)))
+          (for attributes-view = (array-view attributes
+                                             :from index
+                                             :to (+ index tree-batch-size)))
+          (map-into attributes-view attributes-generator)
+          (for samples-view = (array-view samples
                                           :from index
                                           :to (+ index tree-batch-size)))
-            (for attributes-view = (array-view attributes
-                                               :from index
-                                               :to (+ index tree-batch-size)))
-            (map-into attributes-view attributes-generator)
-            (for samples-view = (array-view samples
-                                            :from index
-                                            :to (+ index tree-batch-size)))
-            (fit-tree-batch parameters trees-view attributes-view
-                            state-initargs state
-                            weights samples-view)
+          (fit-tree-batch parameters trees-view attributes-view
+                          state-initargs state
+                          weights samples-view)
+          (setf index (min trees-count (+ index tree-batch-size)))
+          (for swap-count = (cl-ds.utils:swap-if trees (complement #'treep)
+                                                 :end index))
+          (decf index swap-count)
+          (for new-trees = (- index prev-index))
+          (unless (zerop new-trees)
             (update-weights weights-calculator
                             (sl.pt:inner tree-parameters)
-                            trees-view samples-view)
-            (incf index tree-batch-size))
-          (for swap-count = (cl-ds.utils:swap-if trees (complement #'treep)))
-          (cl-progress-bar:update (- index
-                                     (min trees-count (+ index tree-batch-size))
-                                     swap-count))
-          (until (zerop swap-count))
-          (decf index swap-count)))
+                            (array-view trees
+                                        :from prev-index
+                                        :to index)
+                            (array-view samples
+                                        :from prev-index
+                                        :to index))
+            (cl-progress-bar:update new-trees))))
       (make 'random-forest-model
             :trees trees
             :parameters parameters
@@ -296,8 +302,9 @@
                                                   new-contributed
                                                   target-data)
               contributed new-contributed)
-        (cl-progress-bar:update (- index
-                                   (min trees-count (+ index tree-batch-size))))))
+        (for current-position = (min (+ index tree-batch-size) trees-count))
+        (cl-progress-bar:update (- current-position
+                                   index))))
     (make 'gradient-boost-ensemble-model
           :trees trees
           :parameters parameters
