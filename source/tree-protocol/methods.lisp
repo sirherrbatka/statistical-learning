@@ -354,7 +354,7 @@
 (defmethod requires-split-p and ((splitter random-attribute-splitter)
                                  (training-parameters standard-tree-training-parameters)
                                  training-state)
-  (not (emptyp (attribute-indexes training-state))))
+  (~> training-state attribute-indexes emptyp not))
 
 
 (defmethod requires-split-p and ((splitter fundamental-splitter)
