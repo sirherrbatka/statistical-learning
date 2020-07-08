@@ -334,7 +334,7 @@
          (data-point-indexes (sl.mp:data-points state))
          (length (length split-vector)))
     (declare (type sl.data:double-float-data-matrix data)
-             (type data-point-indexes (simple-array fixnum (*)))
+             (type (simple-array fixnum (*)) data-point-indexes)
              (type double-float threshold)
              (type fixnum length attribute))
     (assert (< attribute (sl.data:attributes-count data)))
