@@ -9,7 +9,8 @@
   :depends-on ( :iterate       :serapeum
                 :lparallel     :cl-data-structures
                 :metabang-bind :alexandria
-                :documentation-utils-extensions)
+                :documentation-utils-extensions
+                :cl-progress-bar)
   :serial T
   :pathname "source"
   :components ((:file "aux-package")

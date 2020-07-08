@@ -194,31 +194,35 @@
                                      :weights weights
                                      :train-data train-data
                                      :target-data target-data))
-      (iterate
-        (with state-initargs = '())
-        (with index = 0)
+      (cl-progress-bar:with-progress-bar (trees-count "Fitting random forest of ~a trees." trees-count)
         (iterate
-          (while (< index trees-count))
-          (for trees-view = (array-view trees
-                                        :from index
-                                        :to (+ index tree-batch-size)))
-          (for attributes-view = (array-view attributes
-                                             :from index
-                                             :to (+ index tree-batch-size)))
-          (map-into attributes-view attributes-generator)
-          (for samples-view = (array-view samples
+          (with state-initargs = '())
+          (with index = 0)
+          (iterate
+            (while (< index trees-count))
+            (for trees-view = (array-view trees
                                           :from index
                                           :to (+ index tree-batch-size)))
-          (fit-tree-batch parameters trees-view attributes-view
-                          state-initargs state
-                          weights samples-view)
-          (update-weights weights-calculator
-                          (sl.pt:inner tree-parameters)
-                          trees-view samples-view)
-          (incf index tree-batch-size))
-        (for swap-count = (cl-ds.utils:swap-if trees (complement #'treep)))
-        (until (zerop swap-count))
-        (decf index swap-count))
+            (for attributes-view = (array-view attributes
+                                               :from index
+                                               :to (+ index tree-batch-size)))
+            (map-into attributes-view attributes-generator)
+            (for samples-view = (array-view samples
+                                            :from index
+                                            :to (+ index tree-batch-size)))
+            (fit-tree-batch parameters trees-view attributes-view
+                            state-initargs state
+                            weights samples-view)
+            (update-weights weights-calculator
+                            (sl.pt:inner tree-parameters)
+                            trees-view samples-view)
+            (incf index tree-batch-size))
+          (for swap-count = (cl-ds.utils:swap-if trees (complement #'treep)))
+          (cl-progress-bar:update (- index
+                                     (min trees-count (+ index tree-batch-size))
+                                     swap-count))
+          (until (zerop swap-count))
+          (decf index swap-count)))
       (make 'random-forest-model
             :trees trees
             :parameters parameters
@@ -260,37 +264,40 @@
           (make-array (- (min trees-count to) from)
                       :displaced-index-offset (min trees-count from)
                       :displaced-to array)))
-    (iterate
-      (with response = nil)
-      (with contributed = nil)
-      (with shrinkage = (shrinkage parameters))
-      (for index
-           from 0
-           below trees-count
-           by tree-batch-size)
-      (while (< index trees-count))
-      (for trees-view = (array-view trees
-                                    :from index
-                                    :to (+ index tree-batch-size)))
-      (for attributes-view = (array-view attributes
-                                         :from index
-                                         :to (+ index tree-batch-size)))
-      (map-into attributes-view attributes-generator)
-      (for samples-view = (array-view samples
+    (cl-progress-bar:with-progress-bar (trees-count "Fitting gradient boost ensemble of ~a trees." trees-count)
+      (iterate
+        (with response = nil)
+        (with contributed = nil)
+        (with shrinkage = (shrinkage parameters))
+        (for index
+             from 0
+             below trees-count
+             by tree-batch-size)
+        (while (< index trees-count))
+        (for trees-view = (array-view trees
                                       :from index
                                       :to (+ index tree-batch-size)))
-      (fit-tree-batch parameters trees-view attributes-view
-                      `(:response ,response :shrinkage ,shrinkage)
-                      state nil samples-view)
-      (for new-contributed = (contribute-trees tree-parameters
-                                               trees-view
-                                               train-data
-                                               parallel
-                                               contributed))
-      (setf response (sl.gbt:calculate-response tree-parameters
-                                                new-contributed
-                                                target-data)
-            contributed new-contributed))
+        (for attributes-view = (array-view attributes
+                                           :from index
+                                           :to (+ index tree-batch-size)))
+        (map-into attributes-view attributes-generator)
+        (for samples-view = (array-view samples
+                                        :from index
+                                        :to (+ index tree-batch-size)))
+        (fit-tree-batch parameters trees-view attributes-view
+                        `(:response ,response :shrinkage ,shrinkage)
+                        state nil samples-view)
+        (for new-contributed = (contribute-trees tree-parameters
+                                                 trees-view
+                                                 train-data
+                                                 parallel
+                                                 contributed))
+        (setf response (sl.gbt:calculate-response tree-parameters
+                                                  new-contributed
+                                                  target-data)
+              contributed new-contributed)
+        (cl-progress-bar:update (- index
+                                   (min trees-count (+ index tree-batch-size))))))
     (make 'gradient-boost-ensemble-model
           :trees trees
           :parameters parameters
