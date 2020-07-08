@@ -20,6 +20,8 @@
 (defgeneric (setf target-data) (new-value training-state))
 (defgeneric parallel (training-parameters))
 (defgeneric split* (training-parameters training-state))
+(defgeneric requires-split-p (splitter parameters training-state)
+  (:method-combination and))
 (defgeneric attribute-value (tree-node))
 (defgeneric (setf attribute-value) (new-value tree-node))
 (defgeneric attribute-indexes (training-state))

@@ -90,8 +90,9 @@
   (make 'causal-leaf))
 
 
-(defmethod sl.tp:split* :around ((training-parameters causal-tree)
-                                 training-state)
+(defmethod sl.tp:requires-split-p and ((splitter sl.tp:fundamental-splitter)
+                                       (training-parameters causal-tree)
+                                       training-state)
   (let* ((treatment (treatment training-state))
          (data-points (sl.mp:data-points training-state))
          (minimal-treatment-size (minimal-treatment-size training-parameters))
@@ -103,7 +104,7 @@
       (for (key count) in-hashtable treatment-frequency)
       (when (< count (* 2 minimal-treatment-size))
         (leave nil))
-      (finally (return (call-next-method))))))
+      (finally (return t)))))
 
 
 (defmethod sl.tp:initialize-leaf ((parameters causal-tree)

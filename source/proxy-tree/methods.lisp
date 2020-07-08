@@ -85,5 +85,16 @@
 (defmethod sl.mp:data-points ((state proxy-state))
   (~> state inner sl.mp:data-points))
 
+
 (defmethod (setf sl.mp:data-points) (new-value (state proxy-state))
   (setf (sl.mp:data-points (inner state)) new-value))
+
+
+(defmethod sl.tp:requires-split-p and ((splitter sl.tp:fundamental-splitter)
+                                       (training-parameters proxy-tree)
+                                       training-state)
+  (let ((inner-state (inner training-state))
+        (inner-parameters (inner training-parameters)))
+    (sl.tp:requires-split-p (sl.tp:splitter inner-parameters)
+                            inner-parameters
+                            inner-state)))

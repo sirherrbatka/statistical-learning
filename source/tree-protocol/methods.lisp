@@ -94,20 +94,11 @@
 
 (defmethod split* :around ((training-parameters fundamental-tree-training-parameters)
                            training-state)
-  (let* ((indexes (sl.mp:data-points training-state))
-         (depth (depth training-state))
-         (attribute-indexes (attribute-indexes training-state))
-         (loss (loss training-state))
-         (maximal-depth (maximal-depth training-parameters))
-         (minimal-size (minimal-size training-parameters)))
-    (declare (type (integer 1 *) minimal-size))
-    (if (or (< (length indexes)
-               (* 2 minimal-size))
-            (emptyp attribute-indexes)
-            (>= depth maximal-depth)
-            (<= loss (minimal-difference training-parameters)))
-        nil
-        (call-next-method))))
+  (if (requires-split-p (splitter training-parameters)
+                        training-parameters
+                        training-state)
+      (call-next-method)
+      nil))
 
 
 (defmethod contribute-predictions* :before ((parameters fundamental-tree-training-parameters)
@@ -358,3 +349,26 @@
       (setf (aref split-vector j) rightp)
       (if rightp (incf right-count) (incf left-count))
       (finally (return (values left-count right-count))))))
+
+
+(defmethod requires-split-p and ((splitter random-attribute-splitter)
+                                 (training-parameters standard-tree-training-parameters)
+                                 training-state)
+  (not (emptyp (attribute-indexes training-state))))
+
+
+(defmethod requires-split-p and ((splitter fundamental-splitter)
+                                 (training-parameters standard-tree-training-parameters)
+                                 training-state)
+  (let* ((indexes (sl.mp:data-points training-state))
+         (depth (depth training-state))
+         (loss (loss training-state))
+         (maximal-depth (maximal-depth training-parameters))
+         (minimal-size (minimal-size training-parameters)))
+    (declare (type (integer 1 *) minimal-size))
+    (if (or (< (length indexes)
+               (* 2 minimal-size))
+             (>= depth maximal-depth)
+             (<= loss (minimal-difference training-parameters)))
+        nil
+        t)))

@@ -51,6 +51,7 @@
    #:splitter
    #:fill-split-vector*
    #:pick-split*
+   #:requires-split-p
    #:standard-leaf-node
    #:standard-tree-training-parameters
    #:sums

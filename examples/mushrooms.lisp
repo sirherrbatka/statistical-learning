@@ -105,8 +105,8 @@
         :parallel nil
         :weights-calculator-class 'sl.ensemble:dynamic-weights-calculator
         :tree-batch-size 5
-        :tree-attributes-count 35
-        :tree-sample-rate 0.2
+        :tree-attributes-count 30
+        :tree-sample-rate 0.3
         :tree-parameters (sl.pt:honest *training-parameters*)))
 
 
@@ -117,10 +117,10 @@
                                                      *target-data*
                                                      :parallel t))
 
-(print (sl.performance:accuracy *confusion-matrix*)) ; 0.9816
+(print (sl.perf:accuracy *confusion-matrix*)) ; 0.9816
 
-(print (sl.performance:attributes-importance *forest-parameters*
-                                             4
-                                             *train-data*
-                                             *target-data*
-                                             :parallel t))
+(print (sl.perf:attributes-importance *forest-parameters*
+                                      4
+                                      *train-data*
+                                      *target-data*
+                                      :parallel t))
