@@ -2,12 +2,12 @@
 
 
 (defmethod sl.tp:calculate-loss* ((parameters fundamental-decision-tree-parameters)
-                                  state
-                                  split-array)
+                                  split-array
+                                  target-data
+                                  weights)
   (sl.opt:loss (optimized-function parameters)
-               (sl.mp:target-data state)
-               (sl.mp:weights state)
-               (sl.mp:data-points state)
+               target-data
+               weights
                split-array))
 
 

@@ -193,7 +193,9 @@
              (type boolean parallel))
     (iterate
       (declare (type fixnum attempt left-length right-length
-                     optimal-left-length optimal-right-length data-size)
+                     optimal-left-length optimal-right-length
+                     data-size)
+               (type (simple-array fixnum (*)) data-points)
                (type double-float
                      left-score right-score minimal-score))
       (with optimal-left-length = -1)
@@ -202,24 +204,37 @@
       (with minimal-score = most-positive-double-float)
       (with minimal-left-score = most-positive-double-float)
       (with minimal-right-score = most-positive-double-float)
-      (with data-size = (~> training-state
-                            sl.mp:data-points
-                            length))
+      (with data-points = (sl.mp:data-points training-state))
+      (with data-size = (length data-points))
+      (with splitter = (splitter training-parameters))
       (with split-array = (sl.opt:make-split-array data-size))
       (with optimal-array = (sl.opt:make-split-array data-size))
+      (with weights = (sl.mp:weights training-state))
+      (with current-weights = (if (null weights)
+                                  nil
+                                  (sl.data:sample weights
+                                                  :data-points data-points)))
+      (with current-train-data = (sl.data:sample
+                                  (sl.mp:train-data training-state)
+                                  :data-points data-points))
+      (with current-target-data = (sl.data:sample
+                                   (sl.mp:target-data training-state)
+                                   :data-points data-points))
       (for attempt from 0 below trials-count)
       (for point = (pick-split training-state))
-      (for (values left-length right-length) = (fill-split-vector
-                                                training-state
+      (for (values left-length right-length) = (fill-split-vector*
+                                                splitter
                                                 point
+                                                current-train-data
                                                 split-array))
       (when (or (< left-length minimal-size)
                 (< right-length minimal-size))
         (next-iteration))
       (for (values left-score right-score) = (calculate-loss*
                                               training-parameters
-                                              training-state
-                                              split-array))
+                                              split-array
+                                              current-target-data
+                                              current-weights))
       (for split-score = (+ (* (/ left-length data-size) left-score)
                             (* (/ right-length data-size) right-score)))
       (when (< split-score minimal-score)
@@ -338,20 +353,16 @@
 
 
 (defmethod fill-split-vector* ((splitter random-attribute-splitter)
-                               parameters
-                               state
                                point
+                               data
                                split-vector)
   (declare (type sl.data:split-vector split-vector)
            (type cons point)
            (optimize (speed 3) (safety 0)))
   (bind ((attribute (car point))
          (threshold (cdr point))
-         (data (sl.mp:train-data state))
-         (data-point-indexes (sl.mp:data-points state))
          (length (length split-vector)))
     (declare (type sl.data:double-float-data-matrix data)
-             (type data-point-indexes (simple-array fixnum (*)))
              (type double-float threshold)
              (type fixnum length attribute))
     (assert (< attribute (sl.data:attributes-count data)))
@@ -360,9 +371,8 @@
                (type boolean rightp))
       (with right-count = 0)
       (with left-count = 0)
-      (for j from 0 below length)
-      (for i = (aref data-point-indexes j))
+      (for i from 0 below length)
       (for rightp = (> (sl.data:mref data i attribute) threshold))
-      (setf (aref split-vector j) rightp)
+      (setf (aref split-vector i) rightp)
       (if rightp (incf right-count) (incf left-count))
       (finally (return (values left-count right-count))))))

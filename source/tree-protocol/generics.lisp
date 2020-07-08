@@ -32,9 +32,11 @@
                                        position size point)
   (:method-combination append :most-specific-last))
 (defgeneric pick-split* (splitter parameters state))
-(defgeneric fill-split-vector* (splitter parameters state point split-vector))
+(defgeneric fill-split-vector* (splitter point
+                                target-data split-vector))
 (defgeneric loss (state))
-(defgeneric calculate-loss* (parameters state split-array))
+(defgeneric calculate-loss* (parameters split-array
+                             target-data weights))
 (defgeneric contribute-predictions* (parameters model
                                      data state parallel
                                      &optional leaf-key))

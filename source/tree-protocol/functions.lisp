@@ -112,12 +112,3 @@
     (pick-split* (splitter parameters)
                  parameters
                  state)))
-
-
-(defun fill-split-vector (state point split-vector)
-  (let ((parameters (sl.mp:training-parameters state)))
-    (fill-split-vector* (splitter parameters)
-                        parameters
-                        state
-                        point
-                        split-vector)))

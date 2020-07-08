@@ -2,6 +2,5 @@
 
 
 (defgeneric response (function expected function-output))
-(defgeneric loss (function target-data weights data-points
-                  &optional split-array))
+(defgeneric loss (function target-data weights &optional split-array))
 (defgeneric number-of-classes (function))

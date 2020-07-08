@@ -19,12 +19,10 @@
 (defmethod loss ((function squared-error-function)
                  target-data
                  weights
-                 data-points
                  &optional split-array)
   (declare (type (or null weights-data-matrix) weights)
            (type sl.data:double-float-data-matrix target-data)
            (type (or null sl.data:split-vector) split-array)
-           (type (simple-array fixnum (*)) data-points)
            (optimize (speed 3) (safety 0) (debug 0)))
   (cl-ds.utils:cases ((null weights)
                       (null split-array))
@@ -33,15 +31,14 @@
           (left-count 0)
           (right-count 0))
       (declare (type double-float left-sum right-sum)
-               (type statistical-learning.data:data-matrix target-data)
+               (type sl.data:data-matrix target-data)
                (type fixnum left-count right-count))
       (iterate
-        (declare (type fixnum i j)
+        (declare (type fixnum i)
                  (type double-float value))
-        (for j from 0 below (length data-points))
-        (for i = (aref data-points j))
+        (for i from 0 below (sl.data:data-points-count target-data))
         (for value = (sl.data:mref target-data i 0))
-        (if (and split-array (eql right (aref split-array j)))
+        (if (and split-array (eql right (aref split-array i)))
             (setf right-count (1+ right-count)
                   right-sum (+ right-sum value))
             (setf left-count (1+ left-count)
@@ -50,7 +47,7 @@
         (declare (type double-float
                        left-error right-error
                        left-avg right-avg value)
-                 (type fixnum i j))
+                 (type fixnum i))
         (with left-error = 0.0d0)
         (with right-error = 0.0d0)
         (with left-avg = (if (zerop left-count)
@@ -59,10 +56,9 @@
         (with right-avg = (if (zerop right-count)
                               0.0d0
                               (/ right-sum right-count)))
-        (for j from 0 below (length data-points))
-        (for i = (aref data-points j))
+        (for i from 0 below (sl.data:data-points-count target-data))
         (for value = (sl.data:mref target-data i 0))
-        (if (and split-array (eql (aref split-array j) right))
+        (if (and split-array (eql (aref split-array i) right))
             (incf right-error (square (if (null weights)
                                           #1=(- value right-avg)
                                           (* (weight-at weights i) #1#))))
@@ -102,20 +98,18 @@
 (defmethod loss ((function gini-impurity-function)
                  target-data
                  weights
-                 data-points
                  &optional split-array)
   (declare (type (or null weights-data-matrix) weights)
-           (type (simple-array fixnum (*)) data-points)
            (type sl.data:double-float-data-matrix target-data)
            (type (or null sl.data:split-vector) split-array)
            (optimize (speed 3) (safety 0) (debug 0)))
   (cl-ds.utils:cases ((null split-array)
                       (null weights))
     (iterate
-      (declare (type fixnum j i)
+      (declare (type fixnum i)
                (type (simple-array double-float (*))
                      left-sums right-sums)
-               (optimize (speed 3) (safety 1) (debug 1)))
+               (optimize (speed 3) (safety 0) (debug 0)))
       (with number-of-classes = (number-of-classes function))
       (with left-sums = (make-array number-of-classes
                                     :initial-element 0.0d0
@@ -123,10 +117,9 @@
       (with right-sums = (make-array number-of-classes
                                      :initial-element 0.0d0
                                      :element-type 'double-float))
-      (for j from 0 below (length data-points))
-      (for i = (aref data-points j))
-      (for target = (truncate (statistical-learning.data:mref target-data i 0)))
-      (if (and split-array (eql right (aref split-array j)))
+      (for i from 0 below (sl.data:data-points-count target-data))
+      (for target = (the fixnum (truncate (sl.data:mref target-data i 0))))
+      (if (and split-array (eql right (aref split-array i)))
           (incf (aref right-sums target) (if (null weights)
                                              1.0d0
                                              (weight-at weights i)))

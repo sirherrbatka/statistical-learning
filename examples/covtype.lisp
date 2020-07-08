@@ -106,32 +106,34 @@
         :tree-sample-rate 0.2
         :tree-parameters *training-parameters*))
 
-(defparameter *confusion-matrix*
-  (statistical-learning.performance:cross-validation *forest-parameters*
-                                                     4
-                                                     *train-data*
-                                                     *target-data*
-                                                     :parallel t))
+(time
+ (defparameter *confusion-matrix*
+   (statistical-learning.performance:cross-validation *forest-parameters*
+                                                      4
+                                                      *train-data*
+                                                      *target-data*
+                                                      :parallel t)))
 
 (print (statistical-learning.performance:accuracy *confusion-matrix*)) ; 0.82
 
-(~> (make 'statistical-learning.ensemble:gradient-boost-ensemble
-          :trees-count 50
-          :parallel t
-          :tree-batch-size 5
-          :tree-attributes-count 50
-          :shrinkage 0.2d0
-          :tree-sample-rate 0.3
-          :tree-parameters (make 'sl.gbt:classification
-                                 :optimized-function (sl.opt:k-logistic *cover-types*)
-                                 :maximal-depth 25
-                                 :minimal-size 10
-                                 :minimal-difference 0.00001d0
-                                 :trials-count 50
-                                 :parallel t))
-    (statistical-learning.performance:cross-validation 4
-                                                       *train-data*
-                                                       *target-data*
-                                                       :parallel t)
-    statistical-learning.performance:accuracy
-    print) ; 0.818
+(time
+ (~> (make 'statistical-learning.ensemble:gradient-boost-ensemble
+           :trees-count 250
+           :parallel t
+           :tree-batch-size 10
+           :tree-attributes-count 50
+           :shrinkage 0.2d0
+           :tree-sample-rate 0.2
+           :tree-parameters (make 'sl.gbt:classification
+                                  :optimized-function (sl.opt:k-logistic *cover-types*)
+                                  :maximal-depth 25
+                                  :minimal-size 10
+                                  :minimal-difference 0.00001d0
+                                  :trials-count 50
+                                  :parallel nil))
+     (statistical-learning.performance:cross-validation 4
+                                                        *train-data*
+                                                        *target-data*
+                                                        :parallel t)
+     statistical-learning.performance:accuracy
+     print)) ; 0.818

@@ -5,7 +5,7 @@
   (sl.tp:extract-predictions* (predictions))
   (sl.tp:make-leaf* ())
   (sl.tp:splitter ())
-  (sl.tp:calculate-loss* (state split-array))
+  (sl.tp:calculate-loss* (split-array target-data weights))
   (sl.tp:initialize-leaf (state leaf))
   (sl.tp:maximal-depth ())
   (sl.tp:minimal-size ())
