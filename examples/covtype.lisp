@@ -116,7 +116,7 @@
 (print (statistical-learning.performance:accuracy *confusion-matrix*)) ; 0.80
 
 (~> (make 'statistical-learning.ensemble:gradient-boost-ensemble
-          :trees-count 50
+          :trees-count 250
           :parallel t
           :tree-batch-size 5
           :tree-attributes-count 50
@@ -134,4 +134,4 @@
                                                        *target-data*
                                                        :parallel t)
     statistical-learning.performance:accuracy
-    print) ; 0.83
+    print) ; 0.84

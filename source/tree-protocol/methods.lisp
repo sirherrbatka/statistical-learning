@@ -52,6 +52,30 @@
 
 
 (defmethod split-training-state-info append
+    ((splitter fundamental-splitter)
+     (parameters standard-tree-training-parameters)
+     state
+     split-array
+     position
+     size
+     point)
+  (list
+   :data-point (iterate
+                 (declare (type (simple-array fixnum (*))
+                                old-indexes new-indexes))
+                 (with old-indexes = (sl.mp:data-points state))
+                 (with new-indexes = (make-array size :element-type 'fixnum))
+                 (with j = 0)
+                 (for i from 0 below (length old-indexes))
+                 (when (eql position (aref split-array i))
+                   (setf (aref new-indexes j) (aref old-indexes i))
+                   (incf j))
+                 (finally
+                  (assert (= j size))
+                  (return new-indexes)))))
+
+
+(defmethod split-training-state-info append
     ((splitter random-attribute-splitter)
      (parameters standard-tree-training-parameters)
      state
@@ -60,36 +84,22 @@
      size
      point)
   (bind ((attribute-index (car point))
-         (attributes (attribute-indexes state))
-         (new-attributes (if (null attribute-index)
-                             attributes
-                             (iterate
-                               (with size = (~> attributes length 1-))
-                               (with result = (make-array size :element-type 'fixnum))
-                               (with j = 0)
-                               (for i from 0 below (length attributes))
-                               (for value = (aref attributes i))
-                               (unless (= value attribute-index)
-                                 (setf (aref result j) value)
-                                 (incf j))
-                               (finally
-                                (assert (= j size))
-                                (return result)))))
-         (new-data-points (iterate
-                            (declare (type (simple-array fixnum (*))
-                                           old-indexes new-indexes))
-                            (with old-indexes = (sl.mp:data-points state))
-                            (with new-indexes = (make-array size :element-type 'fixnum))
-                            (with j = 0)
-                            (for i from 0 below (length old-indexes))
-                            (when (eql position (aref split-array i))
-                              (setf (aref new-indexes j) (aref old-indexes i))
-                              (incf j))
-                            (finally
-                             (assert (= j size))
-                             (return new-indexes)))))
-    (list :data-point-indexes new-data-points
-          :attributes new-attributes)))
+         (attributes (attribute-indexes state)))
+    (list
+     :attributes (if (null attribute-index)
+                     attributes
+                     (iterate
+                       (with size = (~> attributes length 1-))
+                       (with result = (make-array size :element-type 'fixnum))
+                       (with j = 0)
+                       (for i from 0 below (length attributes))
+                       (for value = (aref attributes i))
+                       (unless (= value attribute-index)
+                         (setf (aref result j) value)
+                         (incf j))
+                       (finally
+                        (assert (= j size))
+                        (return result)))))))
 
 
 (defmethod split* :around ((training-parameters fundamental-tree-training-parameters)
@@ -457,19 +467,4 @@
      position
      size
      point)
-  (bind ((attributes (attribute-indexes state))
-         (new-data-points (iterate
-                            (declare (type (simple-array fixnum (*))
-                                           old-indexes new-indexes))
-                            (with old-indexes = (sl.mp:data-points state))
-                            (with new-indexes = (make-array size :element-type 'fixnum))
-                            (with j = 0)
-                            (for i from 0 below (length old-indexes))
-                            (when (eql position (aref split-array i))
-                              (setf (aref new-indexes j) (aref old-indexes i))
-                              (incf j))
-                            (finally
-                             (assert (= j size))
-                             (return new-indexes)))))
-    (list :data-point-indexes new-data-points
-          :attributes attributes)))
+  (list :attributes (attribute-indexes state)))
