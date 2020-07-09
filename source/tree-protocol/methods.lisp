@@ -45,7 +45,7 @@
   `((:depth depth)
     (:loss loss)
     (:attributes attribute-indexes)
-    (:data-point-indexes sl.mp:data-points)
+    (:data-points sl.mp:data-points)
     (:weights sl.mp:weights)
     (:target-data sl.mp:target-data)
     (:train-data sl.mp:train-data)))
@@ -60,19 +60,19 @@
      size
      point)
   (list
-   :data-point (iterate
-                 (declare (type (simple-array fixnum (*))
-                                old-indexes new-indexes))
-                 (with old-indexes = (sl.mp:data-points state))
-                 (with new-indexes = (make-array size :element-type 'fixnum))
-                 (with j = 0)
-                 (for i from 0 below (length old-indexes))
-                 (when (eql position (aref split-array i))
-                   (setf (aref new-indexes j) (aref old-indexes i))
-                   (incf j))
-                 (finally
-                  (assert (= j size))
-                  (return new-indexes)))))
+   :data-points (iterate
+                  (declare (type (simple-array fixnum (*))
+                                 old-indexes new-indexes))
+                  (with old-indexes = (sl.mp:data-points state))
+                  (with new-indexes = (make-array size :element-type 'fixnum))
+                  (with j = 0)
+                  (for i from 0 below (length old-indexes))
+                  (when (eql position (aref split-array i))
+                    (setf (aref new-indexes j) (aref old-indexes i))
+                    (incf j))
+                  (finally
+                   (assert (= j size))
+                   (return new-indexes)))))
 
 
 (defmethod split-training-state-info append
@@ -290,9 +290,9 @@
   (list :attributes (if (null train-attributes)
                         (attribute-indexes state)
                         train-attributes)
-        :data-point-indexes (if (null data-points)
-                                (sl.mp:data-points state)
-                                data-points)))
+        :data-points (if (null data-points)
+                         (sl.mp:data-points state)
+                         data-points)))
 
 
 (defmethod leaf-for ((splitter random-attribute-splitter)
