@@ -327,7 +327,7 @@
                                split-vector)
   (declare (type sl.data:split-vector split-vector)
            (type cons point)
-           (optimize (speed 3) (safety 0)))
+           (optimize (speed 3) (safety 0) (debug 0)))
   (bind ((attribute (car point))
          (threshold (cdr point))
          (data (sl.mp:train-data state))
@@ -339,7 +339,7 @@
              (type fixnum length attribute))
     (assert (< attribute (sl.data:attributes-count data)))
     (iterate
-      (declare (type fixnum right-count left-count i)
+      (declare (type fixnum right-count left-count i j)
                (type boolean rightp))
       (with right-count = 0)
       (with left-count = 0)
@@ -369,3 +369,107 @@
     (nor (< (length indexes) (* 2 minimal-size))
          (>= depth maximal-depth)
          (<= loss (minimal-difference training-parameters)))))
+
+
+(defmethod pick-split* ((splitter distance-splitter)
+                        parameters
+                        state)
+  (declare (optimize (speed 3) (safety 0)))
+  (let* ((data-points (sl.mp:data-points state))
+         (train-data (sl.mp:train-data state))
+         (length (length data-points))
+         (left-index  (random length))
+         (right-index (iterate
+                        (for right-index = (random length))
+                        (while (not (= right-index left-index)))
+                        (finally (return right-index)))))
+    (declare (type (simple-array fixnum (*)) data-points)
+             (type sl.data:universal-data-matrix train-data)
+             (type fixnum left-index right-index))
+    (cons (~> (aref data-points left-index) (sl.data:mref train-data _ 0))
+          (~> (aref data-points right-index) (sl.data:mref train-data _ 0)))))
+
+
+(defmethod fill-split-vector* ((splitter distance-splitter)
+                               parameters
+                               state
+                               point
+                               split-vector)
+  (declare (type cons point)
+           (type sl.data:split-vector split-vector)
+           (optimize (speed 3) (safety 0)))
+  (bind (((left-pivot . right-pivot) point)
+         (data-points (sl.mp:data-points state))
+         (distance-function (ensure-function (distance-function splitter)))
+         (train-data (sl.mp:train-data state)))
+    (declare (type (simple-array fixnum (*)) data-points)
+             (type sl.data:universal-data-matrix train-data))
+    (iterate
+      (declare (type fixnum j i))
+      (for j from 0 below (length data-points))
+      (for i = (aref data-points j))
+      (for object = (sl.data:mref train-data i 0))
+      (for left-distance = (funcall distance-function
+                                    left-pivot
+                                    object))
+      (for right-distance = (funcall distance-function
+                                     right-pivot
+                                     object))
+      (setf (aref split-vector j) (< right-distance left-distance))
+      (finally (return split-vector)))))
+
+
+(defmethod leaf-for ((splitter distance-splitter)
+                     node
+                     data
+                     index)
+  (declare (type fixnum index))
+  (let ((object (sl.data:mref data index 0))
+        (distance-function (ensure-function (distance-function splitter))))
+    (labels ((impl (node)
+               (declare (optimize (speed 3) (safety 0)))
+               (if (treep node)
+                   (bind (((left-pivot . right-pivot) (point node))
+                          (left-distance (funcall distance-function
+                                                  left-pivot
+                                                  object))
+                          (right-distance (funcall distance-function
+                                                   right-pivot
+                                                   object)))
+                     (if (< right-distance left-distance)
+                         (~> node right-node impl)
+                         (~> node left-node impl)))
+                   node)))
+      (impl node))))
+
+
+(defmethod requires-split-p and ((splitter distance-splitter)
+                                 parameters
+                                 training-state)
+  (> (~> training-state sl.mp:data-points length) 2))
+
+
+(defmethod split-training-state-info append
+    ((splitter distance-splitter)
+     (parameters standard-tree-training-parameters)
+     state
+     split-array
+     position
+     size
+     point)
+  (bind ((attributes (attribute-indexes state))
+         (new-data-points (iterate
+                            (declare (type (simple-array fixnum (*))
+                                           old-indexes new-indexes))
+                            (with old-indexes = (sl.mp:data-points state))
+                            (with new-indexes = (make-array size :element-type 'fixnum))
+                            (with j = 0)
+                            (for i from 0 below (length old-indexes))
+                            (when (eql position (aref split-array i))
+                              (setf (aref new-indexes j) (aref old-indexes i))
+                              (incf j))
+                            (finally
+                             (assert (= j size))
+                             (return new-indexes)))))
+    (list :data-point-indexes new-data-points
+          :attributes attributes)))

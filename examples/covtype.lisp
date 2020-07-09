@@ -90,10 +90,10 @@
 (defparameter *training-parameters*
   (make 'statistical-learning.dt:classification
         :optimized-function (sl.opt:gini-impurity *cover-types*)
-        :maximal-depth 20
+        :maximal-depth 30
         :minimal-difference 0.00001d0
         :minimal-size 10
-        :trials-count 50
+        :trials-count 80
         :parallel t))
 
 (defparameter *forest-parameters*
@@ -101,19 +101,19 @@
         :trees-count 250
         :parallel t
         :weights-calculator-class 'sl.ensemble:dynamic-weights-calculator
-        :tree-batch-size 50
+        :tree-batch-size 5
         :tree-attributes-count 50
         :tree-sample-rate 0.2
         :tree-parameters *training-parameters*))
 
 (defparameter *confusion-matrix*
   (statistical-learning.performance:cross-validation *forest-parameters*
-                                                     4
+                                                     2
                                                      *train-data*
                                                      *target-data*
                                                      :parallel t))
 
-(print (statistical-learning.performance:accuracy *confusion-matrix*)) ; 0.82
+(print (statistical-learning.performance:accuracy *confusion-matrix*)) ; 0.80
 
 (~> (make 'statistical-learning.ensemble:gradient-boost-ensemble
           :trees-count 50
@@ -121,7 +121,7 @@
           :tree-batch-size 5
           :tree-attributes-count 50
           :shrinkage 0.2d0
-          :tree-sample-rate 0.3
+          :tree-sample-rate 0.2
           :tree-parameters (make 'sl.gbt:classification
                                  :optimized-function (sl.opt:k-logistic *cover-types*)
                                  :maximal-depth 25
@@ -129,9 +129,9 @@
                                  :minimal-difference 0.00001d0
                                  :trials-count 50
                                  :parallel t))
-    (statistical-learning.performance:cross-validation 4
+    (statistical-learning.performance:cross-validation 2
                                                        *train-data*
                                                        *target-data*
                                                        :parallel t)
     statistical-learning.performance:accuracy
-    print) ; 0.818
+    print) ; 0.83

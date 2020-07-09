@@ -13,8 +13,10 @@
    #:contributed-predictions
    #:contributions-count
    #:depth
+   #:distance-splitter
    #:extract-predictions
    #:extract-predictions*
+   #:fill-split-vector*
    #:force-tree
    #:force-tree*
    #:fundamental-leaf-node
@@ -38,9 +40,11 @@
    #:parallel
    #:pick-split
    #:pick-split*
+   #:pick-split*
    #:point
    #:predictions
    #:random-attribute-splitter
+   #:requires-split-p
    #:right-node
    #:root
    #:split
@@ -49,9 +53,6 @@
    #:split-training-state*
    #:split-training-state-info
    #:splitter
-   #:fill-split-vector*
-   #:pick-split*
-   #:requires-split-p
    #:standard-leaf-node
    #:standard-tree-training-parameters
    #:sums
