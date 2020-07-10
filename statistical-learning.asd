@@ -2,7 +2,7 @@
 
 
 (asdf:defsystem statistical-learning
-  :name "cl-grf"
+  :name "statistical-learning"
   :version "0.0.0"
   :license "BSD simplified"
   :author "Marek Kochanowicz"
