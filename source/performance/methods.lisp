@@ -114,3 +114,12 @@
                 1.0d0
                 (sl.data:mref weights i 0))))
     result))
+
+
+(defmethod performance-metric*
+    ((parameters classification)
+     (type (eql :roc-auc))
+     target
+     predictions
+     weights)
+  cl-ds.utils:todo)
