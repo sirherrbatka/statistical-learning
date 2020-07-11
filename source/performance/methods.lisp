@@ -23,13 +23,22 @@
     (finally (return (/ sum count)))))
 
 
-(defmethod performance-metric* ((parameters regression)
+(defmethod performance-metric* ((parameters sl.mp:fundamental-model-parameters)
                                 (type (eql :default))
                                 target
                                 predictions
                                 weights)
-  (performance-metric* parameters :mean-squared-error
+  (performance-metric* parameters
+                       (default-performance-metric parameters)
                        target predictions weights))
+
+
+(defmethod default-performance-metric ((parameters classification))
+  :confusion-matrix)
+
+
+(defmethod default-performance-metric ((parameters regression))
+  :mean-squared-error)
 
 
 (defmethod errors ((parameters regression) target predictions)
@@ -105,13 +114,3 @@
                 1.0d0
                 (sl.data:mref weights i 0))))
     result))
-
-
-(defmethod performance-metric*
-    ((parameters classification)
-     (type (eql :default))
-     target
-     predictions
-     weights)
-  (performance-metric* parameters :confusion-matrix
-                       target predictions weights))

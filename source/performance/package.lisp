@@ -15,6 +15,7 @@
    #:make-confusion-matrix
    #:performance-metric
    #:performance-metric*
+   #:default-performance-metric
    #:precision
    #:recall
    #:errors
