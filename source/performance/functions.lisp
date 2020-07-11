@@ -174,3 +174,7 @@
   (coerce (/ 2 (+ (/ 1 (precision confusion-matrix))
                   (/ 1 (recall confusion-matrix))))
           'double-float))
+
+
+(defun performance-metric (parameters target predictions &key weights (type :default))
+  (performance-metric* parameters type target predictions weights))

@@ -1,17 +1,17 @@
 (cl:in-package #:statistical-learning.performance)
 
 
-(defmethod performance-metric :before ((parameters sl.mp:fundamental-model-parameters)
-                                       target predictions
-                                       &key weights)
+(defmethod performance-metric* :before ((parameters sl.mp:fundamental-model-parameters)
+                                        type target predictions weights)
   (check-type weights (or null sl.data:double-float-data-matrix))
   (statistical-learning.data:check-data-points target predictions))
 
 
-(defmethod performance-metric ((parameters regression)
-                               target
-                               predictions
-                               &key weights)
+(defmethod performance-metric* ((parameters regression)
+                                (type (eql :mean-squared-error))
+                                target
+                                predictions
+                                weights)
   (iterate
     (with sum = 0.0d0)
     (with count = (sl.data:data-points-count predictions))
@@ -21,6 +21,15 @@
     (incf sum (* (if (null weights) 1.0d0 (sl.data:mref weights i 0))
                  (* er er)))
     (finally (return (/ sum count)))))
+
+
+(defmethod performance-metric* ((parameters regression)
+                                (type (eql :default))
+                                target
+                                predictions
+                                weights)
+  (performance-metric* parameters :mean-squared-error
+                       target predictions weights))
 
 
 (defmethod errors ((parameters regression) target predictions)
@@ -69,11 +78,12 @@
     (finally (return result))))
 
 
-(defmethod performance-metric
+(defmethod performance-metric*
     ((parameters classification)
+     (type (eql :confusion-matrix))
      target
      predictions
-     &key weights)
+     weights)
   (sl.data:check-data-points target predictions)
   (bind ((number-of-classes (the fixnum (sl.opt:number-of-classes parameters)))
          (data-points-count (sl.data:data-points-count target))
@@ -95,3 +105,13 @@
                 1.0d0
                 (sl.data:mref weights i 0))))
     result))
+
+
+(defmethod performance-metric*
+    ((parameters classification)
+     (type (eql :default))
+     target
+     predictions
+     weights)
+  (performance-metric* parameters :confusion-matrix
+                       target predictions weights))

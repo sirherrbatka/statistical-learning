@@ -14,6 +14,7 @@
    #:f1-score
    #:make-confusion-matrix
    #:performance-metric
+   #:performance-metric*
    #:precision
    #:recall
    #:errors

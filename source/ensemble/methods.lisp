@@ -311,14 +311,16 @@
           :target-attributes-count target-data-attributes)))
 
 
-(defmethod sl.perf:performance-metric ((parameters ensemble)
-                                       target
-                                       predictions
-                                       &key weights)
-  (sl.perf:performance-metric (tree-parameters parameters)
-                              target
-                              predictions
-                              :weights weights))
+(defmethod sl.perf:performance-metric* ((parameters ensemble)
+                                        type
+                                        target
+                                        predictions
+                                        weights)
+  (sl.perf:performance-metric* (tree-parameters parameters)
+                               type
+                               target
+                               predictions
+                               weights))
 
 
 (defmethod sl.perf:average-performance-metric ((parameters ensemble)

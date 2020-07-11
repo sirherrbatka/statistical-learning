@@ -36,14 +36,16 @@
                                      leaf-key)))
 
 
-(defmethod sl.perf:performance-metric ((parameters proxy-tree)
-                                       target
-                                       predictions
-                                       &key weights)
-  (sl.perf:performance-metric (inner parameters)
-                              target
-                              predictions
-                              :key weights))
+(defmethod sl.perf:performance-metric* ((parameters proxy-tree)
+                                        type
+                                        target
+                                        predictions
+                                        weights)
+  (sl.perf:performance-metric* (inner parameters)
+                               type
+                               target
+                               predictions
+                               weights))
 
 
 (defmethod cl-ds.utils:cloning-information append ((state proxy-state))
