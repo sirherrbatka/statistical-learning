@@ -23,7 +23,7 @@
          (tree-parameters (tree-parameters parameters))
          (train-data (sl.mp:train-data state))
          (data-points-count (sl.data:data-points-count train-data))
-         (tree-sample-size (floor (* tree-sample-rate data-points-count)))
+         (tree-sample-size (ceiling (* tree-sample-rate data-points-count)))
          (complete-initargs (append initargs (all-args state)))
          (distribution (if (null sampling-weights)
                            nil
