@@ -53,8 +53,15 @@
     (finally (return result))))
 
 
-(defmethod average-performance-metric ((parameters regression)
-                                       metrics)
+(defmethod average-performance-metric* ((parameters regression)
+                                        (type (eql :mean-squared-error))
+                                        metrics)
+  (mean metrics))
+
+
+(defmethod average-performance-metric* ((parameters classification)
+                                        (type (eql :roc-auc))
+                                        metrics)
   (mean metrics))
 
 
@@ -76,8 +83,9 @@
     result))
 
 
-(defmethod average-performance-metric
+(defmethod average-performance-metric*
     ((parameters classification)
+     (type (eql :confusion-matrix))
      metrics)
   (iterate
     (with result = (~> metrics first-elt copy-array))
@@ -122,4 +130,56 @@
      target
      predictions
      weights)
-  cl-ds.utils:todo)
+  (bind ((precision 1000)
+         (counters (make-array `(,precision 2)
+                               :initial-element 0))
+         (total (sl.data:data-points-count target))
+         (positive-count 0)
+         (negative-count 0))
+    (iterate
+      (for i from 0 below total)
+      (for expected = (truncate (sl.data:mref target i 0)))
+      (for truep = (not (zerop expected)))
+      (for probability = (sl.data:mref predictions i 1))
+      (if truep
+          (incf positive-count)
+          (incf negative-count))
+      (iterate
+        (for j from 0 below precision)
+        (for threshold from (/ 1 precision))
+        (cl-ds.utils:cond+ (truep (> probability threshold))
+          ((t t) (incf (aref counters j 1)))
+          ((nil t) (incf (aref counters j 0)))
+          ((nil nil) nil)
+          ((t nil) nil))))
+    (iterate
+      (for i from 0 below precision)
+      (for true-positive = (aref counters i 1))
+      (for false-positive = (aref counters i 0))
+      (for tpr = (/ true-positive positive-count))
+      (for fpr = (/ false-positive negative-count))
+      (setf (aref counters i 1) tpr)
+      (setf (aref counters i 0) fpr)
+      (for p-tpr previous tpr initially 0)
+      (for p-fpr previous fpr initially 0)
+      (for fpr-span = (- fpr p-fpr))
+      (for tpr-span = (- tpr p-tpr))
+      (for field = (+ (* fpr-span p-tpr)
+                      (/ (* tpr-span fpr-span)
+                         2)))
+      (sum field into result)
+      (return (values result counters)))))
+
+
+(defmethod average-performance-metric ((parameters sl.mp:fundamental-model-parameters)
+                                       metrics
+                                       &key (type :default))
+  (average-performance-metric* parameters type metrics))
+
+
+(defmethod average-performance-metric* ((parameters sl.mp:fundamental-model-parameters)
+                                        (type (eql :default))
+                                        metrics)
+  (average-performance-metric* parameters
+                               (default-performance-metric parameters)
+                               metrics))

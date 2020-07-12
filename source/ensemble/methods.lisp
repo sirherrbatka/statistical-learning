@@ -324,9 +324,11 @@
 
 
 (defmethod sl.perf:average-performance-metric ((parameters ensemble)
-                                               metrics)
+                                               metrics
+                                               &key type)
   (sl.perf:average-performance-metric (tree-parameters parameters)
-                                      metrics))
+                                      metrics
+                                      :type type))
 
 
 (defmethod sl.perf:errors ((parameters ensemble)
@@ -335,3 +337,7 @@
   (sl.perf:errors (tree-parameters parameters)
                   target
                   predictions))
+
+
+(defmethod sl.perf:default-performance-metric ((parameters ensemble))
+  (~> parameters tree-parameters sl.perf:default-performance-metric))

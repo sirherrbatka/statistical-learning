@@ -59,7 +59,7 @@
   result)
 
 
-(defun average-performance (model-parameters function data)
+(defun average-performance (model-parameters function data performance-type)
   (if (null function)
-      (average-performance-metric model-parameters data)
+      (average-performance-metric model-parameters data :type performance-type)
       (funcall function data)))

@@ -4,6 +4,7 @@
 (defun cross-validation (model-parameters number-of-folds
                          train-data target-data
                          &key weights parallel performance-function average-performance-function
+                           (performance-type :default)
                          &allow-other-keys)
   (statistical-learning.data:check-data-points train-data target-data)
   (~> train-data
@@ -36,13 +37,17 @@
                (performance-metric model-parameters
                                    test-target-data
                                    test-predictions
+                                   :type performance-type
                                    :weights weights)
                (funcall performance-function
                         test-target-data
                         test-predictions
                         :weights weights)))))
       cl-ds.alg:to-vector
-      (average-performance model-parameters average-performance-function _)))
+      (average-performance model-parameters
+                           average-performance-function
+                           _
+                           performance-type)))
 
 
 (defun attributes-importance* (model train-data target-data &key parallel weights)

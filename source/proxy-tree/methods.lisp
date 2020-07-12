@@ -3,6 +3,8 @@
 
 (define-forwarding
   (sl.tp:extract-predictions* (predictions))
+  (sl.perf:default-performance-metric ())
+  (sl.perf:average-performance-metric* (type metrics))
   (sl.tp:make-leaf* ())
   (sl.tp:splitter ())
   (sl.tp:calculate-loss* (state split-array))
@@ -12,7 +14,6 @@
   (sl.tp:minimal-difference ())
   (sl.perf:errors (target predictions))
   (sl.tp:trials-count ())
-  (sl.perf:average-performance-metric (metrics))
   (sl.tp:parallel ()))
 
 

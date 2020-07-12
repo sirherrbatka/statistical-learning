@@ -10,6 +10,7 @@
    #:attributes-importance*
    #:at-confusion-matrix
    #:average-performance-metric
+   #:average-performance-metric*
    #:cross-validation
    #:f1-score
    #:make-confusion-matrix
