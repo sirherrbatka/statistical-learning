@@ -135,7 +135,15 @@
                              (curry #'list 0 0)))
          (positive 0)
          (negative 0)
-         (total (sl.data:data-points-count target)))
+         (total (sl.data:data-points-count target))
+         ((:flet calculate-rate (stats))
+          (bind (((true-positive false-positive) stats))
+            (vector (if (zerop negative)
+                        0
+                        (/ false-positive negative))
+                    (if (zerop positive)
+                        0
+                        (/ true-positive positive))))))
     (iterate
       (with step = (/ 1 precision))
       (for i from 0 below total)
@@ -156,16 +164,7 @@
               (incf (second counter))))))
     (iterate
       (for (fpr tpr) in-vector
-           (~> counters
-               (cl-ds.alg:on-each
-                (lambda (stats)
-                  (bind (((true-positive false-positive) stats))
-                    (vector (if (zerop negative)
-                                0
-                                (/ false-positive negative))
-                            (if (zerop positive)
-                                0
-                                (/ true-positive positive))))))
+           (~> (cl-ds.alg:on-each counters #'calculate-rate)
                (cl-ds.alg:partition-if #'= :key #'first-elt)
                (cl-ds.alg:on-each (compose #'cl-ds.math:average
                                            #'cl-ds.alg:array-elementwise))
