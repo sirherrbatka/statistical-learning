@@ -130,36 +130,47 @@
      target
      predictions
      weights)
-  (bind ((precision 1000)
-         (counters (make-array `(,precision 2)
-                               :initial-element 0))
-         (total (sl.data:data-points-count target))
-         (positive-count 0)
-         (negative-count 0))
+  (bind ((precision 5000)
+         (counters (map-into (make-array precision)
+                             (curry #'list 0 0)))
+         (positive 0)
+         (negative 0)
+         (total (sl.data:data-points-count target)))
     (iterate
+      (with step = (/ 1 precision))
       (for i from 0 below total)
-      (for expected = (truncate (sl.data:mref target i 0)))
-      (for truep = (not (zerop expected)))
+      (for expected = (sl.data:mref target i 0))
+      (for truep = (= 1 expected))
       (for probability = (sl.data:mref predictions i 1))
       (if truep
-          (incf positive-count)
-          (incf negative-count))
+          (incf positive)
+          (incf negative))
       (iterate
         (for j from 0 below precision)
-        (for threshold from (/ 1 precision))
-        (cl-ds.utils:cond+ (truep (> probability threshold))
-          ((t t) (incf (aref counters j 1)))
-          ((nil t) (incf (aref counters j 0)))
-          ((nil nil) nil)
-          ((t nil) nil))))
+        (for threshold from step by step)
+        (for counter = (aref counters j))
+        (for positive = (> probability threshold))
+        (when positive
+          (if truep
+              (incf (first counter))
+              (incf (second counter))))))
     (iterate
-      (for i from 0 below precision)
-      (for true-positive = (aref counters i 1))
-      (for false-positive = (aref counters i 0))
-      (for tpr = (/ true-positive positive-count))
-      (for fpr = (/ false-positive negative-count))
-      (setf (aref counters i 1) tpr)
-      (setf (aref counters i 0) fpr)
+      (for (fpr tpr) in-vector
+           (~> counters
+               (cl-ds.alg:on-each
+                (lambda (stats)
+                  (bind (((true-positive false-positive) stats))
+                    (vector (if (zerop negative)
+                                0
+                                (/ false-positive negative))
+                            (if (zerop positive)
+                                0
+                                (/ true-positive positive))))))
+               (cl-ds.alg:partition-if #'= :key #'first-elt)
+               (cl-ds.alg:on-each (compose #'cl-ds.math:average
+                                           #'cl-ds.alg:array-elementwise))
+               (cl-ds.alg:to-vector :key (rcurry #'coerce 'list))
+               nreverse))
       (for p-tpr previous tpr initially 0)
       (for p-fpr previous fpr initially 0)
       (for fpr-span = (- fpr p-fpr))
@@ -168,7 +179,7 @@
                       (/ (* tpr-span fpr-span)
                          2)))
       (sum field into result)
-      (return (values result counters)))))
+      (finally (return (coerce result 'double-float))))))
 
 
 (defmethod average-performance-metric ((parameters sl.mp:fundamental-model-parameters)

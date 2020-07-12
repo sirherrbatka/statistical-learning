@@ -112,10 +112,9 @@
 
 (defparameter *confusion-matrix*
   (statistical-learning.performance:cross-validation *forest-parameters*
-                                                     2
+                                                     4
                                                      *train-data*
                                                      *target-data*
-                                                     :performance-type :roc-auc
                                                      :parallel t))
 
 (print (sl.perf:accuracy *confusion-matrix*)) ; 0.9816
