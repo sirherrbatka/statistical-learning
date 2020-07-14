@@ -2,16 +2,26 @@
 
 
 (defun discrete-distribution (weights)
-  (statistical-learning.data:check-data-points weights)
-  (bind ((data-points (sl.data:data-points-count weights))
-         (probs (make-array data-points :element-type 'double-float
-                            :initial-element 0.0d0)))
+  (declare (type sl.data:double-float-data-matrix weights))
+  (let* ((data-points-count (~>> weights
+                                 cl-ds.utils:unfold-table
+                                 (count-if-not #'zerop)))
+         (probs (make-array data-points-count)))
     (iterate
+      (declare (type fixnum i j))
       (with ac = 0.0d0)
-      (for i from 0 below data-points)
-      (setf (aref probs i) (incf ac (statistical-learning.data:mref weights i 0))))
-    (let ((max (last-elt probs)))
+      (with j = 0)
+      (for i from 0 below (sl.data:data-points-count weights))
+      (for weight = (statistical-learning.data:mref weights i 0))
+      (when (zerop weight)
+        (next-iteration))
+      (setf (aref probs j) (cons (incf ac weight)
+                                 i))
+      (incf j))
+    (let ((max (car (last-elt probs))))
       (declare (type double-float max))
       (lambda ()
         (declare (optimize (speed 3) (safety 0)))
-        (cl-ds.utils:lower-bound probs (random max) #'<)))))
+        (~>> (cl-ds.utils:lower-bound probs (random max) #'< :key #'car)
+             (aref probs)
+             cdr)))))

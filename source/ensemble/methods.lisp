@@ -215,9 +215,6 @@
                           state-initargs state
                           weights samples-view)
           (setf index (min trees-count (+ index tree-batch-size)))
-          (for swap-count = (cl-ds.utils:swap-if trees (complement #'treep)
-                                                 :end index))
-          (decf index swap-count)
           (for new-trees = (- index prev-index))
           (unless (zerop new-trees)
             (update-weights weights-calculator

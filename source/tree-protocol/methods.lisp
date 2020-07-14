@@ -183,7 +183,7 @@
 (defmethod split*
     ((training-parameters fundamental-tree-training-parameters)
      training-state)
-  (declare (optimize (speed 3) (safety 0)))
+  (declare (optimize (debug 3)))
   (bind ((trials-count (trials-count training-parameters))
          (minimal-difference (minimal-difference training-parameters))
          (score (loss training-state))
@@ -252,7 +252,7 @@
                                       &aux (state (new-state position size loss))))
                  (~>> state make-leaf (split state)))
                 ((:flet subtree (position size loss &optional parallel))
-                 (if (and parallel (< new-depth 8))
+                 (if (and parallel (< new-depth 16))
                      (lparallel:future (subtree-impl position size loss))
                      (subtree-impl position size loss))))
            (return (make-node 'fundamental-tree-node
@@ -391,7 +391,8 @@
          (left-index  (random length))
          (right-index (iterate
                         (for right-index = (random length))
-                        (while (not (= right-index left-index)))
+                        (when (not (= right-index left-index))
+                          (finish))
                         (finally (return right-index)))))
     (declare (type (simple-array fixnum (*)) data-points)
              (type sl.data:universal-data-matrix train-data)
@@ -415,7 +416,9 @@
     (declare (type (simple-array fixnum (*)) data-points)
              (type sl.data:universal-data-matrix train-data))
     (iterate
-      (declare (type fixnum j i))
+      (declare (type fixnum j i left-length right-length))
+      (with left-length = 0)
+      (with right-length = 0)
       (for j from 0 below (length data-points))
       (for i = (aref data-points j))
       (for object = (sl.data:mref train-data i 0))
@@ -425,8 +428,12 @@
       (for right-distance = (funcall distance-function
                                      right-pivot
                                      object))
-      (setf (aref split-vector j) (< right-distance left-distance))
-      (finally (return split-vector)))))
+      (for rightp = (< right-distance left-distance))
+      (setf (aref split-vector j) rightp)
+      (if rightp
+          (incf right-length)
+          (incf left-length))
+      (finally (return (values left-length right-length))))))
 
 
 (defmethod leaf-for ((splitter distance-splitter)

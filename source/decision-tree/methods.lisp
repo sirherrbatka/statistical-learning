@@ -13,17 +13,16 @@
 
 (defmethod sl.mp:make-training-state ((parameters fundamental-decision-tree-parameters)
                                       &rest initargs
-                                      &key train-data target-data weights attributes &allow-other-keys)
+                                      &key train-data data-points target-data weights attributes &allow-other-keys)
   (declare (ignore initargs))
   (let ((optimized-function (optimized-function parameters)))
     (make 'sl.tp:tree-training-state
           :training-parameters parameters
-          :loss (~>> train-data
-                     sl.data:data-points-count
-                     sl.data:iota-vector
-                     (sl.opt:loss optimized-function
-                                  target-data
-                                  weights))
+          :data-points data-points
+          :loss (sl.opt:loss optimized-function
+                             target-data
+                             weights
+                             data-points)
           :weights weights
           :attributes attributes
           :target-data target-data
