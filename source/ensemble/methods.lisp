@@ -224,8 +224,7 @@
                                         :to index)
                             (array-view samples
                                         :from prev-index
-                                        :to index))
-            (cl-progress-bar:update new-trees))))
+                                        :to index)))))
       (make 'random-forest-model
             :trees trees
             :parameters parameters
@@ -299,9 +298,7 @@
                                                   new-contributed
                                                   target-data)
               contributed new-contributed)
-        (for current-position = (min (+ index tree-batch-size) trees-count))
-        (cl-progress-bar:update (- current-position
-                                   index))))
+        (for current-position = (min (+ index tree-batch-size) trees-count))))
     (make 'gradient-boost-ensemble-model
           :trees trees
           :parameters parameters
