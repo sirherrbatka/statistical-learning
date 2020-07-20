@@ -115,9 +115,9 @@
                                                      4
                                                      *train-data*
                                                      *target-data*
-                                                     :parallel t))
+                                                     :parallel nil))
 
-(print (sl.perf:accuracy *confusion-matrix*)) ; 0.9816
+(print (sl.perf:accuracy *confusion-matrix*)) ; 0.9948
 
 (print (sl.perf:attributes-importance *forest-parameters*
                                       4

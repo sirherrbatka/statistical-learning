@@ -78,17 +78,16 @@
          (validation-size (truncate data-points-count number-of-folds))
          (train-size (- data-points-count validation-size)))
     (cl-ds:xpr (:index 0 :fold 0)
-      (when (and (< fold number-of-folds)
-                 (< index data-points-count))
+      (when (and (< fold number-of-folds))
         (let* ((validation (make-array validation-size :element-type 'fixnum))
                (train (make-array train-size :element-type 'fixnum)))
-          (iterate
-            (for i from 0 below index)
-            (setf (aref train i) (aref indexes i)))
           (iterate
             (for j from 0 below validation-size)
             (for i from index below data-points-count)
             (setf (aref validation j) (aref indexes i)))
+          (iterate
+            (for i from 0 below index)
+            (setf (aref train i) (aref indexes i)))
           (iterate
             (for j from index below train-size)
             (for i from (+ index validation-size) below data-points-count)
