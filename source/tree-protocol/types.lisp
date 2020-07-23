@@ -11,7 +11,12 @@
 
 (defclass distance-splitter (fundamental-splitter)
   ((%distance-function :initarg :distance-function
-                       :reader distance-function)))
+                       :reader distance-function)
+   (%repeats :initarg :repeats
+             :reader repeats)
+   (%iterations :initarg :iterations
+                :reader iterations))
+  (:default-initargs :iterations 2))
 
 
 (defclass fundamental-node ()

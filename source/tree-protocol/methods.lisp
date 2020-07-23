@@ -144,6 +144,28 @@
         sl.data:iota-vector)))
 
 
+(defmethod initialize-instance :after ((instance distance-splitter)
+                                       &rest initargs)
+  (declare (ignore initargs))
+  (ensure-function (distance-function instance))
+  (let ((iterations (iterations instance))
+        (repeats (repeats instance)))
+    (check-type iterations integer)
+    (check-type repeats integer)
+    (unless (>= iterations 0)
+      (error 'cl-ds:argument-value-out-of-bounds
+             :format-control "Iterations is supposed to be non-negative."
+             :argument :iterations
+             :value iterations
+             :bounds '(>= iterations)))
+    (unless (>= repeats 0)
+      (error 'cl-ds:argument-value-out-of-bounds
+             :format-control "Repeats is supposed to be non-negative."
+             :argument :repeats
+             :value repeats
+             :bounds '(>= repeats)))))
+
+
 (defmethod initialize-instance :after
     ((instance fundamental-tree-training-parameters)
      &rest initargs)
@@ -208,7 +230,7 @@
                             length))
       (with split-array = (sl.opt:make-split-array data-size))
       (with optimal-array = (sl.opt:make-split-array data-size))
-      (for attempt from 0 below trials-count)
+      (for attempt from 0 below (min data-size trials-count))
       (for point = (pick-split training-state))
       (for (values left-length right-length) = (fill-split-vector
                                                 training-state
@@ -252,7 +274,7 @@
                                       &aux (state (new-state position size loss))))
                  (~>> state make-leaf (split state)))
                 ((:flet subtree (position size loss &optional parallel))
-                 (if (and parallel (< new-depth 16))
+                 (if (and parallel (< new-depth 10))
                      (lparallel:future (subtree-impl position size loss))
                      (subtree-impl position size loss))))
            (return (make-node 'fundamental-tree-node
@@ -384,21 +406,37 @@
 (defmethod pick-split* ((splitter distance-splitter)
                         parameters
                         state)
-  (declare (optimize (speed 3) (safety 0)))
   (let* ((data-points (sl.mp:data-points state))
          (train-data (sl.mp:train-data state))
          (length (length data-points))
-         (left-index  (random length))
-         (right-index (iterate
-                        (for right-index = (random length))
-                        (when (not (= right-index left-index))
-                          (finish))
-                        (finally (return right-index)))))
+         (distance-function (ensure-function (distance-function splitter)))
+         (first-index (random length))
+         (repeats (repeats splitter))
+         (second-index (iterate
+                         (for r = (random length))
+                         (while (= r first-index))
+                         (finally (return r)))))
     (declare (type (simple-array fixnum (*)) data-points)
              (type sl.data:universal-data-matrix train-data)
-             (type fixnum left-index right-index))
-    (cons (~> (aref data-points left-index) (sl.data:mref train-data _ 0))
-          (~> (aref data-points right-index) (sl.data:mref train-data _ 0)))))
+             (type fixnum repeats first-index second-index))
+    (iterate
+      (repeat (iterations splitter))
+      (for first-data-point = (aref data-points first-index))
+      (for object = (sl.data:mref train-data first-data-point 0))
+      (for result =
+           (iterate
+             (repeat repeats)
+             (for i = (random length))
+             (when (= i first-index) (next-iteration))
+             (for second-data-point = (aref data-points i))
+             (for other = (sl.data:mref train-data second-data-point 0))
+             (for distance = (funcall distance-function object other))
+             (finding i maximizing distance)))
+      (when (= result second-index) (finish))
+      (setf second-index result)
+      (rotatef first-index second-index))
+    (cons (~> (aref data-points first-index) (sl.data:mref train-data _ 0))
+          (~> (aref data-points second-index) (sl.data:mref train-data _ 0)))))
 
 
 (defmethod fill-split-vector* ((splitter distance-splitter)

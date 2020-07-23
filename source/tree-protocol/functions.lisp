@@ -127,7 +127,9 @@
   (make 'random-attribute-splitter))
 
 
-(defun distance-splitter (distance-function)
+(defun distance-splitter (distance-function &optional (iterations 0) (repeats 8))
   (ensure-functionf distance-function)
   (make 'distance-splitter
+        :iterations iterations
+        :repeats repeats
         :distance-function distance-function))
