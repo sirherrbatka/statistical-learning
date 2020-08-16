@@ -1,9 +1,0 @@
-* DONE implement leaf-for in the tree-protocol
-  CLOSED: [2020-04-25 sob 19:24]
-* TODO add random-forest creation (somehow)
-* DONE remove mode and replace it with the training parameters
-  CLOSED: [2020-04-25 sob 21:32]
-* TODO preserve data about the target in the leaf nodes
-* DONE Add data representation layer with a general purpose functions and types (releated to matrix, so functions like attributes-counts and so one).
-  CLOSED: [2020-04-28 wto 22:17]
-* TODO allow extracting predictions from the leafs
