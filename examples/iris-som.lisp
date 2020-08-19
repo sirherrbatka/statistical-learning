@@ -40,7 +40,21 @@
 
 (defparameter *with-positions*
   (~> *positions* cl-ds.utils:unfold-table (batches 2)
-      (cl-ds.alg:on-each #'vector)
+      (cl-ds.alg:on-each #'vector :key (curry #'map 'list #'truncate))
       (vellum:to-table :columns '((:alias position)))
       list
       (vellum:hstack *data* _)))
+
+(defparameter *classes* (vellum:pipeline (*with-positions*)
+                          (cl-ds.alg:group-by :test 'equal
+                                              :key (vellum:brr position))
+                          (cl-ds.alg:group-by :test 'equal
+                                              :key (vellum:brr class))
+                          cl-ds.alg:count-elements
+                          (vellum:to-table :columns '((:alias position)
+                                                      (:alas class)
+                                                      (:alias count)))
+                          (vellum:order-by 'position
+                                           (curry #'cl-ds.utils:lexicographic-compare
+                                                  #'< #'=))))
+
