@@ -85,7 +85,7 @@
                      :data-points nil))
 
 
-(defclass tree-model (statistical-learning.mp:fundamental-model)
+(defclass tree-model (statistical-learning.mp:supervised-model)
   ((%root :initarg :root
           :writer write-root
           :reader root)

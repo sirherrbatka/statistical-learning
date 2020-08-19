@@ -19,6 +19,7 @@
    #:response
    #:right
    #:split-array
+   #:weight-at
    #:squared-error
    #:squared-error-function
    #:weights-data-matrix

@@ -67,7 +67,7 @@
   (:default-initargs :shrinkage 0.01d0))
 
 
-(defclass ensemble-model (statistical-learning.mp:fundamental-model)
+(defclass ensemble-model (statistical-learning.mp:supervised-model)
   ((%trees :initarg :trees
            :reader trees
            :type simple-vector)

@@ -3,9 +3,11 @@
 
 (declaim (inline weight-at))
 (defun weight-at (weights index)
-  (declare (type weights-data-matrix weights)
+  (declare (type (or null weights-data-matrix) weights)
            (type fixnum index))
-  (sl.data:mref weights index 0))
+  (if (null weights)
+      1.0d0
+      (sl.data:mref weights index 0)))
 
 
 (declaim (inline square))

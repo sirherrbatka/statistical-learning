@@ -7,7 +7,8 @@
   (:export
    #:fundamental-model
    #:fundamental-model-parameters
-   #:make-model
+   #:make-supervised-model
+   #:make-unsupervised-model
    #:make-model*
    #:parameters
    #:predict
@@ -19,6 +20,7 @@
    #:fundamental-training-state
    #:target-data
    #:train-data
+   #:supervised-model
    #:data-points
    #:weights
    ))

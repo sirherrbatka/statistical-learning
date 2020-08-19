@@ -1,0 +1,5 @@
+* Tasks
+** DONE Implement this method.
+   CLOSED: [2020-08-17 pon 18:32]
+   [2020-08-17 pon]
+   [[file:~/quicklisp/local-projects/statistical-learning/source/self-organizing-map/methods.lisp::(defmethod alpha ((decay hill-decay) initial iteration iterations)]]

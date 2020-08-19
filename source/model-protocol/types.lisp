@@ -13,3 +13,7 @@
 (defclass fundamental-training-state ()
   ((%training-parameters :initarg :training-parameters
                          :accessor training-parameters)))
+
+
+(defclass supervised-model (fundamental-model)
+  ())

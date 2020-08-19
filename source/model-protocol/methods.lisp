@@ -1,7 +1,7 @@
 (cl:in-package #:statistical-learning.model-protocol)
 
 
-(defmethod make-training-state :before ((model fundamental-model)
+(defmethod make-training-state :before ((model supervised-model)
                                         &rest initargs
                                         &key train-data target-data &allow-other-keys)
   (declare (ignore initargs))

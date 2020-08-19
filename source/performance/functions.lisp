@@ -19,7 +19,7 @@
                      (map '(vector double-float)
                           (lambda (i) (aref weights i))
                           sample)))
-                (model (statistical-learning.mp:make-model
+                (model (statistical-learning.mp:make-supervised-model
                         model-parameters
                         (statistical-learning.data:sample train-data
                                                           :data-points train)
@@ -78,9 +78,9 @@
                                                   :data-points train))
                 (train-target-data (sl.data:sample target-data
                                                    :data-points train))
-                (model (sl.mp:make-model model-parameters
-                                         train-train-data
-                                         train-target-data))
+                (model (sl.mp:make-supervised-model model-parameters
+                                                    train-train-data
+                                                    train-target-data))
                 (test-target-data (sl.data:sample target-data
                                                   :data-points test))
                 (test-train-data (sl.data:sample train-data

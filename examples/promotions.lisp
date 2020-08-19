@@ -65,10 +65,10 @@
                              sl.pt:honest)))
 
 (defparameter *model*
-  (sl.mp:make-model *forest-parameters*
-                    *train-data*
-                    *target-data*
-                    :treatment *treatment-data*))
+  (sl.mp:make-supervised-model *forest-parameters*
+                               *train-data*
+                               *target-data*
+                               :treatment *treatment-data*))
 
 (defparameter *predictions* (sl.mp:predict *model* *train-data* t))
 
