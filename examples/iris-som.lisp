@@ -26,12 +26,21 @@
 
 (defparameter *training-parameters*
   (make 'sl.som:self-organizing-map
-        :grid-dimensions '(30 30)
+        :grid-dimensions '(50 50)
         :number-of-iterations 10000
         :initial-alpha 0.6d0
-        :initial-sigma 15.0d0
+        :initial-sigma 25.0d0
         :decay sl.som:<linear-decay>
         :parallel nil))
 
 (defparameter *model*
   (sl.mp:make-unsupervised-model *training-parameters* *training-data*))
+
+(defparameter *positions* (sl.mp:predict *model* *training-data*))
+
+(defparameter *with-positions*
+  (~> *positions* cl-ds.utils:unfold-table (batches 2)
+      (cl-ds.alg:on-each #'vector)
+      (vellum:to-table :columns '((:alias position)))
+      list
+      (vellum:hstack *data* _)))

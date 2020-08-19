@@ -92,6 +92,7 @@
          (result (sl.data:make-data-matrix (sl.data:data-points-count data)
                                            (array-rank units))))
     (funcall (if parallel #'lparallel:pmap #'map)
+             nil
              (lambda (i)
                (iterate
                  (for j from 0)
@@ -99,7 +100,7 @@
                                     (cl-ds.utils:row-major-index-to-subscripts data)))
                  (setf (sl.data:mref result i j) (coerce value 'double-float))))
              all-indexes)
-    data))
+    result))
 
 
 (defmethod alpha ((decay linear-decay) initial iteration iterations)
