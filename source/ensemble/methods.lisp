@@ -335,3 +335,36 @@
 
 (defmethod sl.perf:default-performance-metric ((parameters ensemble))
   (~> parameters tree-parameters sl.perf:default-performance-metric))
+
+
+(defmethod leafs ((ensemble ensemble-model)
+                  data
+                  &optional parallel)
+  (sl.data:check-data-points data)
+  (let* ((data-points (sl.data:data-points-count data))
+         (parameters (sl.mp:parameters ensemble))
+         (tree-parameters (tree-parameters parameters))
+         (splitter (sl.tp:splitter tree-parameters))
+         (trees (trees ensemble))
+         (roots (map 'vector #'sl.tp:root trees))
+         (result (sl.data:make-data-matrix data-points
+                                           1
+                                           nil
+                                           t))
+         (unfolded (cl-ds.utils:unfold-table result)))
+    (map-into unfolded (cl-ds:xpr (:i 0)
+                         (cl-ds:send-recur i :i (1+ i))))
+    (funcall (if parallel #'lparallel:pmap-into #'map-into)
+             (lambda (index)
+               (iterate
+                 (with result = (~> trees length make-array))
+                 (for i from 0)
+                 (for root in-vector roots)
+                 (for leaf = (sl.tp:leaf-for splitter
+                                             root
+                                             data
+                                             index))
+                 (setf (aref result i) leaf)
+                 (finally (return result))))
+             unfolded)
+    result))

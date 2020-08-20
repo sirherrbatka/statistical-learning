@@ -5,14 +5,15 @@
   (:use #:cl #:statistical-learning.aux-package)
   (:nicknames #:sl.ensemble)
   (:export
-   #:ensemble-model
-   #:random-forest
    #:dynamic-weights-calculator
-   #:static-weights-calculator
-   #:update-weights
-   #:random-forest-model
+   #:ensemble-model
    #:gradient-boost-ensemble
    #:gradient-boost-ensemble-model
+   #:leafs
+   #:random-forest
+   #:random-forest-model
+   #:static-weights-calculator
    #:tree-batch-size
    #:tree-sample-rate
-   #:trees))
+   #:trees
+   #:update-weights))

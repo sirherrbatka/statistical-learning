@@ -23,7 +23,8 @@
            (tree-parameters (tree-parameters parameters))
            (train-data (sl.mp:train-data state))
            (data-points-count (sl.data:data-points-count train-data))
-           (tree-sample-size (ceiling (* tree-sample-rate data-points-count)))
+           (tree-sample-size (ceiling (* tree-sample-rate
+                                         data-points-count)))
            (complete-initargs (append initargs (all-args state)))
            (distribution (if (null sampling-weights)
                              nil
@@ -39,7 +40,9 @@
                (cl-progress-bar:update 1)
                model))))
       (map-into samples (curry #'bootstrap-sample
-                               tree-sample-size data-points-count distribution))
+                               tree-sample-size
+                               data-points-count
+                               distribution))
       (funcall (if parallel #'lparallel:pmap-into #'map-into)
                trees
                #'make-model
@@ -47,19 +50,22 @@
                samples))))
 
 
-(defun contribute-trees (tree-parameters trees data parallel &optional state)
+(defun contribute-trees (tree-parameters trees data parallel
+                         &optional state)
   (iterate
     (for tree in-vector trees)
-    (setf state (statistical-learning.tp:contribute-predictions* tree-parameters
-                                                   tree
-                                                   data
-                                                   state
-                                                   parallel))
+    (setf state (sl.tp:contribute-predictions* tree-parameters
+                                               tree
+                                               data
+                                               state
+                                               parallel))
     (finally (return state))))
 
 
-(defun trees-predict (tree-parameters trees data parallel &optional state)
-  (let ((state (contribute-trees tree-parameters trees data parallel state)))
+(defun trees-predict (tree-parameters trees data parallel
+                      &optional state)
+  (let ((state (contribute-trees tree-parameters trees
+                                 data parallel state)))
     (values (statistical-learning.tp:extract-predictions state)
             state)))
 
