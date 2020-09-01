@@ -354,6 +354,7 @@
          (unfolded (cl-ds.utils:unfold-table result)))
     (map-into unfolded (cl-ds:iota-range))
     (funcall (if parallel #'lparallel:pmap-into #'map-into)
+             unfolded
              (lambda (index)
                (iterate
                  (with result = (~> trees length make-array))
