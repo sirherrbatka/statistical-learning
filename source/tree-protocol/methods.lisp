@@ -205,7 +205,6 @@
 (defmethod split*
     ((training-parameters fundamental-tree-training-parameters)
      training-state)
-  (declare (optimize (debug 3)))
   (bind ((trials-count (trials-count training-parameters))
          (minimal-difference (minimal-difference training-parameters))
          (score (loss training-state))
@@ -294,14 +293,14 @@
                                   point)
   (bind ((cloning-list (cl-ds.utils:cloning-list state)))
     (apply #'make (class-of state)
-           (append (split-training-state-info (splitter parameters)
+           (append initargs
+                   (split-training-state-info (splitter parameters)
                                               parameters
                                               state
                                               split-array
                                               position
                                               size
                                               point)
-                   initargs
                    cloning-list))))
 
 
@@ -398,9 +397,9 @@
          (maximal-depth (maximal-depth training-parameters))
          (minimal-size (minimal-size training-parameters)))
     (declare (type (integer 1 *) minimal-size))
-    (nor (< (length indexes) (* 2 minimal-size))
-         (>= depth maximal-depth)
-         (<= loss (minimal-difference training-parameters)))))
+    (and (>= (length indexes) (* 2 minimal-size))
+         (< depth maximal-depth)
+         (> loss (minimal-difference training-parameters)))))
 
 
 (defmethod pick-split* ((splitter distance-splitter)
