@@ -294,14 +294,14 @@
                                   point)
   (bind ((cloning-list (cl-ds.utils:cloning-list state)))
     (apply #'make (class-of state)
-           (append (split-training-state-info (splitter parameters)
+           (append initargs
+                   (split-training-state-info (splitter parameters)
                                               parameters
                                               state
                                               split-array
                                               position
                                               size
                                               point)
-                   initargs
                    cloning-list))))
 
 
@@ -503,13 +503,3 @@
                                  training-state)
   (> (~> training-state sl.mp:data-points length) 2))
 
-
-(defmethod split-training-state-info append
-    ((splitter distance-splitter)
-     (parameters standard-tree-training-parameters)
-     state
-     split-array
-     position
-     size
-     point)
-  (list :attributes (attribute-indexes state)))
