@@ -10,7 +10,7 @@
                 :lparallel     :cl-data-structures
                 :metabang-bind :alexandria
                 :documentation-utils-extensions
-                :cl-progress-bar)
+                :cl-progress-bar :vellum)
   :serial T
   :pathname "source"
   :components ((:file "aux-package")

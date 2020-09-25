@@ -1,9 +1,13 @@
 (cl:in-package #:statistical-learning.performance)
 
 
-(defclass classification ()
+(defclass fundamental-prediction ()
   ())
 
 
-(defclass regression ()
+(defclass classification (fundamental-prediction)
+  ())
+
+
+(defclass regression (fundamental-prediction)
   ())

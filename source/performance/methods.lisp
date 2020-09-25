@@ -53,6 +53,17 @@
     (finally (return result))))
 
 
+(defmethod average-performance-metric* ((parameters fundamental-prediction)
+                                        (types list)
+                                        metrics)
+  (mapcar (lambda (type metric)
+            (average-performance-metric* parameters
+                                         type
+                                         metric))
+          types
+          metrics))
+
+
 (defmethod average-performance-metric* ((parameters regression)
                                         (type (eql :mean-squared-error))
                                         metrics)
@@ -125,6 +136,20 @@
     result))
 
 
+(defmethod performance-metric* ((parameters fundamental-prediction)
+                                (types list)
+                                target
+                                predictions
+                                weights)
+  (mapcar (lambda (type)
+            (performance-metric* parameters
+                                 type
+                                 target
+                                 predictions
+                                 weights))
+          types))
+
+
 (defmethod performance-metric*
     ((parameters classification)
      (type (eql :roc-auc))
@@ -143,40 +168,55 @@
                          (list (sl.data:mref predictions i 1)
                                truep))
                    (finally (return (sort result #'> :key #'first)))))
-         (curve (vect (list 1.0d0 0.0d0 0.0d0)))
+         (last-field (list 0.0d0 0.0d0))
          (field 0.0d0)
-         ((:flet update-field (threshold fpr tpr))
-          (bind (((p-threshold p-fpr p-tpr) (last-elt curve))
+         ((:flet update-field (fpr tpr))
+          (bind (((p-fpr p-tpr) last-field)
                  (tpr-span (- tpr p-tpr))
                  (fpr-span (- fpr p-fpr)))
+            (when (zerop fpr-span)
+              (return-from update-field nil))
             (incf field (+ (* fpr-span p-tpr)
                            (/ (* tpr-span fpr-span)
                               2)))
-            (unless (zerop fpr-span)
-              (vector-push-extend (list threshold fpr tpr)
-                                  curve)))))
-    (iterate
-      (with fp = 0)
-      (with tp = 0)
-      (for (score target) in-vector points)
-      (for p-score previous score initially 1.0d0)
-      (unless (= score p-score)
-        (let ((fpr (coerce (/ fp negative)
-                           'double-float))
-              (tpr (coerce (/ tp positive)
-                           'double-float)))
-          (update-field p-score fpr tpr)))
-      (if target (incf tp) (incf fp))
-      (finally (update-field 0.0d0 1.0d0 1.0d0)))
-    (iterate
-      (with data-matrix = (sl.data:make-data-matrix (length curve)
-                                                    3))
-      (for i from 0 below (length curve))
-      (for (threshold fpr tpr) = (aref curve i))
-      (setf (sl.data:mref data-matrix i 0) threshold
-            (sl.data:mref data-matrix i 1) fpr
-            (sl.data:mref data-matrix i 2) tpr)
-      (finally (return (list field (list data-matrix)))))))
+            (setf last-field (list fpr tpr))))
+         (roc-table (vellum.table:make-table
+                     :columns '((:alias threshold :type double-float)
+                                (:alias fpr :type double-float)
+                                (:alias tpr :type double-float)
+                                (:alias npv :type double-float)
+                                (:alias ppv :type double-float))))
+         (fp 0)
+         (tp 0))
+    (vellum:transform
+     roc-table
+     (vellum:body (threshold fpr tpr ppv npv)
+       (bind ((current-point vellum.table:*current-row*)
+              (target (unless (= current-point total)
+                        (second (aref points current-point))))
+              (previous-point (1- current-point))
+              (p-threshold (if (< previous-point 0)
+                               1.0d0
+                               (first (aref points previous-point))))
+              (tp+fp (+ fp tp))
+              (tn (- negative fp))
+              (tn+fn (- total tp+fp)))
+         (setf fpr (coerce (/ fp negative) 'double-float)
+               tpr (coerce (/ tp positive) 'double-float)
+               npv (if (zerop tn+fn)
+                       1.0d0
+                       (coerce (/ tn tn+fn) 'double-float))
+               ppv (cond ((zerop tp) 1.0d0)
+                         ((zerop tp+fp) 0.0d0)
+                         (t (coerce (/ tp tp+fp) 'double-float)))
+               threshold p-threshold)
+         (if target (incf tp) (incf fp))
+         (update-field fpr tpr)))
+     :start 0
+     :end (1+ total)
+     :in-place t)
+    (update-field 1.0d0 1.0d0)
+    (list field (list roc-table))))
 
 
 (defmethod average-performance-metric ((parameters sl.mp:fundamental-model-parameters)
