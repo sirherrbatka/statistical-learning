@@ -1,7 +1,7 @@
 (cl:in-package #:sl.proxy-tree)
 
 
-(defclass causal-tree (proxy-tree)
+(defclass causal-tree (sl.common:lifting-proxy)
   ((%minimal-treatment-size :reader minimal-treatment-size
                             :initarg :minimal-treatment-size)
    (%treatment-types-count :reader treatment-types-count
@@ -15,7 +15,8 @@
                :reader treatment)))
 
 
-(defmethod cl-ds.utils:cloning-information append ((object causal-state))
+(defmethod cl-ds.utils:cloning-information append
+    ((object causal-state))
   '((:treatment treatment)))
 
 
@@ -32,15 +33,9 @@
 (defmethod initialize-instance :after ((instance causal-tree) &rest initargs)
   (declare (ignore initargs))
   (bind ((minimal-treatment-size (minimal-treatment-size instance))
-         (treatment-types-count (treatment-types-count instance))
-         (minimal-size (sl.tp:minimal-size instance)))
+         (treatment-types-count (treatment-types-count instance)))
     (check-type minimal-treatment-size integer)
     (check-type treatment-types-count integer)
-    (unless (>= minimal-size (* 2 minimal-treatment-size))
-      (error 'cl-ds:incompatible-arguments
-             :parameters '(:minimal-size :minimal-no-treatment-size :minimal-treatment-size)
-             :values (list minimal-size minimal-treatment-size)
-             :format-control ":MINIMAL-SIZE must be at least equal to the sum of :MINIMAL-TREATMENT-SIZE and :MINIMAL-NO-TREATMENT-SIZE"))
     (unless (> treatment-types-count 1)
       (error 'cl-ds:argument-value-out-of-bounds
              :argument :treatment-types-count
@@ -53,49 +48,60 @@
              :value minimal-treatment-size))))
 
 
-(defmethod sl.tp:split-training-state* ((parameters causal-tree)
-                                        state
-                                        split-array
-                                        position
-                                        size
-                                        initargs
-                                        point)
+(defmethod sl.tp:split-training-state*/proxy
+    ((proxy causal-tree)
+     parameters
+     state
+     split-array
+     position
+     size
+     initargs
+     point)
   (cl-ds.utils:quasi-clone* state
-    :inner (sl.tp:split-training-state* (inner parameters)
-                                        (inner state)
-                                        split-array
-                                        position
-                                        size
-                                        initargs
-                                        point)))
+    :inner (sl.tp:split-training-state*/proxy
+            (sl.common:next-proxy proxy)
+            parameters
+            (inner state)
+            split-array
+            position
+            size
+            initargs
+            point)))
 
 
-(defmethod sl.mp:sample-training-state* ((parameters causal-tree)
-                                         state
-                                         &key
-                                           data-points
-                                           train-attributes
-                                           initargs
-                                           target-attributes)
+(defmethod sl.mp:sample-training-state*/proxy
+    ((proxy causal-tree)
+     parameters
+     state
+     &key
+       data-points
+       train-attributes
+       initargs
+       target-attributes)
   (cl-ds.utils:quasi-clone* state
-    :inner (sl.mp:sample-training-state* (inner parameters)
-                                         (inner state)
-                                         :data-points data-points
-                                         :train-attributes train-attributes
-                                         :initargs initargs
-                                         :target-attributes target-attributes)))
+    :inner (sl.mp:sample-training-state*/proxy
+            (sl.common:next-proxy proxy)
+            parameters
+            (inner state)
+            :initargs initargs
+            :data-points data-points
+            :train-attributes train-attributes
+            :target-attributes target-attributes)))
 
 
-(defmethod sl.tp:make-leaf* ((parameters causal-tree))
+(defmethod sl.tp:make-leaf*/proxy ((proxy causal-tree)
+                                   parameters)
   (make 'causal-leaf))
 
 
-(defmethod sl.tp:requires-split-p and ((splitter sl.tp:fundamental-splitter)
-                                       (training-parameters causal-tree)
-                                       training-state)
+(defmethod sl.tp:requires-split-p/proxy
+    and ((proxy causal-tree)
+         splitter
+         training-parameters
+         training-state)
   (let* ((treatment (treatment training-state))
          (data-points (sl.mp:data-points training-state))
-         (minimal-treatment-size (minimal-treatment-size training-parameters))
+         (minimal-treatment-size (minimal-treatment-size proxy))
          (treatment-frequency (make-hash-table)))
     (iterate
       (for i in-vector data-points)
@@ -107,16 +113,18 @@
       (finally (return t)))))
 
 
-(defmethod sl.tp:initialize-leaf ((parameters causal-tree)
-                                  training-state
-                                  leaf)
+(defmethod sl.tp:initialize-leaf/proxy
+    ((proxy causal-tree)
+     parameters
+     training-state
+     leaf)
   (bind ((inner (inner training-state))
          (treatment (treatment training-state))
-         (inner-parameters (inner parameters))
          (data-points (sl.mp:data-points inner))
-         (treatment-types-count (treatment-types-count parameters))
+         (treatment-types-count (treatment-types-count proxy))
          (leafs (make-array treatment-types-count))
          (sizes (make-array treatment-types-count))
+         (next-proxy (sl.common:next-proxy proxy))
          (treatment-vector (map 'vector
                                 (curry #'aref treatment)
                                 data-points))
@@ -124,18 +132,21 @@
           (count i treatment-vector)))
     (iterate
       (for i from 0 below treatment-types-count)
-      (for sub-leaf = (sl.tp:make-leaf* inner-parameters))
+      (for sub-leaf = (sl.tp:make-leaf*/proxy next-proxy parameters))
       (for treatment-size = (treatment-size i))
-      (for treatment-state = (sl.tp:split-training-state* inner-parameters
-                                                          inner
-                                                          treatment-vector
-                                                          i
-                                                          treatment-size
-                                                          '()
-                                                          nil))
-      (sl.tp:initialize-leaf inner-parameters
-                             treatment-state
-                             sub-leaf)
+      (for treatment-state =
+           (sl.tp:split-training-state*/proxy next-proxy
+                                              parameters
+                                              inner
+                                              treatment-vector
+                                              i
+                                              treatment-size
+                                              '()
+                                              nil))
+      (sl.tp:initialize-leaf/proxy next-proxy
+                                   parameters
+                                   treatment-state
+                                   sub-leaf)
       (setf (aref sizes i) treatment-size
             (aref leafs i) sub-leaf))
     (setf (leafs leaf) leafs
@@ -149,54 +160,63 @@
              :reader results)))
 
 
-(defmethod sl.mp:make-training-state ((parameters causal-tree)
-                                      &rest initargs
-                                      &key treatment &allow-other-keys)
-  (make 'causal-state
-        :training-parameters parameters
-        :inner (apply #'sl.mp:make-training-state
-                      (inner parameters)
-                      initargs)
-        :treatment (map 'vector
-                        #'round
-                        (cl-ds.utils:unfold-table treatment))))
+(defmethod sl.mp:make-training-state/proxy
+    ((proxy causal-tree)
+     parameters
+     &rest initargs
+     &key treatment &allow-other-keys)
+  (make-instance 'causal-state
+                 :training-parameters parameters
+                 :inner (apply #'sl.mp:make-training-state/proxy
+                               (sl.common:next-proxy proxy)
+                               parameters
+                               initargs)
+                 :treatment (map 'vector
+                                 #'round
+                                 (cl-ds.utils:unfold-table treatment))))
 
 
 (defun causal (parameters
                minimal-treatment-size
                treatment-classes)
-  (make 'causal-tree
-        :minimal-treatment-size minimal-treatment-size
-        :treatment-types-count treatment-classes
-        :inner parameters))
+  (sl.common:lift parameters 'causal-tree
+                  :minimal-treatment-size minimal-treatment-size
+                  :treatment-types-count treatment-classes))
 
 
-(defmethod sl.tp:extract-predictions* ((parameters causal-tree)
-                                       state)
+(defmethod sl.tp:extract-predictions*/proxy ((proxy causal-tree)
+                                             parameters
+                                             state)
   (map 'vector
-       (curry #'sl.tp:extract-predictions* (inner parameters))
+       (curry #'sl.tp:extract-predictions*/proxy
+              (sl.common:next-proxy proxy)
+              parameters)
        (results state)))
 
 
 ;; this is simple, but slow
-(defmethod sl.tp:contribute-predictions* ((parameters causal-tree)
-                                          model
-                                          data
-                                          state
-                                          parallel
-                                          &optional (leaf-key #'identity))
-  (let ((treatment-types-count (treatment-types-count parameters)))
+(defmethod sl.tp:contribute-predictions*/proxy
+    ((proxy causal-tree)
+     parameters
+     model
+     data
+     state
+     parallel
+     &optional (leaf-key #'identity))
+  (ensure leaf-key #'identity)
+  (let ((treatment-types-count (treatment-types-count proxy))
+        (next-proxy (sl.common:next-proxy proxy)))
     (when (null state)
       (setf state (make 'causal-contributed-predictions
                         :results (make-array treatment-types-count
                                              :initial-element nil)
                         :training-parameters parameters)))
     (iterate
-      (with inner = (inner parameters))
       (with results = (results state))
-      (for i from 0 below (treatment-types-count parameters))
-      (setf (aref results i) (sl.tp:contribute-predictions*
-                              inner
+      (for i from 0 below treatment-types-count)
+      (setf (aref results i) (sl.tp:contribute-predictions*/proxy
+                              next-proxy
+                              parameters
                               model
                               data
                               (aref results i)
@@ -207,7 +227,7 @@
   state)
 
 
-(defmethod sl.mp:make-model* ((parameters causal-tree) state)
+(defmethod sl.mp:make-model*/proxy ((proxy causal-tree) parameters state)
   (make 'sl.tp:tree-model
         :parameters parameters
         :root (~>> state sl.tp:make-leaf (sl.tp:split state))))

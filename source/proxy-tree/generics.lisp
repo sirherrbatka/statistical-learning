@@ -1,4 +1,4 @@
 (cl:in-package #:sl.proxy-tree)
 
 
-(defgeneric inner (proxy))
+(defgeneric inner (proxy-state))

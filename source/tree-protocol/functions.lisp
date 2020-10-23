@@ -15,9 +15,16 @@
     result))
 
 
-(defun split (training-state leaf)
+(defun split (training-state leaf
+              &optional (parameters/proxy nil proxy-p))
   (let* ((parameters (sl.mp:training-parameters training-state))
-         (result (split* parameters training-state)))
+         (proxy (if proxy-p
+                    parameters/proxy
+                    (sl.common:proxy parameters)))
+         (result (split*/proxy proxy
+                               parameters
+                               training-state)))
+    ;; TODO also correct initialize-leaf call to include proxy
     (if (null result)
         (progn (initialize-leaf parameters training-state leaf)
                leaf)

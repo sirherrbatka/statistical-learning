@@ -7,7 +7,4 @@
   (:export
    #:honest
    #:causal
-   #:inner
-   #:forward-call
-   #:proxy-tree
-   ))
+   #:inner))

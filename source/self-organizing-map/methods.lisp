@@ -1,8 +1,9 @@
 (cl:in-package #:sl.som)
 
 
-(defmethod sl.mp:sample-training-state-info append
-    ((parameters self-organizing-map)
+(defmethod sl.mp:sample-training-state-info/proxy append
+    (parameters/proxy
+     (parameters self-organizing-map)
      state
      &key data-points)
   (list :data (sl.data:sample (data state)
@@ -56,10 +57,12 @@
              :bounds '(> number-of-iterations 0)))))
 
 
-(defmethod sl.mp:make-training-state ((parameters self-organizing-map)
-                                      &rest initargs
-                                      &key data
-                                        weights)
+(defmethod sl.mp:make-training-state/proxy
+    (parameters/proxy
+     (parameters self-organizing-map)
+     &rest initargs
+     &key data
+       weights)
   (declare (ignore initargs))
   (let* ((attributes-count (sl.data:attributes-count data))
          (grid (~> parameters grid-dimensions
@@ -76,8 +79,9 @@
                        (copy-array weights)))))
 
 
-(defmethod sl.mp:make-model* ((parameters self-organizing-map)
-                              training-state)
+(defmethod sl.mp:make-model*/proxy (parameters/proxy
+                                    (parameters self-organizing-map)
+                                    training-state)
   (fit training-state)
   (make 'self-organizing-map-model
         :parameters parameters

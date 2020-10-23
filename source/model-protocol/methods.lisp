@@ -1,9 +1,11 @@
 (cl:in-package #:statistical-learning.model-protocol)
 
 
-(defmethod make-training-state :before ((model supervised-model)
-                                        &rest initargs
-                                        &key train-data target-data &allow-other-keys)
+(defmethod make-training-state/proxy
+    :before (parameters/proxy
+             (parameters supervised-model)
+             &rest initargs
+             &key train-data target-data &allow-other-keys)
   (declare (ignore initargs))
   (statistical-learning.data:bind-data-matrix-dimensions
       ((train-data-points train-data-attributes train-data)
@@ -40,21 +42,26 @@
   (statistical-learning.data:check-data-points data))
 
 
-(defmethod make-training-state ((parameters fundamental-model-parameters)
-                                &rest initargs &key &allow-other-keys)
+(defmethod make-training-state/proxy
+    (parameters/proxy
+     (parameters fundamental-model-parameters)
+     &rest initargs &key &allow-other-keys)
   (apply #'make 'fundamental-training-state
          :training-parameters parameters
          initargs))
 
 
-(defmethod sample-training-state* ((parameters fundamental-model-parameters)
-                                   state
-                                   &key data-points train-attributes target-attributes initargs
-                                   &allow-other-keys)
+(defmethod sample-training-state*/proxy
+    (parameters/proxy
+     (parameters fundamental-model-parameters)
+     state
+     &key data-points train-attributes target-attributes initargs
+     &allow-other-keys)
   (apply #'make (class-of state)
-         (append (sample-training-state-info parameters state
-                                             :target-attributes target-attributes
-                                             :train-attributes train-attributes
-                                             :data-points data-points)
+         (append (sample-training-state-info
+                  parameters state
+                  :target-attributes target-attributes
+                  :train-attributes train-attributes
+                  :data-points data-points)
                  initargs
                  (cl-ds.utils:cloning-list state))))

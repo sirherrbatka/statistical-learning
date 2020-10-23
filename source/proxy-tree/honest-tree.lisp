@@ -1,7 +1,7 @@
 (cl:in-package #:sl.proxy-tree)
 
 
-(defclass honest-tree (proxy-tree)
+(defclass honest-tree (sl.common:lifting-proxy)
   ())
 
 
@@ -14,14 +14,17 @@
   `((:attributes attributes)))
 
 
-(defmethod sl.mp:sample-training-state* ((parameters honest-tree)
-                                         state
-                                         &key data-points
-                                           train-attributes
-                                           target-attributes
-                                           initargs)
-  (let* ((inner-sample (sl.mp:sample-training-state*
-                        (inner parameters)
+(defmethod sl.mp:sample-training-state*/proxy
+    ((proxy honest-tree)
+     parameters
+     state
+     &key data-points
+       train-attributes
+       target-attributes
+       initargs)
+  (let* ((inner-sample (sl.mp:sample-training-state*/proxy
+                        (sl.common:next-proxy proxy)
+                        parameters
                         (inner state)
                         :data-points data-points
                         :target-attributes target-attributes
@@ -33,11 +36,11 @@
                        train-attributes))))
 
 
-(defmethod sl.mp:make-model* ((parameters honest-tree)
-                              state)
+(defmethod sl.mp:make-model*/proxy ((proxy honest-tree)
+                                    parameters
+                                    state)
   (bind ((inner-state (inner state))
          (training-data (sl.mp:train-data inner-state))
-         (inner-parameters (inner parameters))
          (data-points-count (~> inner-state
                                 sl.mp:data-points
                                 length))
@@ -47,13 +50,18 @@
          (adjust-indexes (drop (truncate data-points-count 2)
                                indexes))
          (attributes (attributes state))
-         (division (sl.mp:sample-training-state inner-state
-                                                :train-attributes attributes
-                                                :data-points division-indexes))
-         (adjust (sl.mp:sample-training-state inner-state
-                                              :data-points adjust-indexes))
-         (inner (inner parameters))
-         (model (sl.mp:make-model* inner division))
+         (next-proxy (sl.common:next-proxy proxy))
+         (division (sl.mp:sample-training-state*/proxy
+                    next-proxy
+                    parameters
+                    inner-state
+                    :train-attributes attributes
+                    :data-points division-indexes))
+         (adjust (sl.mp:sample-training-state*/proxy next-proxy
+                                                     parameters
+                                                     inner-state
+                                                     :data-points adjust-indexes))
+         (model (sl.mp:make-model*/proxy next-proxy parameters division))
          (root (sl.tp:root model))
          (splitter (sl.tp:splitter parameters))
          ((:flet assign-leaf (index))
@@ -62,10 +70,12 @@
                                 training-data index)))
          ((:flet adjust-leaf (leaf.indexes))
           (bind (((leaf . indexes) leaf.indexes)
-                 (no-fill-pointer (cl-ds.utils:remove-fill-pointer indexes)))
-            (~> inner-parameters
-                (sl.mp:sample-training-state* adjust :data-points no-fill-pointer)
-                (sl.tp:initialize-leaf inner _ leaf)))))
+                 (no-fill-pointer (cl-ds.utils:remove-fill-pointer indexes))
+                 (sample (sl.mp:sample-training-state*/proxy
+                          next-proxy parameters
+                          adjust :data-points no-fill-pointer)))
+            (sl.tp:initialize-leaf/proxy next-proxy parameters
+                                         sample leaf))))
     (~> (cl-ds.alg:on-each adjust-indexes #'assign-leaf)
         (cl-ds.alg:group-by :key #'cdr :test 'eq)
         (cl-ds.alg:to-vector :key #'car :element-type 'fixnum)
@@ -73,11 +83,14 @@
     model))
 
 
-(defmethod sl.mp:make-training-state ((parameters honest-tree)
-                                      &rest initargs
-                                      &key attributes train-data &allow-other-keys)
-  (let ((inner (apply #'sl.mp:make-training-state
-                      (inner parameters)
+(defmethod sl.mp:make-training-state/proxy
+    ((proxy honest-tree)
+     parameters
+     &rest initargs
+     &key attributes train-data &allow-other-keys)
+  (let ((inner (apply #'sl.mp:make-training-state/proxy
+                      (sl.common:next-proxy proxy)
+                      parameters
                       :attributes nil
                       initargs)))
     (make 'honest-state
@@ -87,7 +100,5 @@
                                          sl.data:iota-vector))
           :inner inner)))
 
-
 (defun honest (parameters)
-  (make 'honest-tree
-        :inner parameters))
+  (sl.common:lift parameters 'honest-tree))

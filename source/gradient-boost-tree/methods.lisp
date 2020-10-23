@@ -1,29 +1,34 @@
 (cl:in-package #:statistical-learning.gradient-boost-tree)
 
 
-(defmethod sl.mp:make-training-state ((parameters fundamental-gradient-boost-tree-parameters)
-                                      &rest initargs
-                                      &key attributes train-data
-                                        target-data weights response
-                                        expected-value shrinkage data-points
-                                      &allow-other-keys)
+(defmethod sl.mp:make-training-state/proxy (parameters/proxy
+                                            (parameters fundamental-gradient-boost-tree-parameters)
+                                            &rest initargs
+                                            &key attributes train-data
+                                              target-data weights response
+                                              expected-value shrinkage data-points
+                                            &allow-other-keys)
   (declare (ignore initargs))
-  (sl.mp:make-training-state (implementation parameters
-                                             :shrinkage shrinkage
-                                             :expected-value expected-value)
-                             :data-points data-points
-                             :train-data train-data
-                             :target-data (if (null response)
-                                              (target parameters
-                                                      target-data
-                                                      expected-value)
-                                              response)
-                             :attributes attributes
-                             :weights weights))
+  (sl.mp:make-training-state/proxy
+   parameters/proxy
+   (implementation parameters
+                   :shrinkage shrinkage
+                   :expected-value expected-value)
+   :data-points data-points
+   :train-data train-data
+   :target-data (if (null response)
+                    (target parameters
+                            target-data
+                            expected-value)
+                    response)
+   :attributes attributes
+   :weights weights))
 
 
-(defmethod sl.mp:make-model* ((parameters gradient-boosting-implementation)
-                              state)
+(defmethod sl.mp:make-model*/proxy
+    (parameters-proxy
+     (parameters gradient-boosting-implementation)
+     state)
   (let ((parameters (sl.mp:training-parameters state)))
     (make 'gradient-boost-model
           :parameters (gradient-parameters parameters)
@@ -32,18 +37,22 @@
           :root (sl.tp:root (call-next-method)))))
 
 
-(defmethod sl.mp:make-model* ((parameters fundamental-gradient-boost-tree-parameters)
-                              state)
-  (sl.mp:make-model* (sl.mp:training-parameters state)
-                     state))
+(defmethod sl.mp:make-model*/proxy
+    (parameters/proxy
+     (parameters fundamental-gradient-boost-tree-parameters)
+     state)
+  (sl.mp:make-model* (sl.mp:training-parameters state) state))
 
 
-(defmethod sl.tp:contribute-predictions* ((parameters regression)
-                                          model
-                                          data
-                                          state
-                                          parallel
-                                          &optional (leaf-key #'identity))
+(defmethod sl.tp:contribute-predictions*/proxy
+    (parameters/proxy
+     (parameters regression)
+     model
+     data
+     state
+     parallel
+     &optional (leaf-key #'identity))
+  (ensure leaf-key #'identity)
   (sl.data:bind-data-matrix-dimensions ((data-points-count attributes-count data))
     (when (null state)
       (setf state (contributed-predictions parameters model data-points-count)))
@@ -66,12 +75,15 @@
     state))
 
 
-(defmethod sl.tp:contribute-predictions* ((parameters classification)
-                                          model
-                                          data
-                                          state
-                                          parallel
-                                          &optional (leaf-key #'identity))
+(defmethod sl.tp:contribute-predictions*/proxy
+    (parameters/proxy
+     (parameters classification)
+     model
+     data
+     state
+     parallel
+     &optional (leaf-key #'identity))
+  (ensure leaf-key #'identity)
   (sl.data:bind-data-matrix-dimensions ((data-points-count attributes-count data))
     (when (null state)
       (setf state (contributed-predictions parameters model data-points-count)))
@@ -98,13 +110,17 @@
     state))
 
 
-(defmethod sl.tp:extract-predictions* ((parameters regression)
-                                       (state sl.tp:contributed-predictions))
+(defmethod sl.tp:extract-predictions*/proxy
+    (parameters/proxy
+     (parameters regression)
+     (state sl.tp:contributed-predictions))
   (sl.tp:sums state))
 
 
-(defmethod sl.tp:extract-predictions* ((parameters classification)
-                                       (state sl.tp:contributed-predictions))
+(defmethod sl.tp:extract-predictions*/proxy
+    (parameters/proxy
+     (parameters classification)
+     (state sl.tp:contributed-predictions))
   (iterate
     (declare (type fixnum i number-of-classes)
              (type double-float maximum sum)
@@ -134,8 +150,10 @@
     (finally (return result))))
 
 
-(defmethod implementation ((parameters classification) &rest initargs)
+(defmethod implementation
+    ((parameters classification) &rest initargs)
   (apply #'make 'classification-implementation
+         :proxy (sl.common:proxy parameters)
          :gradient-parameters parameters
          :splitter (sl.tp:splitter parameters)
          :maximal-depth (sl.tp:maximal-depth parameters)
@@ -148,6 +166,7 @@
 
 (defmethod implementation ((parameters regression) &rest initargs)
   (apply #'make 'regression-implementation
+         :proxy (sl.common:proxy parameters)
          :gradient-parameters parameters
          :splitter (sl.tp:splitter parameters)
          :maximal-depth (sl.tp:maximal-depth parameters)
@@ -158,7 +177,8 @@
          initargs))
 
 
-(defmethod target ((parameters classification) target-data expected-value)
+(defmethod target ((parameters classification)
+                   target-data expected-value)
   (declare (type sl.data:double-float-data-matrix target-data expected-value)
            (optimize (speed 3) (safety 0)))
   (iterate
@@ -181,15 +201,17 @@
     (finally (return result))))
 
 
-(defmethod target ((parameters regression) target-data expected-value)
+(defmethod target ((parameters regression)
+                   target-data expected-value)
   (sl.data:map-data-matrix (lambda (x) (- x expected-value))
                            target-data))
 
 
-(defmethod sl.tp:initialize-leaf ((training-parameters classification-implementation)
-                                  training-state
-                                  leaf)
-  (declare (optimize (speed 3) (safety 0)))
+(defmethod sl.tp:initialize-leaf/proxy
+    (parameters/proxy
+     (training-parameters classification-implementation)
+     training-state
+     leaf)
   (iterate
     (declare (type (simple-array fixnum (*)) data-points)
              (type fixnum i j length number-of-classes)

@@ -14,6 +14,9 @@
   :serial T
   :pathname "source"
   :components ((:file "aux-package")
+               (:module "common"
+                :components ((:file "package")
+                             (:file "lifting-proxy")))
                (:module "data"
                 :components ((:file "package")
                              (:file "macros")
@@ -61,11 +64,8 @@
                (:module "proxy-tree"
                 :components ((:file "package")
                              (:file "generics")
-                             (:file "macros")
                              (:file "types")
                              (:file "utils")
-                             (:file "functions")
-                             (:file "methods")
                              (:file "honest-tree")
                              (:file "causal-tree")
                              ))

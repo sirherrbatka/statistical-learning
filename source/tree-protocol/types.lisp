@@ -1,7 +1,7 @@
 (cl:in-package #:statistical-learning.tree-protocol)
 
 
-(defclass fundamental-splitter ()
+(defclass fundamental-splitter (sl.common:proxy-enabled)
   ())
 
 

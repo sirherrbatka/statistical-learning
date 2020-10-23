@@ -91,13 +91,14 @@
               ("e" 0.0d0))))))
 
 (defparameter *training-parameters*
-  (make 'statistical-learning.dt:classification
-        :optimized-function (sl.opt:gini-impurity 2)
-        :maximal-depth 8
-        :minimal-difference 0.0001d0
-        :minimal-size 10
-        :trials-count 80
-        :parallel nil))
+  (sl.pt:honest
+   (make 'statistical-learning.dt:classification
+         :optimized-function (sl.opt:gini-impurity 2)
+         :maximal-depth 8
+         :minimal-difference 0.0001d0
+         :minimal-size 10
+         :trials-count 80
+         :parallel nil)))
 
 (defparameter *forest-parameters*
   (make 'statistical-learning.ensemble:random-forest
@@ -107,7 +108,7 @@
         :tree-batch-size 5
         :tree-attributes-count 30
         :tree-sample-rate 0.3
-        :tree-parameters (sl.pt:honest *training-parameters*)))
+        :tree-parameters *training-parameters*))
 
 
 (defparameter *confusion-matrix*
@@ -123,4 +124,4 @@
                                       4
                                       *train-data*
                                       *target-data*
-                                      :parallel t))
+                                      :parallel nil))

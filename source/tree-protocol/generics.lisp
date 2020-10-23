@@ -1,5 +1,46 @@
 (cl:in-package #:statistical-learning.tree-protocol)
 
+(sl.common:defgeneric/proxy contribute-predictions*
+    ((parameters)
+     model data state parallel
+     &optional leaf-key))
+
+(sl.common:defgeneric/proxy split-training-state-info
+    (splitter
+     (parameters)
+     state split-array
+     position size point)
+  (:method-combination append :most-specific-last))
+
+(sl.common:defgeneric/proxy leaf-for ((splitter) node data index))
+
+(sl.common:defgeneric/proxy split* ((training-parameters)
+                                    training-state))
+
+(sl.common:defgeneric/proxy split-training-state*
+    ((parameters) state split-array position size initargs point))
+
+(sl.common:defgeneric/proxy make-leaf* ((training-parameters)))
+
+(sl.common:defgeneric/proxy requires-split-p
+    (splitter (parameters) training-state)
+  (:method-combination and))
+
+(sl.common:defgeneric/proxy initialize-leaf ((training-parameters)
+                                             training-state
+                                             leaf))
+
+(sl.common:defgeneric/proxy extract-predictions* ((parameters)
+                                                  state))
+
+(sl.common:defgeneric/proxy fill-split-vector*
+    ((splitter) parameters state point split-vector))
+
+(sl.common:defgeneric/proxy pick-split*
+    ((splitter) parameters state))
+
+(sl.common:defgeneric/proxy calculate-loss*
+    ((parameters) state split-array))
 
 (defgeneric root (model))
 (defgeneric treep (node))
@@ -19,28 +60,11 @@
 (defgeneric target-data (training-state))
 (defgeneric (setf target-data) (new-value training-state))
 (defgeneric parallel (training-parameters))
-(defgeneric split* (training-parameters training-state))
-(defgeneric requires-split-p (splitter parameters training-state)
-  (:method-combination and))
 (defgeneric attribute-value (tree-node))
 (defgeneric (setf attribute-value) (new-value tree-node))
 (defgeneric attribute-indexes (training-state))
 (defgeneric (setf attribute-indexes) (new-value training-state))
-(defgeneric make-leaf* (training-parameters))
-(defgeneric initialize-leaf (training-parameters training-state leaf))
-(defgeneric split-training-state* (parameters state split-array
-                                   position size initargs point))
-(defgeneric split-training-state-info (splitter parameters state split-array
-                                       position size point)
-  (:method-combination append :most-specific-last))
-(defgeneric pick-split* (splitter parameters state))
-(defgeneric fill-split-vector* (splitter parameters state point split-vector))
 (defgeneric loss (state))
-(defgeneric calculate-loss* (parameters state split-array))
-(defgeneric contribute-predictions* (parameters model
-                                     data state parallel
-                                     &optional leaf-key))
-(defgeneric extract-predictions* (parameters state))
 (defgeneric weights (state))
 (defgeneric support (node))
 (defgeneric (setf support) (new-value node))
@@ -50,4 +74,3 @@
 (defgeneric indexes (predictions))
 (defgeneric contributions-count (predictions))
 (defgeneric training-parameters (predictions))
-(defgeneric leaf-for (splitter node data index))

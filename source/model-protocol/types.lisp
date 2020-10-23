@@ -1,12 +1,12 @@
 (cl:in-package #:statistical-learning.model-protocol)
 
 
-(defclass fundamental-model ()
+(defclass fundamental-model (sl.common:proxy-enabled)
   ((%parameters :initarg :parameters
                 :reader parameters)))
 
 
-(defclass fundamental-model-parameters ()
+(defclass fundamental-model-parameters (sl.common:proxy-enabled)
   ())
 
 

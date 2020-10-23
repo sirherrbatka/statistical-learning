@@ -147,9 +147,10 @@
              indexes)))
 
 
-(defmethod sl.mp:make-training-state ((parameters random-forest)
-                                      &rest initargs
-                                      &key train-data target-data weights)
+(defmethod sl.mp:make-training-state/proxy (parameters/proxy
+                                            (parameters random-forest)
+                                            &rest initargs
+                                            &key train-data target-data weights)
   (make 'ensemble-state
         :train-data train-data
         :target-data target-data
@@ -158,8 +159,9 @@
         :all-args initargs))
 
 
-(defmethod sl.mp:make-model* ((parameters random-forest)
-                              state)
+(defmethod sl.mp:make-model*/proxy (parameters/proxy
+                                    (parameters random-forest)
+                                    state)
   (bind ((train-data (sl.mp:train-data state))
          (weights (sl.mp:weights state))
          (target-data (sl.mp:target-data state))
@@ -231,9 +233,10 @@
             :target-attributes-count target-data-attributes))))
 
 
-(defmethod sl.mp:make-training-state ((parameters gradient-boost-ensemble)
-                                      &rest initargs
-                                      &key target-data train-data weights)
+(defmethod sl.mp:make-training-state/proxy (parameters/proxy
+                                            (parameters gradient-boost-ensemble)
+                                            &rest initargs
+                                            &key target-data train-data weights)
   (let* ((tree-parameters (tree-parameters parameters))
          (expected-value (sl.gbt:calculate-expected-value tree-parameters
                                                           target-data)))
@@ -245,8 +248,9 @@
           :training-parameters parameters)))
 
 
-(defmethod sl.mp:make-model* ((parameters gradient-boost-ensemble)
-                              state)
+(defmethod sl.mp:make-model*/proxy (parameters/proxy
+                                    (parameters gradient-boost-ensemble)
+                                    state)
   (bind ((train-data (sl.mp:train-data state))
          (target-data (sl.mp:target-data state))
          (train-data-attributes (sl.data:attributes-count train-data))

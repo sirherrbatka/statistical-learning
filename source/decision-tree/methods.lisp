@@ -1,9 +1,11 @@
 (cl:in-package #:statistical-learning.decision-tree)
 
 
-(defmethod sl.tp:calculate-loss* ((parameters fundamental-decision-tree-parameters)
-                                  state
-                                  split-array)
+(defmethod sl.tp:calculate-loss*/proxy
+    (parameters/proxy
+     (parameters fundamental-decision-tree-parameters)
+     state
+     split-array)
   (sl.opt:loss (optimized-function parameters)
                (sl.mp:target-data state)
                (sl.mp:weights state)
@@ -11,9 +13,12 @@
                split-array))
 
 
-(defmethod sl.mp:make-training-state ((parameters fundamental-decision-tree-parameters)
-                                      &rest initargs
-                                      &key train-data data-points target-data weights attributes &allow-other-keys)
+(defmethod sl.mp:make-training-state/proxy
+    (parameters/proxy
+     (parameters fundamental-decision-tree-parameters)
+     &rest initargs
+     &key train-data data-points
+       target-data weights attributes &allow-other-keys)
   (declare (ignore initargs))
   (let ((optimized-function (optimized-function parameters)))
     (make 'sl.tp:tree-training-state
@@ -29,17 +34,22 @@
           :train-data train-data)))
 
 
-(defmethod sl.mp:make-model* ((parameters fundamental-decision-tree-parameters)
-                              state)
-  (let ((root (~>> state sl.tp:make-leaf (sl.tp:split state))))
+(defmethod sl.mp:make-model*/proxy
+    (parameters-proxy
+     (parameters fundamental-decision-tree-parameters)
+     state)
+  (let* ((protoroot (sl.tp:make-leaf* parameters))
+         (root (sl.tp:split state protoroot parameters-proxy)))
     (make 'sl.tp:tree-model
           :parameters parameters
           :root root)))
 
 
-(defmethod sl.tp:initialize-leaf ((training-parameters classification)
-                                  training-state
-                                  leaf)
+(defmethod sl.tp:initialize-leaf/proxy
+    (parameters/proxy
+     (training-parameters classification)
+     training-state
+     leaf)
   (declare (optimize (speed 3) (safety 0)))
   (let* ((target-data (sl.mp:target-data training-state))
          (data-points (sl.mp:data-points training-state))
@@ -64,10 +74,11 @@
     (setf (sl.tp:predictions leaf) predictions)))
 
 
-(defmethod sl.tp:initialize-leaf ((training-parameters regression)
-                                  training-state
-                                  leaf)
-  (declare (optimize (speed 3) (safety 0)))
+(defmethod sl.tp:initialize-leaf/proxy
+    (parameters/proxy
+     (training-parameters regression)
+     training-state
+     leaf)
   (let* ((target-data (sl.mp:target-data training-state))
          (sum 0.0d0)
          (data-points (sl.mp:data-points training-state))
@@ -84,12 +95,15 @@
     (setf (sl.tp:predictions leaf) (/ sum data-points-count))))
 
 
-(defmethod sl.tp:contribute-predictions* ((parameters regression)
-                                          model
-                                          data
-                                          state
-                                          parallel
-                                          &optional (leaf-key #'identity))
+(defmethod sl.tp:contribute-predictions*/proxy
+    (parameters/proxy
+     (parameters regression)
+     model
+     data
+     state
+     parallel
+     &optional (leaf-key #'identity))
+  (ensure leaf-key #'identity)
   (sl.data:bind-data-matrix-dimensions ((data-points-count attributes-count data))
     (when (null state)
       (setf state (make 'sl.tp:contributed-predictions
@@ -114,12 +128,15 @@
     state))
 
 
-(defmethod sl.tp:contribute-predictions* ((parameters classification)
-                                          model
-                                          data
-                                          state
-                                          parallel
-                                          &optional (leaf-key #'identity))
+(defmethod sl.tp:contribute-predictions*/proxy
+    (parameters/proxy
+     (parameters classification)
+     model
+     data
+     state
+     parallel
+     &optional (leaf-key #'identity))
+  (ensure leaf-key #'identity)
   (sl.data:bind-data-matrix-dimensions ((data-points-count attributes-count data))
     (let ((number-of-classes (~> parameters
                                  optimized-function
@@ -150,8 +167,10 @@
     state))
 
 
-(defmethod sl.tp:extract-predictions* ((parameters fundamental-decision-tree-parameters)
-                                       (state sl.tp:contributed-predictions))
+(defmethod sl.tp:extract-predictions*/proxy
+    (parameters/proxy
+     (parameters fundamental-decision-tree-parameters)
+     (state sl.tp:contributed-predictions))
   (let ((count (sl.tp:contributions-count state)))
     (sl.data:map-data-matrix (lambda (value) (/ value count))
                              (sl.tp:sums state))))

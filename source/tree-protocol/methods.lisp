@@ -51,8 +51,9 @@
     (:train-data sl.mp:train-data)))
 
 
-(defmethod split-training-state-info append
-    ((splitter fundamental-splitter)
+(defmethod split-training-state-info/proxy append
+    (parameters/proxy
+     (splitter fundamental-splitter)
      (parameters standard-tree-training-parameters)
      state
      split-array
@@ -75,8 +76,9 @@
                    (return new-indexes)))))
 
 
-(defmethod split-training-state-info append
-    ((splitter random-attribute-splitter)
+(defmethod split-training-state-info/proxy append
+    (parameters/proxy
+     (splitter random-attribute-splitter)
      (parameters standard-tree-training-parameters)
      state
      split-array
@@ -102,8 +104,9 @@
                         (return result)))))))
 
 
-(defmethod split* :around ((training-parameters fundamental-tree-training-parameters)
-                           training-state)
+(defmethod split*/proxy :around (parameters/proxy
+                                 (training-parameters fundamental-tree-training-parameters)
+                                 training-state)
   (if (requires-split-p (splitter training-parameters)
                         training-parameters
                         training-state)
@@ -111,12 +114,14 @@
       nil))
 
 
-(defmethod contribute-predictions* :before ((parameters fundamental-tree-training-parameters)
-                                            (model tree-model)
-                                            data
-                                            state
-                                            parallel
-                                            &optional leaf-key)
+(defmethod contribute-predictions*/proxy
+    :before (parameters/proxy
+             (parameters fundamental-tree-training-parameters)
+             (model tree-model)
+             data
+             state
+             parallel
+             &optional leaf-key)
   (declare (ignore leaf-key))
   (unless (forced model)
     (force-tree model)))
@@ -198,14 +203,15 @@
              :value trials-count))))
 
 
-(defmethod make-leaf* ((parameters fundamental-tree-training-parameters))
+(defmethod make-leaf*/proxy (parameters/proxy
+                             (parameters fundamental-tree-training-parameters))
   (make 'standard-leaf-node))
 
 
-(defmethod split*
-    ((training-parameters fundamental-tree-training-parameters)
+(defmethod split*/proxy
+    (parameters/proxy
+     (training-parameters fundamental-tree-training-parameters)
      training-state)
-  (declare (optimize (debug 3)))
   (bind ((trials-count (trials-count training-parameters))
          (minimal-difference (minimal-difference training-parameters))
          (score (loss training-state))
@@ -239,12 +245,14 @@
       (when (or (< left-length minimal-size)
                 (< right-length minimal-size))
         (next-iteration))
-      (for (values left-score right-score) = (calculate-loss*
-                                              training-parameters
-                                              training-state
-                                              split-array))
-      (for split-score = (+ (* (/ left-length data-size) left-score)
-                            (* (/ right-length data-size) right-score)))
+      (for (values left-score right-score) =
+           (calculate-loss* training-parameters
+                            training-state
+                            split-array))
+      (for split-score = (+ (* (/ left-length data-size)
+                               left-score)
+                            (* (/ right-length data-size)
+                               right-score)))
       (when (< split-score minimal-score)
         (setf minimal-score split-score
               optimal-point point
@@ -261,18 +269,20 @@
            (return nil))
          (bind ((new-depth (~> training-state depth 1+))
                 ((:flet new-state (position size loss))
-                 (split-training-state* training-parameters
-                                        training-state
-                                        optimal-array
-                                        position
-                                        size
-                                        `(:depth ,new-depth :loss ,loss)
-                                        optimal-point))
+                 (split-training-state*
+                  training-parameters
+                  training-state
+                  optimal-array
+                  position
+                  size
+                  `(:depth ,new-depth :loss ,loss)
+                  optimal-point))
                 ((:flet subtree-impl (position
                                       size
                                       loss
                                       &aux (state (new-state position size loss))))
-                 (~>> state make-leaf (split state)))
+                 (~>> (make-leaf* training-parameters)
+                      (split state)))
                 ((:flet subtree (position size loss &optional parallel))
                  (if (and parallel (< new-depth 10))
                      (lparallel:future (subtree-impl position size loss))
@@ -288,25 +298,30 @@
                               :point optimal-point))))))))
 
 
-(defmethod split-training-state* ((parameters standard-tree-training-parameters)
-                                  state split-array
-                                  position size initargs
-                                  point)
+(defmethod split-training-state*/proxy
+    (parameters/proxy
+     (parameters standard-tree-training-parameters)
+     state split-array
+     position size initargs
+     point)
   (bind ((cloning-list (cl-ds.utils:cloning-list state)))
     (apply #'make (class-of state)
            (append initargs
-                   (split-training-state-info (splitter parameters)
-                                              parameters
-                                              state
-                                              split-array
-                                              position
-                                              size
-                                              point)
+                   (split-training-state-info/proxy
+                    parameters/proxy
+                    (splitter parameters)
+                    parameters
+                    state
+                    split-array
+                    position
+                    size
+                    point)
                    cloning-list))))
 
 
-(defmethod sl.mp:sample-training-state-info append
-    ((parameters fundamental-tree-training-parameters)
+(defmethod sl.mp:sample-training-state-info/proxy append
+    (parameters/proxy
+     (parameters fundamental-tree-training-parameters)
      state
      &key train-attributes data-points)
   (list :attributes (if (null train-attributes)
@@ -317,9 +332,10 @@
                          data-points)))
 
 
-(defmethod leaf-for ((splitter random-attribute-splitter)
-                     (node fundamental-node)
-                     data index)
+(defmethod leaf-for/proxy (proxy
+                           (splitter random-attribute-splitter)
+                           (node fundamental-node)
+                           data index)
   (declare (type sl.data:double-float-data-matrix data)
            (type fixnum index))
   (labels ((impl (node)
@@ -336,7 +352,9 @@
     (impl node)))
 
 
-(defmethod pick-split* ((splitter random-attribute-splitter) parameters state)
+(defmethod pick-split*/proxy (splitter/proxy
+                              (splitter random-attribute-splitter)
+                              parameters state)
   "Uses ExtraTree approach."
   (declare (optimize (speed 3) (safety 0))
            (ignore parameters))
@@ -352,11 +370,13 @@
     (list* attribute-index (if (= threshold max) min threshold))))
 
 
-(defmethod fill-split-vector* ((splitter random-attribute-splitter)
-                               parameters
-                               state
-                               point
-                               split-vector)
+(defmethod fill-split-vector*/proxy
+    (splitter/proxy
+     (splitter random-attribute-splitter)
+     parameters
+     state
+     point
+     split-vector)
   (declare (type sl.data:split-vector split-vector)
            (type cons point)
            (optimize (speed 3) (safety 0) (debug 0)))
@@ -383,15 +403,19 @@
       (finally (return (values left-count right-count))))))
 
 
-(defmethod requires-split-p and ((splitter random-attribute-splitter)
-                                 (training-parameters standard-tree-training-parameters)
+(defmethod requires-split-p/proxy
+    and (parameters/proxy
+         (splitter random-attribute-splitter)
+         (training-parameters standard-tree-training-parameters)
                                  training-state)
   (~> training-state attribute-indexes emptyp not))
 
 
-(defmethod requires-split-p and ((splitter fundamental-splitter)
-                                 (training-parameters standard-tree-training-parameters)
-                                 training-state)
+(defmethod requires-split-p/proxy
+    and (parameters/proxy
+         (splitter fundamental-splitter)
+         (training-parameters standard-tree-training-parameters)
+         training-state)
   (let* ((indexes (sl.mp:data-points training-state))
          (depth (depth training-state))
          (loss (loss training-state))
@@ -403,9 +427,10 @@
          (<= loss (minimal-difference training-parameters)))))
 
 
-(defmethod pick-split* ((splitter distance-splitter)
-                        parameters
-                        state)
+(defmethod pick-split*/proxy (splitter/proxy
+                              (splitter distance-splitter)
+                              parameters
+                              state)
   (let* ((data-points (sl.mp:data-points state))
          (train-data (sl.mp:train-data state))
          (length (length data-points))
@@ -439,11 +464,13 @@
           (~> (aref data-points second-index) (sl.data:mref train-data _ 0)))))
 
 
-(defmethod fill-split-vector* ((splitter distance-splitter)
-                               parameters
-                               state
-                               point
-                               split-vector)
+(defmethod fill-split-vector*/proxy
+    (splitter/proxy
+     (splitter distance-splitter)
+     parameters
+     state
+     point
+     split-vector)
   (declare (type cons point)
            (type sl.data:split-vector split-vector)
            (optimize (speed 3) (safety 0)))
@@ -474,10 +501,11 @@
       (finally (return (values left-length right-length))))))
 
 
-(defmethod leaf-for ((splitter distance-splitter)
-                     node
-                     data
-                     index)
+(defmethod leaf-for/proxy (splitter/proxy
+                           (splitter distance-splitter)
+                           node
+                           data
+                           index)
   (declare (type fixnum index))
   (let ((object (sl.data:mref data index 0))
         (distance-function (ensure-function (distance-function splitter))))
@@ -498,8 +526,10 @@
       (impl node))))
 
 
-(defmethod requires-split-p and ((splitter distance-splitter)
-                                 parameters
-                                 training-state)
+(defmethod requires-split-p/proxy
+    and (parameters/proxy
+         (splitter distance-splitter)
+         parameters
+         training-state)
   (> (~> training-state sl.mp:data-points length) 2))
 
