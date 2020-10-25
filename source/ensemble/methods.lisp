@@ -451,10 +451,13 @@
 
 (defmethod ensemble-slot ((ensemble-state ensemble-state)
                           slot)
-  (gethash slot (additional-slots ensemble-state)))
+  (bt:with-lock-held ((additional-slots-mutex ensemble-state))
+    (gethash slot (additional-slots ensemble-state))))
 
 
 (defmethod (setf ensemble-slot) (new-value
                                   (ensemble-state ensemble-state)
                                   slot)
-  (setf (gethash slot (additional-slots ensemble-state)) new-value))
+  (bt:with-lock-held ((additional-slots-mutex ensemble-state))
+    (setf (gethash slot (additional-slots ensemble-state))
+          new-value)))
