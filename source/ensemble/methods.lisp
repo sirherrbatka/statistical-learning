@@ -447,3 +447,14 @@
              indexes)
     (setf (leafs-assigned-p state) t)
     nil))
+
+
+(defmethod ensemble-slot ((ensemble-state ensemble-state)
+                          slot)
+  (gethash slot (additional-slots ensemble-state)))
+
+
+(defmethod (setf ensemble-slot) (new-value
+                                  (ensemble-state ensemble-state)
+                                  slot)
+  (setf (gethash slot (additional-slots ensemble-state)) new-value))

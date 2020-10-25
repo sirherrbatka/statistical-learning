@@ -80,11 +80,15 @@
    (%leafs-assigned-p :initarg :leafs-assigned-p
                       :accessor leafs-assigned-p)
    (%weights :initarg :weights
-             :accessor sl.mp:weights))
-  (:default-initargs :samples-view nil
-                     :leafs-assigned-p nil
-                     :attributes-view nil
-                     :trees-view nil))
+             :accessor sl.mp:weights)
+   (%additional-slots :initargs :additional-slots
+                      :reader additional-slots))
+  (:default-initargs
+   :samples-view nil
+   :leafs-assigned-p nil
+   :attributes-view nil
+   :trees-view nil
+   :additional-slots (make-hash-table :test 'equal)))
 
 
 (defclass gradient-boost-ensemble (ensemble)

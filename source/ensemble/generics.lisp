@@ -32,3 +32,5 @@
 (defgeneric (setf trees-view) (new-value ensemble-state))
 (defgeneric samples-view (ensemble-state))
 (defgeneric (setf samples-view) (new-value ensemble-state))
+(defgeneric ensemble-slot (ensemble-state slot))
+(defgeneric (setf ensemble-slot) (new-value ensemble-state slot))
