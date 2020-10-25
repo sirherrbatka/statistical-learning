@@ -14,11 +14,14 @@
       (weighted-sample tree-sample-size distribution)))
 
 
-(defun fit-tree-batch (parameters trees all-attributes
-                       initargs state
-                       sampling-weights samples)
+(defun fit-tree-batch (initargs state)
   (cl-ds.utils:with-rebind (cl-progress-bar:*progress-bar*)
-    (bind ((parallel (parallel parameters))
+    (bind ((parameters (sl.mp:parameters state))
+           (parallel (parallel parameters))
+           (trees (trees-view state))
+           (samples (samples-view state))
+           (all-attributes (attributes-view state))
+           (sampling-weights (sl.mp:weights state))
            (tree-sample-rate (tree-sample-rate parameters))
            (tree-parameters (tree-parameters parameters))
            (train-data (sl.mp:train-data state))
@@ -31,12 +34,16 @@
                              (sl.random:discrete-distribution sampling-weights)))
            ((:flet make-model (attributes sample))
             (cl-ds.utils:rebind
-             (bind ((sub-state (apply #'sl.mp:make-training-state
-                                      tree-parameters
-                                      :data-points (sort sample #'<)
-                                      :attributes attributes
-                                      complete-initargs))
-                    (model (sl.mp:make-model* tree-parameters sub-state)))
+             (bind ((*state* state)
+                    (sub-state (make-tree-training-state
+                                parameters
+                                tree-parameters
+                                state
+                                attributes
+                                (sort sample #'<)
+                                complete-initargs))
+                    (model (sl.mp:make-model* tree-parameters
+                                              sub-state)))
                (cl-progress-bar:update 1)
                model))))
       (map-into samples (curry #'bootstrap-sample

@@ -13,9 +13,7 @@
 
 
 (defclass dynamic-weights-calculator (fundamental-weights-calculator)
-  ((%indexes :initarg :indexes
-             :accessor indexes)
-   (%counts :initarg :counts
+  ((%counts :initarg :counts
             :accessor counts))
   (:default-initargs
    :indexes nil
@@ -53,12 +51,40 @@
 (defclass ensemble-state (sl.mp:fundamental-training-state)
   ((%all-args :initarg :all-args
               :reader all-args)
+   (%parameters :initarg :parameters
+                :reader sl.mp:parameters)
+   (%trees :initarg :trees
+           :accessor trees)
+   (%attributes :initarg :attributes
+                :reader attributes)
+   (%samples :initarg :samples
+             :reader samples)
+   (%trees-view :initarg :trees-view
+                :accessor trees-view)
+   (%attributes-view :initarg :attributes-view
+                     :accessor attributes-view)
+   (%samples-view :initarg :samples-view
+                  :accessor samples-view)
+   (%sampling-weights :initarg :sampling-weights
+                      :accessor sampling-weights)
+   (%all-attributes :initarg :all-attributes
+                    :accessor all-attributes)
    (%train-data :initarg :train-data
                 :reader sl.mp:train-data)
+   (%indexes :initarg :indexes
+             :reader indexes)
    (%target-data :initarg :target-data
                  :reader sl.mp:target-data)
+   (%assigned-leafs :initarg :assigned-leafs
+                    :accessor assigned-leafs)
+   (%leafs-assigned-p :initarg :leafs-assigned-p
+                      :accessor leafs-assigned-p)
    (%weights :initarg :weights
-             :reader sl.mp:weights)))
+             :accessor sl.mp:weights))
+  (:default-initargs :samples-view nil
+                     :leafs-assigned-p nil
+                     :attributes-view nil
+                     :trees-view nil))
 
 
 (defclass gradient-boost-ensemble (ensemble)

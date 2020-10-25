@@ -10,6 +10,9 @@
    #:gradient-boost-ensemble
    #:gradient-boost-ensemble-model
    #:leafs
+   #:make-tree-training-state
+   #:make-tree-training-state/proxy
+   #:*state*
    #:random-forest
    #:random-forest-model
    #:static-weights-calculator

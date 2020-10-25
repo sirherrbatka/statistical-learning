@@ -65,7 +65,18 @@
 
 
 (defmethod cl-ds.utils:cloning-information append ((state ensemble-state))
-  '((:all-args all-args)))
+  '((:all-args all-args)
+    (:trees trees)
+    (:attributes attributes)
+    (:samples samples)
+    (:trees-view trees-view)
+    (:attributes-view attributes-view)
+    (:samples-view samples-view)
+    (:sampling-weights sampling-weights)
+    (:all-attributes all-attributes)
+    (:indexes indexes)
+    (:assigned-leafs assigned-leafs)
+    (:weights weights)))
 
 
 (defmethod initialize-instance :after ((instance dynamic-weights-calculator)
@@ -74,55 +85,44 @@
   (declare (ignore initargs))
   (let* ((weights (weights instance))
          (data-points-count (sl.data:data-points-count weights)))
-    (setf (indexes instance) (sl.data:iota-vector data-points-count)
-          (counts instance) (make-array `(,data-points-count 2)
+    (setf (counts instance) (make-array `(,data-points-count 2)
                                         :element-type 'fixnum
                                         :initial-element 0))))
 
 
 (defmethod update-weights ((calculator static-weights-calculator)
                            tree-parameters
-                           prev-trees
-                           samples)
+                           ensemble-state)
   nil)
 
 
 (defmethod update-weights ((calculator dynamic-weights-calculator)
                            (tree-parameters sl.perf:classification)
-                           prev-trees
-                           samples)
-  (declare (type vector samples prev-trees)
-           (optimize (speed 3) (safety 0)))
-  (let ((indexes (indexes calculator))
-        (parallel (parallel calculator))
-        (splitter (sl.tp:splitter tree-parameters))
-        (train-data (train-data calculator))
-        (target-data (target-data calculator))
-        (weights (weights calculator))
-        (counts (counts calculator)))
-    (declare (type sl.data:data-matrix train-data)
-             (type (simple-array fixnum (* *)) counts)
+                           ensemble-state)
+  (let* ((parallel (~> ensemble-state sl.mp:parameters parallel))
+         (indexes (indexes ensemble-state))
+         (prev-trees (trees-view ensemble-state))
+         (target-data (sl.mp:target-data ensemble-state))
+         (counts (counts calculator))
+         (assigned-leafs (assigned-leafs ensemble-state))
+         (weights (sl.mp:weights ensemble-state)))
+    (declare (type (simple-array fixnum (* *)) counts)
              (type sl.data:double-float-data-matrix target-data weights))
-    (cl-ds.utils:transform #'cl-ds.alg:to-hash-table
-                           samples)
-    (map nil #'sl.tp:force-tree prev-trees)
+    (assign-leafs ensemble-state)
     (funcall (if parallel #'lparallel:pmap #'map)
              nil
-             (lambda (index &aux )
+             (lambda (index)
                (declare (type fixnum index))
                (iterate
                  (declare (type double-float expected))
                  (with expected = (sl.data:mref (the sl.data:double-float-data-matrix target-data)
                                                 index
                                                 0))
+                 (with leafs = (aref assigned-leafs index))
+                 (for i from (~> leafs length 1-) downto 0)
                  (for tree in-vector prev-trees)
-                 (for sample in-vector samples)
+                 (for leaf = (aref leafs i))
                  (incf (aref counts index 0))
-                 (when (gethash index sample) (next-iteration))
-                 (for leaf = (sl.tp:leaf-for splitter
-                                             (sl.tp:root tree)
-                                             train-data
-                                             index))
                  (for predictions = (sl.tp:predictions leaf))
                  (for prediction =
                       (iterate
@@ -151,19 +151,32 @@
                                             (parameters random-forest)
                                             &rest initargs
                                             &key train-data target-data weights)
-  (make 'ensemble-state
-        :train-data train-data
-        :target-data target-data
-        :weights weights
-        :training-parameters parameters
-        :all-args initargs))
+  (bind ((trees-count (trees-count parameters))
+         (attributes (make-array trees-count))
+         (trees (make-array trees-count))
+         (data-points-count (sl.data:data-points-count train-data))
+         (assigned-leafs (map-into (make-array data-points-count)
+                                   #'vect))
+         (indexes (sl.data:iota-vector data-points-count))
+         (samples (make-array trees-count)))
+    (make 'ensemble-state
+          :train-data train-data
+          :indexes indexes
+          :assigned-leafs assigned-leafs
+          :parameters parameters
+          :trees trees
+          :attributes attributes
+          :samples samples
+          :target-data target-data
+          :weights weights
+          :training-parameters parameters
+          :all-args initargs)))
 
 
 (defmethod sl.mp:make-model*/proxy (parameters/proxy
                                     (parameters random-forest)
                                     state)
   (bind ((train-data (sl.mp:train-data state))
-         (weights (sl.mp:weights state))
          (target-data (sl.mp:target-data state))
          (train-data-attributes (sl.data:attributes-count train-data))
          (tree-batch-size (tree-batch-size parameters))
@@ -171,10 +184,9 @@
          (trees-count (trees-count parameters))
          (parallel (parallel parameters))
          (tree-attributes-count (tree-attributes-count parameters))
-         (trees (make-array trees-count
-                            :initial-element nil))
-         (samples (make-array trees-count))
-         (attributes (make-array trees-count))
+         ((:accessors trees samples attributes attributes-view
+                      samples-view trees-view (weights sl.mp:weights))
+          state)
          (weights-calculator nil)
          (attributes-generator (sl.data:selecting-random-indexes
                                 tree-attributes-count
@@ -203,30 +215,25 @@
           (with state-initargs = '())
           (setf prev-index index)
           (while (< index trees-count))
-          (for trees-view = (array-view trees
+          (setf trees-view (array-view trees
                                         :from index
                                         :to (+ index tree-batch-size)))
-          (for attributes-view = (array-view attributes
+          (setf attributes-view (array-view attributes
                                              :from index
                                              :to (+ index tree-batch-size)))
           (map-into attributes-view attributes-generator)
-          (for samples-view = (array-view samples
-                                          :from index
-                                          :to (+ index tree-batch-size)))
-          (fit-tree-batch parameters trees-view attributes-view
-                          state-initargs state
-                          weights samples-view)
+          (setf samples-view (array-view samples
+                                         :from index
+                                         :to (+ index tree-batch-size)))
+          (fit-tree-batch state-initargs state)
+          (setf (leafs-assigned-p state) nil)
+          (after-tree-fitting parameters tree-parameters state)
           (setf index (min trees-count (+ index tree-batch-size)))
           (for new-trees = (- index prev-index))
           (unless (zerop new-trees)
             (update-weights weights-calculator
-                            (sl.pt:inner tree-parameters)
-                            (array-view trees
-                                        :from prev-index
-                                        :to index)
-                            (array-view samples
-                                        :from prev-index
-                                        :to index)))))
+                            tree-parameters
+                            state))))
       (make 'random-forest-model
             :trees trees
             :parameters parameters
@@ -238,11 +245,26 @@
                                             &rest initargs
                                             &key target-data train-data weights)
   (let* ((tree-parameters (tree-parameters parameters))
-         (expected-value (sl.gbt:calculate-expected-value tree-parameters
-                                                          target-data)))
+         (expected-value (sl.gbt:calculate-expected-value
+                          tree-parameters
+                          target-data))
+         (trees-count (trees-count parameters))
+         (data-points-count (sl.data:data-points-count train-data))
+         (indexes (sl.data:iota-vector data-points-count))
+         (assigned-leafs (map-into (make-array data-points-count)
+                                   #'vect))
+         (attributes (make-array trees-count))
+         (trees (make-array trees-count))
+         (samples (make-array trees-count)))
     (make 'ensemble-state
           :all-args `(:expected-value ,expected-value ,@initargs)
+          :parameters parameters
           :train-data train-data
+          :indexes indexes
+          :trees trees
+          :assigned-leafs assigned-leafs
+          :attributes attributes
+          :samples samples
           :target-data target-data
           :weights weights
           :training-parameters parameters)))
@@ -258,11 +280,11 @@
          (tree-batch-size (tree-batch-size parameters))
          (tree-parameters (tree-parameters parameters))
          (trees-count (trees-count parameters))
-         (samples (make-array trees-count))
          (parallel (parallel parameters))
          (tree-attributes-count (tree-attributes-count parameters))
-         (trees (make-array trees-count))
-         (attributes (make-array trees-count))
+         ((:accessors trees samples attributes attributes-view
+                      samples-view trees-view)
+          state)
          (attributes-generator (sl.data:selecting-random-indexes
                                 tree-attributes-count
                                 train-data-attributes))
@@ -280,19 +302,18 @@
              below trees-count
              by tree-batch-size)
         (while (< index trees-count))
-        (for trees-view = (array-view trees
-                                      :from index
-                                      :to (+ index tree-batch-size)))
-        (for attributes-view = (array-view attributes
-                                           :from index
-                                           :to (+ index tree-batch-size)))
+        (setf trees-view (array-view trees
+                                     :from index
+                                     :to (+ index tree-batch-size)))
+        (setf attributes-view (array-view attributes
+                                          :from index
+                                          :to (+ index tree-batch-size)))
         (map-into attributes-view attributes-generator)
-        (for samples-view = (array-view samples
-                                        :from index
-                                        :to (+ index tree-batch-size)))
-        (fit-tree-batch parameters trees-view attributes-view
-                        `(:response ,response :shrinkage ,shrinkage)
-                        state nil samples-view)
+        (setf samples-view (array-view samples
+                                       :from index
+                                       :to (+ index tree-batch-size)))
+        (fit-tree-batch `(:response ,response :shrinkage ,shrinkage)
+                        state)
         (for new-contributed = (contribute-trees tree-parameters
                                                  trees-view
                                                  train-data
@@ -372,3 +393,57 @@
                  (finally (return result))))
              unfolded)
     result))
+
+
+(defmethod make-tree-training-state/proxy
+    (ensemble-parameters/proxy
+     tree-parameters/proxy
+     ensemble-parameters
+     tree-parameters
+     ensemble-state
+     attributes
+     sample
+     initargs)
+  (apply #'sl.mp:make-training-state
+         tree-parameters
+         :data-points sample
+         :attributes attributes
+         initargs))
+
+
+(defmethod after-tree-fitting/proxy
+    (ensemble-parameters/proxy
+     tree-parameters/proxy
+     ensemble-parameters
+     tree-parameters
+     ensemble-state)
+  nil)
+
+
+(defmethod assign-leafs ((state ensemble-state))
+  (when (leafs-assigned-p state)
+    (return-from assign-leafs nil))
+  (bind ((parallel (~> state sl.mp:parameters parallel))
+         (parameters (sl.mp:parameters state))
+         (tree-parameters (tree-parameters parameters))
+         (splitter (sl.tp:splitter tree-parameters))
+         (assigned-leafs (assigned-leafs state))
+         (train-data (sl.mp:train-data state))
+         (trees (trees-view state))
+         (indexes (indexes state)))
+    (map nil #'sl.tp:force-tree trees)
+    (funcall (if parallel #'lparallel:pmap #'map)
+             nil
+             (lambda (index)
+               (declare (type fixnum index))
+               (iterate
+                 (with leafs = (aref assigned-leafs index))
+                 (for tree in-vector trees)
+                 (for leaf = (sl.tp:leaf-for splitter
+                                             (sl.tp:root tree)
+                                             train-data
+                                             index))
+                 (vector-push-extend leaf leafs)))
+             indexes)
+    (setf (leafs-assigned-p state) t)
+    nil))
