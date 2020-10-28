@@ -74,3 +74,6 @@
 (defgeneric indexes (predictions))
 (defgeneric contributions-count (predictions))
 (defgeneric training-parameters (predictions))
+(defgeneric split-point (tree-training-state))
+(defgeneric (setf split-point) (new-value tree-training-state))
+(defgeneric distance-function (splitter))

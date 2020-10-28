@@ -121,8 +121,9 @@
                  state)))
 
 
-(defun fill-split-vector (state point split-vector)
-  (let ((parameters (sl.mp:training-parameters state)))
+(defun fill-split-vector (state split-vector)
+  (let ((parameters (sl.mp:training-parameters state))
+        (point (split-point state)))
     (fill-split-vector* (splitter parameters)
                         parameters
                         state

@@ -77,10 +77,16 @@
                  :reader sl.mp:target-data)
    (%weights :initarg :weights
              :reader sl.mp:weights)
+   (%split-point :initarg :split-point
+                 :accessor split-point)
+   (%optimal-split-point :initarg :optimal-split-point
+                         :accessor optimal-split-point)
    (%train-data :initarg :train-data
                 :reader sl.mp:train-data))
   (:default-initargs :depth 0
                      :attributes nil
+                     :split-point nil
+                     :optimal-split-point nil
                      :weights nil
                      :data-points nil))
 

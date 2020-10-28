@@ -71,6 +71,7 @@
     (:samples samples)
     (:trees-view trees-view)
     (:attributes-view attributes-view)
+    (:additonal-slots additional-slots)
     (:samples-view samples-view)
     (:sampling-weights sampling-weights)
     (:all-attributes all-attributes)
@@ -402,11 +403,11 @@
      tree-parameters
      ensemble-state
      attributes
-     sample
+     data-points
      initargs)
   (apply #'sl.mp:make-training-state
          tree-parameters
-         :data-points sample
+         :data-points data-points
          :attributes attributes
          initargs))
 
@@ -451,13 +452,11 @@
 
 (defmethod ensemble-slot ((ensemble-state ensemble-state)
                           slot)
-  (bt:with-lock-held ((additional-slots-mutex ensemble-state))
-    (gethash slot (additional-slots ensemble-state))))
+  (gethash slot (additional-slots ensemble-state)))
 
 
 (defmethod (setf ensemble-slot) (new-value
                                   (ensemble-state ensemble-state)
                                   slot)
-  (bt:with-lock-held ((additional-slots-mutex ensemble-state))
-    (setf (gethash slot (additional-slots ensemble-state))
-          new-value)))
+  (setf (gethash slot (additional-slots ensemble-state))
+        new-value))

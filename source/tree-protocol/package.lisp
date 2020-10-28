@@ -28,6 +28,9 @@
    #:fundamental-splitter
    #:fundamental-tree-node
    #:fundamental-tree-training-parameters
+   #:optimal-split-point
+   #:distance-function
+   #:split-point
    #:indexes
    #:initialize-leaf
    #:initialize-leaf/proxy

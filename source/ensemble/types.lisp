@@ -81,16 +81,13 @@
                       :accessor leafs-assigned-p)
    (%weights :initarg :weights
              :accessor sl.mp:weights)
-   (%additional-slots-mutex :initargs :additional-slots-mutex
-                            :reader additional-slots-mutex)
-   (%additional-slots :initargs :additional-slots
+   (%additional-slots :initarg :additional-slots
                       :reader additional-slots))
   (:default-initargs
    :samples-view nil
    :leafs-assigned-p nil
    :attributes-view nil
    :trees-view nil
-   :additional-slots-mutex (bt:make-lock)
    :additional-slots (make-hash-table :test 'equal)))
 
 

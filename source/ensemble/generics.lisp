@@ -17,7 +17,7 @@
      (tree-parameters)
      ensemble-state
      attributes
-     sample
+     data-points
      initargs))
 (sl.common:defgeneric/proxy after-tree-fitting
     ((ensemble-parameters)

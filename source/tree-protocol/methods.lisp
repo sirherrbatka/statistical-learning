@@ -43,6 +43,8 @@
 (defmethod cl-ds.utils:cloning-information append
     ((object tree-training-state))
   `((:depth depth)
+    (:split-point split-point)
+    (:optimal-split-point optimal-split-point)
     (:loss loss)
     (:attributes attribute-indexes)
     (:data-points sl.mp:data-points)
@@ -212,6 +214,7 @@
     (parameters/proxy
      (training-parameters fundamental-tree-training-parameters)
      training-state)
+  (declare (optimize (debug 3) (speed 0) (safety 3)))
   (bind ((trials-count (trials-count training-parameters))
          (minimal-difference (minimal-difference training-parameters))
          (score (loss training-state))
@@ -223,8 +226,7 @@
     (iterate
       (declare (type fixnum attempt left-length right-length
                      optimal-left-length optimal-right-length data-size)
-               (type double-float
-                     left-score right-score minimal-score))
+               (type double-float left-score right-score minimal-score))
       (with optimal-left-length = -1)
       (with optimal-right-length = -1)
       (with optimal-point = nil)
@@ -238,9 +240,9 @@
       (with optimal-array = (sl.opt:make-split-array data-size))
       (for attempt from 0 below (min data-size trials-count))
       (for point = (pick-split training-state))
+      (setf (split-point training-state) point)
       (for (values left-length right-length) = (fill-split-vector
                                                 training-state
-                                                point
                                                 split-array))
       (when (or (< left-length minimal-size)
                 (< right-length minimal-size))
@@ -256,6 +258,7 @@
       (when (< split-score minimal-score)
         (setf minimal-score split-score
               optimal-point point
+              (optimal-split-point training-state) optimal-point
               optimal-left-length left-length
               optimal-right-length right-length
               minimal-left-score left-score
@@ -445,7 +448,9 @@
              (type sl.data:universal-data-matrix train-data)
              (type fixnum repeats first-index second-index))
     (iterate
-      (repeat (iterations splitter))
+      (declare (type fixnum iterations))
+      (with iterations = (iterations splitter))
+      (repeat iterations)
       (for first-data-point = (aref data-points first-index))
       (for object = (sl.data:mref train-data first-data-point 0))
       (for result =
@@ -460,8 +465,10 @@
       (when (= result second-index) (finish))
       (setf second-index result)
       (rotatef first-index second-index))
-    (cons (~> (aref data-points first-index) (sl.data:mref train-data _ 0))
-          (~> (aref data-points second-index) (sl.data:mref train-data _ 0)))))
+    (cons (~> (aref data-points first-index)
+              (sl.data:mref train-data _ 0))
+          (~> (aref data-points second-index)
+              (sl.data:mref train-data _ 0)))))
 
 
 (defmethod fill-split-vector*/proxy

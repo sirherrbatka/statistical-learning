@@ -1,7 +1,7 @@
 (cl:in-package #:sl.proxy-tree)
 
 
-(defclass honest-tree (sl.common:lifting-proxy)
+(defclass honest-tree (tree-proxy)
   ())
 
 

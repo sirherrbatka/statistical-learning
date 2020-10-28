@@ -12,7 +12,7 @@
    #:assigned-leafs
    #:dynamic-weights-calculator
    #:ensemble-model
-   #:ensmble-slot
+   #:ensemble-slot
    #:gradient-boost-ensemble
    #:gradient-boost-ensemble-model
    #:indexes

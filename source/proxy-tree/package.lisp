@@ -6,5 +6,10 @@
   (:nicknames #:sl.proxy-tree #:sl.pt)
   (:export
    #:honest
+   #:honest-tree
+   #:causal-tree
    #:causal
+   #:tree-proxy
+   ;; #:triplet-tree
+   #:triplet
    #:inner))

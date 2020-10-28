@@ -1,7 +1,7 @@
 (cl:in-package #:sl.proxy-tree)
 
 
-(defclass causal-tree (sl.common:lifting-proxy)
+(defclass causal-tree (tree-proxy)
   ((%minimal-treatment-size :reader minimal-treatment-size
                             :initarg :minimal-treatment-size)
    (%treatment-types-count :reader treatment-types-count
@@ -50,23 +50,19 @@
 
 (defmethod sl.tp:split-training-state*/proxy
     ((proxy causal-tree)
-     parameters
-     state
-     split-array
-     position
-     size
-     initargs
-     point)
-  (cl-ds.utils:quasi-clone* state
-    :inner (sl.tp:split-training-state*/proxy
-            (sl.common:next-proxy proxy)
-            parameters
-            (inner state)
-            split-array
-            position
-            size
-            initargs
-            point)))
+     parameters state split-array
+     position size initargs point)
+  (cl-ds.utils:quasi-clone
+   state
+   :inner (sl.tp:split-training-state*/proxy
+           (sl.common:next-proxy proxy)
+           parameters
+           (inner state)
+           split-array
+           position
+           size
+           initargs
+           point)))
 
 
 (defmethod sl.mp:sample-training-state*/proxy
