@@ -143,8 +143,9 @@
                (unless (zerop total)
                  (setf (sl.data:mref (the sl.data:double-float-data-matrix weights)
                                      index 0)
-                       (- 1.0d0 (/ (the fixnum (aref counts index 1))
-                                   total)))))
+                       (+ (- 1.0d0 (/ (the fixnum (aref counts index 1))
+                                      total))
+                          double-float-epsilon))))
              indexes)))
 
 
@@ -177,6 +178,7 @@
 (defmethod sl.mp:make-model*/proxy (parameters/proxy
                                     (parameters random-forest)
                                     state)
+  (declare (optimize (debug 3)))
   (bind ((train-data (sl.mp:train-data state))
          (target-data (sl.mp:target-data state))
          (train-data-attributes (sl.data:attributes-count train-data))
