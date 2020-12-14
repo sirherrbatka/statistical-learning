@@ -176,9 +176,11 @@
 
 
 (defun f1-score (confusion-matrix)
-  (coerce (/ 2 (+ (/ 1 (precision confusion-matrix))
-                  (/ 1 (recall confusion-matrix))))
-          'double-float))
+  (let ((precision (precision confusion-matrix))
+        (recall (recall confusion-matrix)))
+    (coerce (/ (* 2 precision recall)
+               (+ precision recall))
+            'double-float)))
 
 
 (defun performance-metric (parameters target predictions &key weights (type :default))
