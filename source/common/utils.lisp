@@ -19,27 +19,16 @@
      (* (- p2x p3x) (- p1y p3y))))
 
 
-(defstruct gauss-random-state
-  (u 0.0d0 :type double-float)
-  (v 0.0d0 :type double-float)
-  (phase t :type boolean)
-  (lock (bt:make-lock)))
-
-
-(defun gauss-random (state)
-  (bind (((:structure gauss-random-state- u v phase lock)
-          state))
-    (bt:with-lock-held (lock)
-      (prog1
-          (if phase
-              (progn
-                (setf u (/ (+ 1.0d0 (random most-positive-fixnum))
-                           (+ 2.0d0 most-positive-fixnum))
-                      v (/ (random most-positive-fixnum)
-                           (+ 1.0d0 most-positive-fixnum)))
-                (* (sqrt (* -2.0d0 (log u)))
-                   (sin (* 2.0d0 pi v))))
-              (* (sqrt (* -2.0d0 (log u)))
-                 (cos (* 2.0d0 pi v))))
-        (setf phase (not phase))))))
-
+(defun gauss-random (&optional (mean 0.0d0) (std-dev 0.1d0))
+  "Normal random numbers, with the given mean & standard deviation."
+  (do* ((rand-u (* 2 (- 0.5d0 (random 1.0d0)))
+                (* 2 (- 0.5d0 (random 1.0d0))))
+        (rand-v (* 2 (- 0.5d0 (random 1.0d0)))
+                (* 2 (- 0.5d0 (random 1.0d0))))
+        (rand-s (+ (* rand-u rand-u) (* rand-v rand-v))
+                (+ (* rand-u rand-u) (* rand-v rand-v))))
+       ((nor (= 0 rand-s) (>= rand-s 1))
+        (+ mean
+           (* std-dev
+              (* rand-u (sqrt (/ (* -2.0d0 (log rand-s))
+                                 rand-s))))))))

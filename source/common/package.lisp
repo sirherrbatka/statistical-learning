@@ -12,6 +12,5 @@
    #:lift
    #:random-uniform
    #:side-of-line
-   #:make-gauss-random-state
    #:gauss-random
    #:proxy-enabled))

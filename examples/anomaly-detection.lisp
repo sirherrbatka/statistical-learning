@@ -8,27 +8,37 @@
 
 (cl:in-package #:anomaly-example)
 
-(defvar *data*
+(defparameter *data*
   (lret ((data (vellum:make-table
                 :columns '((:alias x :type double-float)
                            (:alias y :type double-float)))))
     ;; build normal population
-    (let ((state (sl.common:make-gauss-random-state)))
-      (vellum:transform data
-                        (vellum:body (x y)
-                          (let ((r (sl.common:gauss-random state)))
-                            (setf x (- r 2.0d0)
-                                  y (+ r 2.0d0))))
-                        :end 100
-                        :in-place t))
-    ;; add abnormal observations
     (vellum:transform data
                       (vellum:body (x y)
-                        (setf x #1=(random-in-range -5.0d0 5.0d0)
-                              y #1#))
-                      :start 100
-                      :end 110
+                        (let ((re (sl.common:gauss-random)))
+                          (setf x (+ re (random-in-range -0.2 0.2))
+                                y (+ re (random-in-range -0.2 0.2)))))
+                      :end 200
+                      :in-place t)
+    (vellum:transform data
+                      (vellum:body (x y)
+                        (setf x (random-in-range -2.0d0 2.0d0)
+                              y (random-in-range -2.0d0 2.0d0)))
+                      :start 200
+                      :end 220
                       :in-place t)))
+
+(vellum.plot:visualize
+ :plotly
+ (vellum.plot:stack *data*
+                    (vellum.plot:aesthetics
+                     :label "Heatmap"
+                     :x (vellum.plot:axis :label "X" :scale-ratio 1 :scale-anchor :y)
+                     :y (vellum.plot:axis :label "Y" :scale-ratio 1))
+                    (vellum.plot:points
+                     :aesthetics (vellum.plot:aesthetics)
+                     :mapping (vellum.plot:mapping :x 'x :y 'y)))
+ "~/dist.html")
 
 (defparameter *tree-parameters*
   (make 'sl.if:isolation
@@ -49,4 +59,4 @@
                                  (vellum:to-matrix *data*
                                                    :element-type 'double-float)))
 
-;; (clouseau:inspect *model*)
+(clouseau:inspect *model*)

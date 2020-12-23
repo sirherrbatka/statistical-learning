@@ -3,34 +3,26 @@
 
 (-> generate-point (sl.data:double-float-data-matrix
                     (simple-array fixnum (*))
-                    (simple-array fixnum (*))
-                    double-float
-                    sl.data:double-float-data-matrix
-                    sl.data:double-float-data-matrix
-                    t)
-    sl.data:double-float-data-matrix)
-(defun generate-point (data samples attributes
-                       depth-ratio min max gaussian-state)
+                    (simple-array fixnum (*)))
+    split-point)
+(defun generate-point (data samples attributes)
   (iterate
-    (with random-sample = (make-array
-                           1
-                           :element-type 'fixnum
-                           :initial-element (aref samples (random (length samples)))))
-    (with p = (sl.data:sample data
-                              :data-points random-sample
-                              :attributes attributes))
-    (for i from 0 below (sl.data:attributes-count p))
-    (for attribute = (aref attributes i))
-    (incf (sl.data:mref p 0 i)
-          (* (sl.common:gauss-random gaussian-state)
-             depth-ratio
-             (if (= (sl.data:mref max 0 attribute)
-                    (sl.data:mref min 0 attribute))
-                 0.5d0
-                 (/ (- (sl.data:mref max 0 attribute)
-                       (sl.data:mref min 0 attribute))
-                    2.0d0))))
-    (finally (return p))))
+    (with sample = (sl.data:sample data
+                                   :data-points samples
+                                   :attributes attributes))
+    (with attributes-count = (length attributes))
+    (with min = (calculate-mins sample))
+    (with max = (calculate-maxs sample))
+    (with normals = (sl.data:make-data-matrix 1 attributes-count))
+    (for i from 0 below attributes-count)
+    (setf (sl.data:mref normals 0 i) (sl.common:gauss-random))
+    (sum (* (sl.data:mref normals 0 i)
+            (random-in-range (sl.data:mref min 0 i)
+                             (sl.data:mref max 0 i)))
+         into dot-product)
+    (finally (return (make-split-point
+                      :normals normals
+                      :dot-product dot-product)))))
 
 
 (-> scale-double-float
@@ -39,9 +31,7 @@
 (defun scale-double-float (value range scale-min min max)
   (if (= max min)
       value
-      (+ (* range
-            (/ (- value min)
-               (- max min)))
+      (+ (* range (/ (- value min) (- max min)))
          scale-min)))
 
 
@@ -49,38 +39,25 @@
           sl.data:double-float-data-matrix
           fixnum
           fixnum
-          (simple-array fixnum (*))
-          sl.data:double-float-data-matrix
-          sl.data:double-float-data-matrix
-          double-float
-          double-float)
+          (simple-array fixnum (*)))
     double-float)
-(defun wdot (first second first-point second-point attributes
-             mins maxs global-min global-max)
+(defun wdot (first second first-point second-point attributes)
   (declare (optimize (speed 0) (safety 3) (debug 3)))
   (iterate
-    (with range = (- global-max global-min))
     (for i from 0 below (length attributes))
     (for attribute = (aref attributes i))
-    (sum (* (scale-double-float (sl.data:mref first
-                                              first-point
-                                              attribute)
-                                range
-                                global-min
-                                (sl.data:mref mins 0 attribute)
-                                (sl.data:mref maxs 0 attribute))
-            (sl.data:mref second second-point attribute)))))
+    (sum (* (sl.data:mref first first-point attribute)
+            (sl.data:mref second second-point i)))))
 
 
-(defun rightp (dot-product attributes normals data-point data
-               mins maxs global-min global-max)
-  (declare (type double-float dot-product)
-           (type sl.data:double-float-data-matrix normals data)
+(defun rightp (split-point attributes data-point data)
+  (declare (type sl.data:double-float-data-matrix data)
            (type (simple-array fixnum (*)) attributes)
            (type fixnum data-point))
-  (> (wdot normals data 0 data-point attributes
-           mins maxs global-min global-max)
-     dot-product))
+  (let ((dot-product (split-point-dot-product split-point))
+        (normals (split-point-normals split-point)))
+    (< (wdot data normals data-point 0 attributes)
+       dot-product)))
 
 
 (defun calculate-mins (data-matrix)
@@ -97,3 +74,11 @@
     (for min = (sl.data:mref mins 0 i))
     (for max = (sl.data:mref maxs 0 i))
     (finding (list min max) maximizing (- max min))))
+
+
+(defun make-normals (count)
+  (iterate
+    (with result = (sl.data:make-data-matrix 1 count))
+    (for i from 0 below count)
+    (setf (sl.data:mref result 0 i) (sl.common:gauss-random))
+    (finally (return result))))

@@ -6,7 +6,6 @@
   (:nicknames #:statistical-learning.if #:sl.if)
   (:export
    #:c-factor
-   #:make-normals
    #:c
    #:mins
    #:maxs
