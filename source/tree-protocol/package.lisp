@@ -54,7 +54,6 @@
    #:pick-split*/proxy
    #:point
    #:predictions
-   #:predictions-lock
    #:random-attribute-splitter
    #:requires-split-p
    #:requires-split-p/proxy
