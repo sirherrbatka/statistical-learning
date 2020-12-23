@@ -32,7 +32,8 @@
                 (lparallel:future (subtree-impl position size))
                 (subtree-impl position size)))
            (parallel (sl.tp:parallel training-parameters)))
-      (sl.tp:make-node 'sl.tp:fundamental-tree-node
+      (sl.tp:make-node 'isolation-tree
+                       :size (+ left-length right-length)
                        :left-node (subtree sl.opt:left
                                            left-length
                                            parallel)

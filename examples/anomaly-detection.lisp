@@ -16,16 +16,16 @@
     (vellum:transform data
                       (vellum:body (x y)
                         (let ((re (sl.common:gauss-random)))
-                          (setf x (+ re (random-in-range -0.2 0.2))
-                                y (+ re (random-in-range -0.2 0.2)))))
-                      :end 200
+                          (setf x (+ re (random-in-range -0.1 0.1))
+                                y (+ re (random-in-range -0.1 0.1)))))
+                      :end 500
                       :in-place t)
     (vellum:transform data
                       (vellum:body (x y)
-                        (setf x (random-in-range -2.0d0 2.0d0)
-                              y (random-in-range -2.0d0 2.0d0)))
-                      :start 200
-                      :end 220
+                        (setf x (random-in-range -1.5d0 1.5d0)
+                              y (random-in-range -1.5d0 1.5d0)))
+                      :start 500
+                      :end 520
                       :in-place t)))
 
 (vellum.plot:visualize
@@ -42,8 +42,8 @@
 
 (defparameter *tree-parameters*
   (make 'sl.if:isolation
-        :maximal-depth 2
-        :minimal-size 3))
+        :maximal-depth 20
+        :minimal-size 5))
 
 (defparameter *isolation-forest*
   (make 'sl.ensemble:isolation-forest

@@ -25,6 +25,12 @@
    (%c :initarg :c :reader c)))
 
 
+(defclass isolation-tree (sl.tp:fundamental-tree-node)
+  ((%size :initarg :size
+          :accessor size))
+  (:default-initargs :size 0))
+
+
 (defclass isolation-leaf (sl.tp:fundamental-leaf-node)
   ((%size :initarg :size
           :accessor size))
