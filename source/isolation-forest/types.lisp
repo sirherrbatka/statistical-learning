@@ -2,8 +2,7 @@
 
 
 (defclass isolation-splitter (sl.tp:fundamental-splitter)
-  ((%normals :initarg :normals
-             :reader normals)))
+  ())
 
 
 (defclass isolation (sl.tp:basic-tree-training-parameters)
@@ -16,7 +15,25 @@
    (%minimal-size :initarg :minimal-size
                   :reader sl.tp:minimal-size))
   (:default-initargs
-   :splitter (make-instance 'isolation-splitter)))
+   :splitter (make 'isolation-splitter)
+   :parallel nil))
+
+
+(defclass isolation-model (sl.tp:tree-model)
+  ((%normals :initarg :normals
+             :reader normals)
+   (%attributes :initarg :attributes
+                :reader attributes)
+   (%c :initarg :c
+       :reader c)
+   (%mins :initarg :mins
+          :reader mins)
+   (%maxs :initarg :maxs
+          :reader maxs)
+   (%global-min :initarg :global-min
+                :reader global-min)
+   (%global-max :initarg :global-max
+                :reader global-max)))
 
 
 (defclass isolation-leaf (sl.tp:fundamental-leaf-node)
@@ -30,12 +47,16 @@
                 :reader global-min)
    (%global-max :initarg :global-max
                 :reader global-max)
+   (%split-point :initarg :split-point
+                 :accessor sl.tp:split-point)
    (%depth :initarg :depth
            :reader sl.tp:depth)
-   (%averages :initarg :averages
-              :reader averages)
    (%mins :initarg :mins
           :reader mins)
+   (%normals :initarg :normals
+             :reader normals)
+   (%c :initarg :c
+       :reader c)
    (%maxs :initarg :maxs
           :reader maxs)
    (%train-data :initarg :train-data
@@ -45,12 +66,9 @@
    (%data-points :initarg :data-points
                  :reader sl.mp:data-points)
    (%gaussian-state :initarg :gaussian-state
-                    :reader gaussian-state)))
-
-
-(defstruct isolation-forest-split-point
-  (dot-product 0.0d0 :type double-float)
-  attributes)
+                    :reader gaussian-state))
+  (:default-initargs
+   :gaussian-state (sl.common:make-gauss-random-state)))
 
 
 (defclass isolation-prediction ()
@@ -60,10 +78,7 @@
                :accessor trees-sum)
    (%indexes :initarg :indexes
              :reader sl.tp:indexes)
-   (%predictions-lock :initarg :predictions-lock
-                      :reader sl.tp:predictions-lock)
    (%c :initarg :c
        :reader c))
   (:default-initargs
-   :trees-count 0
-   :predictions-lock (bt:make-lock)))
+   :trees-count 0))

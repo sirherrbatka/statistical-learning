@@ -7,8 +7,6 @@
   (:export
    #:c-factor
    #:make-normals
-   #:calculate-mins
-   #:calculate-maxs
    #:c
    #:mins
    #:maxs

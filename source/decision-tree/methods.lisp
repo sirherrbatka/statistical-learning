@@ -109,7 +109,7 @@
                (lambda (data-point)
                  (let* ((leaf (~>> (sl.tp:leaf-for splitter root
                                                    data data-point
-                                                   context)
+                                                   model)
                                    (funcall leaf-key)))
                         (predictions (sl.tp:predictions leaf)))
                    (incf (sl.data:mref sums data-point 0)
@@ -149,7 +149,7 @@
                      (declare (type fixnum j))
                      (with leaf = (~>> (sl.tp:leaf-for splitter root
                                                        data data-point
-                                                       context)
+                                                       model)
                                        (funcall leaf-key)))
                      (with predictions = (sl.tp:predictions leaf))
                      (for j from 0 below number-of-classes)

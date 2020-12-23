@@ -267,7 +267,6 @@
          (tree-batch-size (tree-batch-size parameters))
          (tree-parameters (tree-parameters parameters))
          (trees-count (trees-count parameters))
-         (c (c state))
          (tree-attributes-count (tree-attributes-count parameters))
          ((:accessors trees samples attributes attributes-view
                       samples-view trees-view)
@@ -298,17 +297,11 @@
                                          :from index
                                          :to (+ index tree-batch-size)))
           (fit-tree-batch state-initargs state)
-          (setf (leafs-assigned-p state) nil)
           (after-tree-fitting parameters tree-parameters state)
           (setf index (min trees-count (+ index tree-batch-size)))))
       (make 'isolation-forest-model
             :trees trees
-            :parameters parameters
-            :maxs (sl.if:maxs state)
-            :mins (sl.if:mins state)
-            :global-min (sl.if:mins state)
-            :global-max (sl.if:maxs state)
-            :c c))))
+            :parameters parameters))))
 
 (defmethod sl.mp:weights ((object isolation-forest-ensemble-state))
   nil)
@@ -316,38 +309,24 @@
 (defmethod sl.mp:make-training-state/proxy (parameters/proxy
                                             (parameters isolation-forest)
                                             &rest initargs
-                                            &key train-data)
+                                            &key data)
   (bind ((trees-count (trees-count parameters))
-         (tree-sample-rate (tree-sample-rate parameters/proxy))
-         (data-points-count (sl.data:data-points-count train-data))
+         (tree-sample-rate (tree-sample-rate parameters))
+         (data-points-count (sl.data:data-points-count data))
          (tree-sample-size (* data-points-count tree-sample-rate))
          (indexes (sl.data:iota-vector data-points-count))
-         (assigned-leafs (map-into (make-array data-points-count)
-                                   #'vect))
          (attributes (make-array trees-count))
-         (mins (sl.if:calculate-mins train-data))
-         (maxs (sl.if:calculate-maxs train-data))
-         ((global-min global-max) (global-min/max mins maxs))
          (trees (make-array trees-count))
          (samples (make-array trees-count))
          (c (sl.if:c-factor tree-sample-size)))
     (make 'isolation-forest-ensemble-state
-          :all-args `(,@initargs :mins ,mins :maxs ,maxs
-                                 :global-min global-min
-                                 :global-max global-max)
+          :all-args `(,@initargs :c ,c)
           :parameters parameters
-          :c c
-          :mins mins
-          :maxs maxs
-          :global-min global-min
-          :global-max global-max
-          :train-data train-data
+          :train-data data
           :indexes indexes
           :trees trees
-          :assigned-leafs assigned-leafs
           :attributes attributes
           :samples samples
-          :target-data nil
           :training-parameters parameters)))
 
 

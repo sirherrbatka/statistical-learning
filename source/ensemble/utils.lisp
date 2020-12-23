@@ -81,11 +81,3 @@
 (defun treep (tree)
   (and (not (null tree))
        (~> tree sl.tp:root sl.tp:treep)))
-
-
-(defun global-min/max (mins maxs)
-  (iterate
-    (for i from 0 below (sl.data:attributes-count mins))
-    (for min = (sl.data:mref mins 0 i))
-    (for max = (sl.data:mref maxs 0 i))
-    (finding (list min max) maximizing (- max min))))

@@ -72,18 +72,15 @@
             (sl.data:mref second second-point attribute)))))
 
 
-(defun rightp (split-point normals data-point data
+(defun rightp (dot-product attributes normals data-point data
                mins maxs global-min global-max)
-  (declare (type isolation-forest-split-point split-point)
+  (declare (type double-float dot-product)
            (type sl.data:double-float-data-matrix normals data)
+           (type (simple-array fixnum (*)) attributes)
            (type fixnum data-point))
-  (bind ((dot-product (isolation-forest-split-point-dot-product
-                       split-point))
-         (attributes (isolation-forest-split-point-attributes
-                      split-point)))
-    (> (wdot normals data 0 data-point attributes
-             mins maxs global-min global-max)
-       dot-product)))
+  (> (wdot normals data 0 data-point attributes
+           mins maxs global-min global-max)
+     dot-product))
 
 
 (defun calculate-mins (data-matrix)
@@ -92,3 +89,11 @@
 
 (defun calculate-maxs (data-matrix)
   (sl.data:reduce-data-points #'max data-matrix))
+
+
+(defun global-min/max (mins maxs)
+  (iterate
+    (for i from 0 below (sl.data:attributes-count mins))
+    (for min = (sl.data:mref mins 0 i))
+    (for max = (sl.data:mref maxs 0 i))
+    (finding (list min max) maximizing (- max min))))

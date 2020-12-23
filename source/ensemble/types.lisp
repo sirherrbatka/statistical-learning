@@ -96,16 +96,7 @@
 
 
 (defclass isolation-forest-ensemble-state (ensemble-state)
-  ((%c :initarg :c
-       :reader sl.if:c)
-   (%global-min :initarg :global-min
-                :reader sl.if:global-min)
-   (%global-max :initarg :global-max
-                 :reader sl.if:global-max)
-   (%maxs :initarg :maxs
-          :reader sl.if:maxs)
-   (%mins :initarg :mins
-          :reader sl.if:mins)))
+  ())
 
 
 (defclass gradient-boost-ensemble (ensemble)
@@ -133,13 +124,4 @@
 
 
 (defclass isolation-forest-model (ensemble-model)
-  ((%c :initarg :c
-       :reader sl.if:c)
-   (%global-min :initarg :global-min
-                :reader sl.if:global-min)
-   (%global-max :initarg :global-max
-                :reader sl.if:global-max)
-   (%maxs :initarg :maxs
-          :reader sl.if:maxs)
-   (%mins :initarg :mins
-          :reader sl.if:mins)))
+  ())

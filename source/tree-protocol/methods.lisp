@@ -175,7 +175,7 @@
 
 
 (defmethod initialize-instance :after
-    ((instance fundamental-tree-training-parameters)
+    ((instance standard-tree-training-parameters)
      &rest initargs)
   (declare (ignore initargs))
   (let ((maximal-depth (maximal-depth instance))
