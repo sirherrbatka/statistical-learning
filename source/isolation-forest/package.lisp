@@ -7,9 +7,5 @@
   (:export
    #:c-factor
    #:c
-   #:mins
-   #:maxs
-   #:global-min
-   #:global-max
    #:isolation
    #:isolation-splitter))

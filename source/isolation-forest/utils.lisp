@@ -68,14 +68,6 @@
   (sl.data:reduce-data-points #'max data-matrix))
 
 
-(defun global-min/max (mins maxs)
-  (iterate
-    (for i from 0 below (sl.data:attributes-count mins))
-    (for min = (sl.data:mref mins 0 i))
-    (for max = (sl.data:mref maxs 0 i))
-    (finding (list min max) maximizing (- max min))))
-
-
 (defun make-normals (count)
   (iterate
     (with result = (sl.data:make-data-matrix 1 count))

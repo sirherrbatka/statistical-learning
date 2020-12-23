@@ -2,5 +2,3 @@
 
 
 (defgeneric c (model))
-(defgeneric global-min (object))
-(defgeneric global-max (object))
