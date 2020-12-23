@@ -15,7 +15,7 @@
     ;; build normal population
     (vellum:transform data
                       (vellum:body (x y)
-                        (let ((re (sl.common:gauss-random)))
+                        (let ((re (+ 5 (sl.common:gauss-random))))
                           (setf x (+ re (random-in-range -0.1 0.1))
                                 y (+ re (random-in-range -0.1 0.1)))))
                       :end 500

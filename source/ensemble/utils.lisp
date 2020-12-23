@@ -35,7 +35,7 @@
            ((:flet make-model (attributes sample))
             (cl-ds.utils:rebind
              (bind ((*state* state)
-                    (sub-make (state-tree-training-state
+                    (sub-state (make-tree-training-state
                                 parameters
                                 tree-parameters
                                 state
