@@ -60,24 +60,38 @@
   (let* ((trees (trees model))
          (parameters (statistical-learning.mp:parameters model))
          (tree-parameters (tree-parameters parameters))
-         (result (trees-predict tree-parameters trees data parallel)))
+         (result (trees-predict model tree-parameters trees data parallel)))
     result))
 
 
-(defmethod cl-ds.utils:cloning-information append ((state ensemble-state))
+(defmethod cl-ds.utils:cloning-information append
+    ((state ensemble-state))
   '((:all-args all-args)
     (:trees trees)
     (:attributes attributes)
     (:samples samples)
     (:trees-view trees-view)
     (:attributes-view attributes-view)
-    (:additonal-slots additional-slots)
     (:samples-view samples-view)
+    (:indexes indexes)))
+
+
+(defmethod cl-ds.utils:cloning-information append
+    ((state supervised-ensemble-state))
+  '((:target-data sl.mp:target-data)
     (:sampling-weights sampling-weights)
-    (:all-attributes all-attributes)
-    (:indexes indexes)
     (:assigned-leafs assigned-leafs)
+    (:leafs-assigned-p leafs-assigned-p)
     (:weights weights)))
+
+
+(defmethod cl-ds.utils:cloning-information append
+    ((state isolation-forest-ensemble-state))
+  '((:c sl.if:c)
+    (:global-min sl.if:global-min)
+    (:global-max sl.if:global-max)
+    (:maxs sl.if:maxs)
+    (:mins sl.if:mins)))
 
 
 (defmethod initialize-instance :after ((instance dynamic-weights-calculator)
@@ -109,7 +123,7 @@
          (weights (sl.mp:weights ensemble-state)))
     (declare (type (simple-array fixnum (* *)) counts)
              (type sl.data:double-float-data-matrix target-data weights))
-    (assign-leafs ensemble-state)
+    (assign-leafs ensemble-state (ensemble calculator))
     (funcall (if parallel #'lparallel:pmap #'map)
              nil
              (lambda (index)
@@ -161,7 +175,7 @@
                                    #'vect))
          (indexes (sl.data:iota-vector data-points-count))
          (samples (make-array trees-count)))
-    (make 'ensemble-state
+    (make 'supervised-ensemble-state
           :train-data train-data
           :indexes indexes
           :assigned-leafs assigned-leafs
@@ -197,10 +211,13 @@
          ((:flet array-view (array &key (from 0) (to trees-count)))
           (make-array (- (min trees-count to) from)
                       :displaced-index-offset (min trees-count from)
-                      :displaced-to array)))
+                      :displaced-to array))
+         (model (make 'random-forest-model
+                      :trees trees
+                      :parameters parameters
+                      :target-attributes-count (sl.data:attributes-count target-data))))
     (statistical-learning.data:bind-data-matrix-dimensions
-        ((train-data-data-points train-data-attributes train-data)
-         (target-data-data-points target-data-attributes target-data))
+        ((train-data-data-points train-data-attributes train-data))
       (setf weights (if (null weights)
                         (sl.data:make-data-matrix train-data-data-points
                                                   1
@@ -209,6 +226,7 @@
       (setf weights-calculator (make (weights-calculator-class parameters)
                                      :parallel parallel
                                      :weights weights
+                                     :ensemble model
                                      :train-data train-data
                                      :target-data target-data))
       (cl-progress-bar:with-progress-bar (trees-count "Fitting random forest of ~a trees." trees-count)
@@ -237,10 +255,100 @@
             (update-weights weights-calculator
                             tree-parameters
                             state))))
-      (make 'random-forest-model
+      model)))
+
+
+(defmethod sl.mp:make-model*/proxy (parameters/proxy
+                                    (parameters isolation-forest)
+                                    state)
+  (declare (optimize (debug 3)))
+  (bind ((train-data (sl.mp:train-data state))
+         (train-data-attributes (sl.data:attributes-count train-data))
+         (tree-batch-size (tree-batch-size parameters))
+         (tree-parameters (tree-parameters parameters))
+         (trees-count (trees-count parameters))
+         (c (c state))
+         (tree-attributes-count (tree-attributes-count parameters))
+         ((:accessors trees samples attributes attributes-view
+                      samples-view trees-view)
+          state)
+         (attributes-generator (sl.data:selecting-random-indexes
+                                tree-attributes-count
+                                train-data-attributes))
+         ((:flet array-view (array &key (from 0) (to trees-count)))
+          (make-array (- (min trees-count to) from)
+                      :displaced-index-offset (min trees-count from)
+                      :displaced-to array)))
+    (statistical-learning.data:bind-data-matrix-dimensions
+        ((train-data-data-points train-data-attributes train-data))
+      (cl-progress-bar:with-progress-bar (trees-count "Fitting isolation forest of ~a trees."
+                                                      trees-count)
+        (iterate
+          (with index = 0)
+          (with state-initargs = '())
+          (while (< index trees-count))
+          (setf trees-view (array-view trees
+                                       :from index
+                                       :to (+ index tree-batch-size)))
+          (setf attributes-view (array-view attributes
+                                             :from index
+                                             :to (+ index tree-batch-size)))
+          (map-into attributes-view attributes-generator)
+          (setf samples-view (array-view samples
+                                         :from index
+                                         :to (+ index tree-batch-size)))
+          (fit-tree-batch state-initargs state)
+          (setf (leafs-assigned-p state) nil)
+          (after-tree-fitting parameters tree-parameters state)
+          (setf index (min trees-count (+ index tree-batch-size)))))
+      (make 'isolation-forest-model
             :trees trees
             :parameters parameters
-            :target-attributes-count target-data-attributes))))
+            :maxs (sl.if:maxs state)
+            :mins (sl.if:mins state)
+            :global-min (sl.if:mins state)
+            :global-max (sl.if:maxs state)
+            :c c))))
+
+(defmethod sl.mp:weights ((object isolation-forest-ensemble-state))
+  nil)
+
+(defmethod sl.mp:make-training-state/proxy (parameters/proxy
+                                            (parameters isolation-forest)
+                                            &rest initargs
+                                            &key train-data)
+  (bind ((trees-count (trees-count parameters))
+         (tree-sample-rate (tree-sample-rate parameters/proxy))
+         (data-points-count (sl.data:data-points-count train-data))
+         (tree-sample-size (* data-points-count tree-sample-rate))
+         (indexes (sl.data:iota-vector data-points-count))
+         (assigned-leafs (map-into (make-array data-points-count)
+                                   #'vect))
+         (attributes (make-array trees-count))
+         (mins (sl.if:calculate-mins train-data))
+         (maxs (sl.if:calculate-maxs train-data))
+         ((global-min global-max) (global-min/max mins maxs))
+         (trees (make-array trees-count))
+         (samples (make-array trees-count))
+         (c (sl.if:c-factor tree-sample-size)))
+    (make 'isolation-forest-ensemble-state
+          :all-args `(,@initargs :mins ,mins :maxs ,maxs
+                                 :global-min global-min
+                                 :global-max global-max)
+          :parameters parameters
+          :c c
+          :mins mins
+          :maxs maxs
+          :global-min global-min
+          :global-max global-max
+          :train-data train-data
+          :indexes indexes
+          :trees trees
+          :assigned-leafs assigned-leafs
+          :attributes attributes
+          :samples samples
+          :target-data nil
+          :training-parameters parameters)))
 
 
 (defmethod sl.mp:make-training-state/proxy (parameters/proxy
@@ -259,8 +367,8 @@
          (attributes (make-array trees-count))
          (trees (make-array trees-count))
          (samples (make-array trees-count)))
-    (make 'ensemble-state
-          :all-args `(:expected-value ,expected-value ,@initargs)
+    (make 'supervised-ensemble-state
+          :all-args `(,@initargs :expected-value ,expected-value)
           :parameters parameters
           :train-data train-data
           :indexes indexes
@@ -294,7 +402,11 @@
          ((:flet array-view (array &key (from 0) (to trees-count)))
           (make-array (- (min trees-count to) from)
                       :displaced-index-offset (min trees-count from)
-                      :displaced-to array)))
+                      :displaced-to array))
+         (model (make 'gradient-boost-ensemble-model
+                      :trees trees
+                      :parameters parameters
+                      :target-attributes-count target-data-attributes)))
     (cl-progress-bar:with-progress-bar (trees-count "Fitting gradient boost ensemble of ~a trees." trees-count)
       (iterate
         (with response = nil)
@@ -317,7 +429,8 @@
                                        :to (+ index tree-batch-size)))
         (fit-tree-batch `(:response ,response :shrinkage ,shrinkage)
                         state)
-        (for new-contributed = (contribute-trees tree-parameters
+        (for new-contributed = (contribute-trees model
+                                                 tree-parameters
                                                  trees-view
                                                  train-data
                                                  parallel
@@ -325,12 +438,8 @@
         (setf response (sl.gbt:calculate-response tree-parameters
                                                   new-contributed
                                                   target-data)
-              contributed new-contributed)
-        (for current-position = (min (+ index tree-batch-size) trees-count))))
-    (make 'gradient-boost-ensemble-model
-          :trees trees
-          :parameters parameters
-          :target-attributes-count target-data-attributes)))
+              contributed new-contributed)))
+    model))
 
 
 (defmethod sl.perf:performance-metric* ((parameters ensemble)
@@ -391,7 +500,8 @@
                  (for leaf = (sl.tp:leaf-for splitter
                                              root
                                              data
-                                             index))
+                                             index
+                                             ensemble))
                  (setf (aref result i) leaf)
                  (finally (return result))))
              unfolded)
@@ -401,7 +511,7 @@
 (defmethod make-tree-training-state/proxy
     (ensemble-parameters/proxy
      tree-parameters/proxy
-     ensemble-parameters
+     (ensemble-parameters ensemble)
      tree-parameters
      ensemble-state
      attributes
@@ -423,7 +533,7 @@
   nil)
 
 
-(defmethod assign-leafs ((state ensemble-state))
+(defmethod assign-leafs ((state supervised-ensemble-state) model)
   (when (leafs-assigned-p state)
     (return-from assign-leafs nil))
   (bind ((parallel (~> state sl.mp:parameters parallel))
@@ -445,20 +555,9 @@
                  (for leaf = (sl.tp:leaf-for splitter
                                              (sl.tp:root tree)
                                              train-data
-                                             index))
+                                             index
+                                             model))
                  (vector-push-extend leaf leafs)))
              indexes)
     (setf (leafs-assigned-p state) t)
     nil))
-
-
-(defmethod ensemble-slot ((ensemble-state ensemble-state)
-                          slot)
-  (gethash slot (additional-slots ensemble-state)))
-
-
-(defmethod (setf ensemble-slot) (new-value
-                                  (ensemble-state ensemble-state)
-                                  slot)
-  (setf (gethash slot (additional-slots ensemble-state))
-        new-value))

@@ -56,7 +56,7 @@
 (defmethod split-training-state-info/proxy append
     (parameters/proxy
      (splitter fundamental-splitter)
-     (parameters standard-tree-training-parameters)
+     (parameters basic-tree-training-parameters)
      state
      split-array
      position
@@ -81,7 +81,7 @@
 (defmethod split-training-state-info/proxy append
     (parameters/proxy
      (splitter random-attribute-splitter)
-     (parameters standard-tree-training-parameters)
+     (parameters basic-tree-training-parameters)
      state
      split-array
      position
@@ -122,6 +122,7 @@
              (model tree-model)
              data
              state
+             context
              parallel
              &optional leaf-key)
   (declare (ignore leaf-key))
@@ -212,7 +213,7 @@
 
 (defmethod split*/proxy
     (parameters/proxy
-     (training-parameters fundamental-tree-training-parameters)
+     (training-parameters basic-tree-training-parameters)
      training-state)
   (declare (optimize (debug 3) (speed 0) (safety 3)))
   (bind ((trials-count (trials-count training-parameters))
@@ -272,7 +273,8 @@
            (return nil))
          (bind ((new-depth (~> training-state depth 1+))
                 ((:flet new-state (position size loss))
-                 (split-training-state*
+                 (split-training-state*/proxy
+                  parameters/proxy
                   training-parameters
                   training-state
                   optimal-array
@@ -284,8 +286,9 @@
                                       size
                                       loss
                                       &aux (state (new-state position size loss))))
-                 (~>> (make-leaf* training-parameters)
-                      (split state)))
+                 (~>> (make-leaf*/proxy parameters/proxy
+                                        training-parameters)
+                      (split state _ parameters/proxy)))
                 ((:flet subtree (position size loss &optional parallel))
                  (if (and parallel (< new-depth 10))
                      (lparallel:future (subtree-impl position size loss))
@@ -303,7 +306,7 @@
 
 (defmethod split-training-state*/proxy
     (parameters/proxy
-     (parameters standard-tree-training-parameters)
+     (parameters basic-tree-training-parameters)
      state split-array
      position size initargs
      point)
@@ -324,7 +327,7 @@
 
 (defmethod sl.mp:sample-training-state-info/proxy append
     (parameters/proxy
-     (parameters fundamental-tree-training-parameters)
+     (parameters basic-tree-training-parameters)
      state
      &key train-attributes data-points)
   (list :attributes (if (null train-attributes)
@@ -338,10 +341,10 @@
 (defmethod leaf-for/proxy (proxy
                            (splitter random-attribute-splitter)
                            (node fundamental-node)
-                           data index)
+                           data index context)
   (declare (type sl.data:double-float-data-matrix data)
            (type fixnum index))
-  (labels ((impl (node)
+  (labels ((impl (node depth &aux (new-depth (the fixnum (1+ depth))))
              (declare (optimize (speed 3) (safety 0)))
              (if (treep node)
                  (bind (((attribute-index . attribute-value) (point node)))
@@ -349,16 +352,15 @@
                             (type double-float attribute-value))
                    (if (> (sl.data:mref data index attribute-index)
                           attribute-value)
-                       (~> node right-node impl)
-                       (~> node left-node impl)))
-                 node)))
-    (impl node)))
+                       (~> node right-node (impl new-depth))
+                       (~> node left-node (impl new-depth))))
+                 (values node depth))))
+    (impl node 0)))
 
 
 (defmethod pick-split*/proxy (splitter/proxy
                               (splitter random-attribute-splitter)
                               parameters state)
-  "Uses ExtraTree approach."
   (declare (optimize (speed 3) (safety 0))
            (ignore parameters))
   (bind ((attributes (the (simple-array fixnum (*))
@@ -366,10 +368,10 @@
          (data (sl.mp:train-data state))
          (attributes-count (length attributes))
          (attribute-index (aref attributes (random attributes-count)))
-         ((:values min max) (data-min/max data
-                                          attribute-index
-                                          (sl.mp:data-points state)))
-         (threshold (if (= min max) min (random-uniform min max))))
+         ((:values min max) (sl.data:data-min/max data
+                                                  attribute-index
+                                                  (sl.mp:data-points state)))
+         (threshold (if (= min max) min (sl.common:random-uniform min max))))
     (list* attribute-index (if (= threshold max) min threshold))))
 
 
@@ -409,8 +411,8 @@
 (defmethod requires-split-p/proxy
     and (parameters/proxy
          (splitter random-attribute-splitter)
-         (training-parameters standard-tree-training-parameters)
-                                 training-state)
+         (training-parameters basic-tree-training-parameters)
+         training-state)
   (~> training-state attribute-indexes emptyp not))
 
 
@@ -512,11 +514,12 @@
                            (splitter distance-splitter)
                            node
                            data
-                           index)
+                           index
+                           context)
   (declare (type fixnum index))
   (let ((object (sl.data:mref data index 0))
         (distance-function (ensure-function (distance-function splitter))))
-    (labels ((impl (node)
+    (labels ((impl (node depth &aux (new-depth (the fixnum (1+ depth))))
                (declare (optimize (speed 3) (safety 0)))
                (if (treep node)
                    (bind (((left-pivot . right-pivot) (point node))
@@ -527,10 +530,10 @@
                                                    right-pivot
                                                    object)))
                      (if (< right-distance left-distance)
-                         (~> node right-node impl)
-                         (~> node left-node impl)))
-                   node)))
-      (impl node))))
+                         (~> node right-node (impl new-depth))
+                         (~> node left-node (impl new-depth))))
+                   (values node depth))))
+      (impl node 0))))
 
 
 (defmethod requires-split-p/proxy
@@ -540,3 +543,13 @@
          training-state)
   (> (~> training-state sl.mp:data-points length) 2))
 
+
+(defmethod sl.mp:make-model*/proxy
+    (parameters-proxy
+     (parameters basic-tree-training-parameters)
+     state)
+  (let* ((protoroot (make-leaf* parameters))
+         (root (split state protoroot parameters-proxy)))
+    (make 'tree-model
+          :parameters parameters
+          :root root)))

@@ -12,10 +12,10 @@
    #:assigned-leafs
    #:dynamic-weights-calculator
    #:ensemble-model
-   #:ensemble-slot
    #:gradient-boost-ensemble
    #:gradient-boost-ensemble-model
    #:indexes
+   #:isolation-forest
    #:leafs
    #:leafs-assigned-p
    #:make-tree-training-state

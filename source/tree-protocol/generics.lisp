@@ -2,7 +2,7 @@
 
 (sl.common:defgeneric/proxy contribute-predictions*
     ((parameters)
-     model data state parallel
+     model data state context parallel
      &optional leaf-key))
 
 (sl.common:defgeneric/proxy split-training-state-info
@@ -12,10 +12,11 @@
      position size point)
   (:method-combination append :most-specific-last))
 
-(sl.common:defgeneric/proxy leaf-for ((splitter) node data index))
+(sl.common:defgeneric/proxy leaf-for ((splitter) node data index context))
 
 (sl.common:defgeneric/proxy split* ((training-parameters)
-                                    training-state))
+                                    training-state)
+  () nil)
 
 (sl.common:defgeneric/proxy split-training-state*
     ((parameters) state split-array position size initargs point))
@@ -77,3 +78,4 @@
 (defgeneric split-point (tree-training-state))
 (defgeneric (setf split-point) (new-value tree-training-state))
 (defgeneric distance-function (splitter))
+(defgeneric predictions-lock (predictions))

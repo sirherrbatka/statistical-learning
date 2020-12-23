@@ -8,3 +8,4 @@
 
 (defclass tree-proxy (sl.common:lifting-proxy)
   ())
+

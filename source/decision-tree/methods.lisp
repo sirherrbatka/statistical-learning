@@ -34,17 +34,6 @@
           :train-data train-data)))
 
 
-(defmethod sl.mp:make-model*/proxy
-    (parameters-proxy
-     (parameters fundamental-decision-tree-parameters)
-     state)
-  (let* ((protoroot (sl.tp:make-leaf* parameters))
-         (root (sl.tp:split state protoroot parameters-proxy)))
-    (make 'sl.tp:tree-model
-          :parameters parameters
-          :root root)))
-
-
 (defmethod sl.tp:initialize-leaf/proxy
     (parameters/proxy
      (training-parameters classification)
@@ -101,6 +90,7 @@
      model
      data
      state
+     context
      parallel
      &optional (leaf-key #'identity))
   (ensure leaf-key #'identity)
@@ -112,17 +102,20 @@
                         :sums (sl.data:make-data-matrix data-points-count
                                                         1))))
     (let* ((sums (sl.tp:sums state))
+           (predictions-lock (sl.tp:predictions-lock state))
            (splitter (sl.tp:splitter parameters))
            (root (sl.tp:root model)))
       (funcall (if parallel #'lparallel:pmap #'map)
                nil
                (lambda (data-point)
                  (let* ((leaf (~>> (sl.tp:leaf-for splitter root
-                                                   data data-point)
+                                                   data data-point
+                                                   context)
                                    (funcall leaf-key)))
                         (predictions (sl.tp:predictions leaf)))
-                   (incf (sl.data:mref sums data-point 0)
-                         predictions)))
+                   (bt:with-lock-held (predictions-lock)
+                     (incf (sl.data:mref sums data-point 0)
+                           predictions))))
                (sl.tp:indexes state)))
     (incf (sl.tp:contributions-count state))
     state))
@@ -134,6 +127,7 @@
      model
      data
      state
+     context
      parallel
      &optional (leaf-key #'identity))
   (ensure leaf-key #'identity)
@@ -149,6 +143,7 @@
                                                           number-of-classes))))
       (let* ((sums (sl.tp:sums state))
              (splitter (sl.tp:splitter parameters))
+             (predictions-lock (sl.tp:predictions-lock state))
              (root (sl.tp:root model)))
         (funcall (if parallel #'lparallel:pmap #'map)
                  nil
@@ -156,12 +151,14 @@
                    (iterate
                      (declare (type fixnum j))
                      (with leaf = (~>> (sl.tp:leaf-for splitter root
-                                                       data data-point)
+                                                       data data-point
+                                                       context)
                                        (funcall leaf-key)))
                      (with predictions = (sl.tp:predictions leaf))
                      (for j from 0 below number-of-classes)
                      (for class-support = (sl.data:mref predictions 0 j))
-                     (incf (sl.data:mref sums data-point j) class-support)))
+                     (bt:with-lock-held (predictions-lock)
+                       (incf (sl.data:mref sums data-point j) class-support))))
                  (sl.tp:indexes state))))
     (incf (sl.tp:contributions-count state))
     state))

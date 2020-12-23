@@ -11,7 +11,7 @@
 (defgeneric update-weights (calculator tree-parameters
                             ensemble-state))
 (defgeneric leafs (ensemble data &optional parallel))
-(defgeneric assign-leafs (state))
+(defgeneric assign-leafs (state model))
 (sl.common:defgeneric/proxy make-tree-training-state
     ((ensemble-parameters)
      (tree-parameters)
@@ -32,5 +32,3 @@
 (defgeneric (setf trees-view) (new-value ensemble-state))
 (defgeneric samples-view (ensemble-state))
 (defgeneric (setf samples-view) (new-value ensemble-state))
-(defgeneric ensemble-slot (ensemble-state slot))
-(defgeneric (setf ensemble-slot) (new-value ensemble-state slot))

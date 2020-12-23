@@ -47,7 +47,12 @@
   ())
 
 
-(defclass standard-tree-training-parameters (fundamental-tree-training-parameters)
+(defclass basic-tree-training-parameters
+    (fundamental-tree-training-parameters)
+  ())
+
+
+(defclass standard-tree-training-parameters (basic-tree-training-parameters)
   ((%maximal-depth :initarg :maximal-depth
                    :reader maximal-depth)
    (%minimal-difference :initarg :minimal-difference
@@ -103,10 +108,14 @@
 (defclass contributed-predictions ()
   ((%training-parameters :initarg :training-parameters
                          :reader sl.mp:training-parameters)
+   (%predictions-lock :initarg :predictions-lock
+                      :reader predictions-lock)
    (%contributions-count :initarg :contributions-count
                          :accessor contributions-count)
    (%indexes :initarg :indexes
              :reader indexes)
    (%sums :initarg :sums
           :reader sums))
-  (:default-initargs :contributions-count 0))
+  (:default-initargs
+   :contributions-count 0
+   :predictions-lock (bt:make-lock)))

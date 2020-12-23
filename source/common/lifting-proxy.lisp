@@ -35,7 +35,7 @@
 
 
 (defmacro defgeneric/proxy (name arguments
-                            &optional options)
+                            &optional options (strip t))
   (bind (((:flet /proxy (symbol))
           (intern (format nil "~a/PROXY" symbol)))
          (function-arguments (mapcar (lambda (x)
@@ -71,29 +71,31 @@
          ,@(if (null options)
                nil
                (list options)))
-       ,@(iterate
-           (for arg in proxy-arguments)
-           (for list = (substitute (list arg 'lifting-proxy)
-                                   arg
-                                   proxy-arguments))
-           (for next = (substitute `(next-proxy ,arg)
-                                   arg
-                                   proxy-arguments))
-           (collect `(defmethod ,with-proxy-name
-                         ,@(remove-if #'keywordp options)
+       ,@(when strip
+           (iterate
+             (for arg in proxy-arguments)
+             (for list = (substitute (list arg 'lifting-proxy)
+                                     arg
+                                     proxy-arguments))
+             (for next = (if strip
+                             (substitute `(next-proxy ,arg)
+                                         arg
+                                         proxy-arguments)))
+             (collect `(defmethod ,with-proxy-name
+                           ,@(remove-if #'keywordp options)
                          ,(generic-lambda-list list)
-                       ,@(when rest
-                           `((declare (ignore ,@(mapcar #'cadar key)))))
-                       ,(if setfp
-                            `(,(if rest 'apply 'funcall)
-                              #',with-proxy-name
-                              ,(first real-arguments)
-                              ,@next
-                              ,@(rest real-arguments))
-                            `(,(if rest 'apply 'funcall)
-                              #',with-proxy-name
-                              ,@next
-                              ,@real-arguments)))))
+                         ,@(when rest
+                             `((declare (ignore ,@(mapcar #'cadar key)))))
+                         ,(if setfp
+                              `(,(if rest 'apply 'funcall)
+                                #',with-proxy-name
+                                ,(first real-arguments)
+                                ,@next
+                                ,@(rest real-arguments))
+                              `(,(if rest 'apply 'funcall)
+                                #',with-proxy-name
+                                ,@next
+                                ,@real-arguments))))))
        (defun ,name (,@function-arguments)
          ,@(when rest
              `((declare (ignore ,@(mapcar #'cadar key)))))

@@ -17,7 +17,7 @@
 (defmethod sl.mp:sample-training-state*/proxy
     ((proxy honest-tree)
      parameters
-     state
+     (state honest-state)
      &key data-points
        train-attributes
        target-attributes
@@ -39,6 +39,7 @@
 (defmethod sl.mp:make-model*/proxy ((proxy honest-tree)
                                     parameters
                                     state)
+  (declare (optimize (debug 3)))
   (bind ((inner-state (inner state))
          (training-data (sl.mp:train-data inner-state))
          (data-points-count (~> inner-state
@@ -67,7 +68,8 @@
          ((:flet assign-leaf (index))
           (cons index
                 (sl.tp:leaf-for splitter root
-                                training-data index)))
+                                training-data index
+                                model)))
          ((:flet adjust-leaf (leaf.indexes))
           (bind (((leaf . indexes) leaf.indexes)
                  (no-fill-pointer (cl-ds.utils:remove-fill-pointer indexes))
@@ -99,6 +101,7 @@
                                          sl.data:attributes-count
                                          sl.data:iota-vector))
           :inner inner)))
+
 
 (defun honest (parameters)
   (sl.common:lift parameters 'honest-tree))

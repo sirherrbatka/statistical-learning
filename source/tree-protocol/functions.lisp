@@ -26,7 +26,7 @@
                                training-state)))
     ;; TODO also correct initialize-leaf call to include proxy
     (if (null result)
-        (progn (initialize-leaf parameters training-state leaf)
+        (progn (initialize-leaf/proxy parameters/proxy parameters training-state leaf)
                leaf)
         result)))
 

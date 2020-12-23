@@ -50,7 +50,9 @@
 
 (defmethod sl.tp:split-training-state*/proxy
     ((proxy causal-tree)
-     parameters state split-array
+     parameters
+     (state causal-state)
+     split-array
      position size initargs point)
   (cl-ds.utils:quasi-clone
    state
@@ -197,6 +199,7 @@
      model
      data
      state
+     context
      parallel
      &optional (leaf-key #'identity))
   (ensure leaf-key #'identity)
@@ -216,6 +219,7 @@
                               model
                               data
                               (aref results i)
+                              context
                               parallel
                               (compose (rcurry #'aref i)
                                        #'leafs
@@ -226,7 +230,7 @@
 (defmethod sl.mp:make-model*/proxy ((proxy causal-tree) parameters state)
   (make 'sl.tp:tree-model
         :parameters parameters
-        :root (~>> state sl.tp:make-leaf (sl.tp:split state))))
+        :root (~> state sl.tp:make-leaf (sl.tp:split state _ proxy))))
 
 
 (defmethod sl.tp:predictions ((leaf causal-leaf))

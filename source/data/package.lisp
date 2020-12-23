@@ -11,6 +11,7 @@
    #:universal-data-matrix
    #:double-float-data-matrix
    #:dispatch-data-matrix
+   #:data-min/max
    #:bind-data-matrix-dimensions
    #:data-matrix
    #:data-matrix-dimensions

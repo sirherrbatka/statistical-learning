@@ -4,6 +4,8 @@
 (defclass fundamental-weights-calculator ()
   ((%weights :initarg :weights
              :reader weights)
+   (%ensemble :initarg :ensemble
+              :reader ensemble)
    (%train-data :initarg :train-data
                 :reader train-data)
    (%target-data :initarg :target-data
@@ -41,6 +43,10 @@
                      :reader tree-parameters)))
 
 
+(defclass isolation-forest (ensemble)
+  ())
+
+
 (defclass random-forest (ensemble)
   ((%weights-calculator-class :initarg :weights-calculator-class
                               :reader weights-calculator-class))
@@ -65,30 +71,41 @@
                      :accessor attributes-view)
    (%samples-view :initarg :samples-view
                   :accessor samples-view)
-   (%sampling-weights :initarg :sampling-weights
-                      :accessor sampling-weights)
-   (%all-attributes :initarg :all-attributes
-                    :accessor all-attributes)
    (%train-data :initarg :train-data
                 :reader sl.mp:train-data)
    (%indexes :initarg :indexes
-             :reader indexes)
-   (%target-data :initarg :target-data
-                 :reader sl.mp:target-data)
-   (%assigned-leafs :initarg :assigned-leafs
-                    :accessor assigned-leafs)
-   (%leafs-assigned-p :initarg :leafs-assigned-p
-                      :accessor leafs-assigned-p)
-   (%weights :initarg :weights
-             :accessor sl.mp:weights)
-   (%additional-slots :initarg :additional-slots
-                      :reader additional-slots))
+             :reader indexes))
   (:default-initargs
    :samples-view nil
-   :leafs-assigned-p nil
    :attributes-view nil
-   :trees-view nil
-   :additional-slots (make-hash-table :test 'equal)))
+   :trees-view nil))
+
+
+(defclass supervised-ensemble-state (ensemble-state)
+  ((%target-data :initarg :target-data
+                 :reader sl.mp:target-data)
+   (%leafs-assigned-p :initarg :leafs-assigned-p
+                      :accessor leafs-assigned-p)
+   (%assigned-leafs :initarg :assigned-leafs
+                    :accessor assigned-leafs
+                    :documentation "For the weights calculator")
+   (%weights :initarg :weights
+             :accessor sl.mp:weights))
+  (:default-initargs
+   :leafs-assigned-p nil))
+
+
+(defclass isolation-forest-ensemble-state (ensemble-state)
+  ((%c :initarg :c
+       :reader sl.if:c)
+   (%global-min :initarg :global-min
+                :reader sl.if:global-min)
+   (%global-max :initarg :global-max
+                 :reader sl.if:global-max)
+   (%maxs :initarg :maxs
+          :reader sl.if:maxs)
+   (%mins :initarg :mins
+          :reader sl.if:mins)))
 
 
 (defclass gradient-boost-ensemble (ensemble)
@@ -97,17 +114,32 @@
   (:default-initargs :shrinkage 0.01d0))
 
 
-(defclass ensemble-model (statistical-learning.mp:supervised-model)
+(defclass ensemble-model (sl.mp:fundamental-model)
   ((%trees :initarg :trees
            :reader trees
-           :type simple-vector)
-   (%target-attributes-count :initarg :target-attributes-count
+           :type simple-vector)))
+
+
+(defclass random-forest-model (sl.mp:supervised-model
+                               ensemble-model)
+  ((%target-attributes-count :initarg :target-attributes-count
                              :reader target-attributes-count)))
 
 
-(defclass random-forest-model (ensemble-model)
-  ())
+(defclass gradient-boost-ensemble-model (sl.mp:supervised-model
+                                         ensemble-model)
+  ((%target-attributes-count :initarg :target-attributes-count
+                             :reader target-attributes-count)))
 
 
-(defclass gradient-boost-ensemble-model (ensemble-model)
-  ())
+(defclass isolation-forest-model (ensemble-model)
+  ((%c :initarg :c
+       :reader sl.if:c)
+   (%global-min :initarg :global-min
+                :reader sl.if:global-min)
+   (%global-max :initarg :global-max
+                :reader sl.if:global-max)
+   (%maxs :initarg :maxs
+          :reader sl.if:maxs)
+   (%mins :initarg :mins
+          :reader sl.if:mins)))

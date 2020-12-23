@@ -50,6 +50,7 @@
      model
      data
      state
+     context
      parallel
      &optional (leaf-key #'identity))
   (ensure leaf-key #'identity)
@@ -58,6 +59,7 @@
       (setf state (contributed-predictions parameters model data-points-count)))
     (let* ((sums (sl.tp:sums state))
            (splitter (sl.tp:splitter parameters))
+           (predictions-lock (sl.tp:predictions-lock state))
            (shrinkage (shrinkage model))
            (root (sl.tp:root model)))
       (declare (type sl.data:double-float-data-matrix sums))
@@ -65,11 +67,13 @@
                nil
                (lambda (data-point)
                  (let* ((leaf (~>> (sl.tp:leaf-for splitter root
-                                                   data data-point)
+                                                   data data-point
+                                                   context)
                                    (funcall leaf-key)))
                         (predictions (sl.tp:predictions leaf)))
-                   (incf (sl.data:mref sums data-point 0)
-                         (* shrinkage predictions))))
+                   (bt:with-lock-held (predictions-lock)
+                     (incf (sl.data:mref sums data-point 0)
+                           (* shrinkage predictions)))))
                (sl.tp:indexes state)))
     (incf (sl.tp:contributions-count state))
     state))
@@ -81,6 +85,7 @@
      model
      data
      state
+     context
      parallel
      &optional (leaf-key #'identity))
   (ensure leaf-key #'identity)
@@ -89,6 +94,7 @@
       (setf state (contributed-predictions parameters model data-points-count)))
     (let* ((sums (sl.tp:sums state))
            (splitter (sl.tp:splitter parameters))
+           (predictions-lock (sl.tp:predictions-lock state))
            (number-of-classes (sl.opt:number-of-classes parameters))
            (shrinkage (shrinkage model))
            (root (sl.tp:root model)))
@@ -98,13 +104,15 @@
                  (iterate
                    (declare (type fixnum j))
                    (with leaf = (~>> (sl.tp:leaf-for splitter root
-                                                     data data-point)
+                                                     data data-point
+                                                     context)
                                      (funcall leaf-key)))
                    (with predictions = (sl.tp:predictions leaf))
                    (for j from 0 below number-of-classes)
                    (for gradient = (sl.data:mref predictions 0 j))
-                   (incf (sl.data:mref sums data-point j)
-                         (* shrinkage gradient))))
+                   (bt:with-lock-held (predictions-lock)
+                     (incf (sl.data:mref sums data-point j)
+                           (* shrinkage gradient)))))
                (sl.tp:indexes state)))
     (incf (sl.tp:contributions-count state))
     state))

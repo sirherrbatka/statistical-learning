@@ -57,7 +57,7 @@
                samples))))
 
 
-(defun contribute-trees (tree-parameters trees data parallel
+(defun contribute-trees (ensemble tree-parameters trees data parallel
                          &optional state)
   (iterate
     (for tree in-vector trees)
@@ -65,13 +65,14 @@
                                                tree
                                                data
                                                state
+                                               ensemble
                                                parallel))
     (finally (return state))))
 
 
-(defun trees-predict (tree-parameters trees data parallel
+(defun trees-predict (ensemble tree-parameters trees data parallel
                       &optional state)
-  (let ((state (contribute-trees tree-parameters trees
+  (let ((state (contribute-trees ensemble tree-parameters trees
                                  data parallel state)))
     (values (statistical-learning.tp:extract-predictions state)
             state)))
@@ -80,3 +81,11 @@
 (defun treep (tree)
   (and (not (null tree))
        (~> tree sl.tp:root sl.tp:treep)))
+
+
+(defun global-min/max (mins maxs)
+  (iterate
+    (for i from 0 below (sl.data:attributes-count mins))
+    (for min = (sl.data:mref mins 0 i))
+    (for max = (sl.data:mref maxs 0 i))
+    (finding (list min max) maximizing (- max min))))

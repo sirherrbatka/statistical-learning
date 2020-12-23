@@ -7,6 +7,7 @@
   (:intern sl.opt:left sl.opt:right)
   (:export
    #:attribute-indexes
+   #:basic-tree-training-parameters
    #:calculate-loss*
    #:calculate-loss*/proxy
    #:contribute-predictions
@@ -15,10 +16,12 @@
    #:contributed-predictions
    #:contributions-count
    #:depth
+   #:distance-function
    #:distance-splitter
    #:extract-predictions
    #:extract-predictions*
    #:extract-predictions*/proxy
+   #:fill-split-vector
    #:fill-split-vector*
    #:fill-split-vector*/proxy
    #:force-tree
@@ -28,9 +31,6 @@
    #:fundamental-splitter
    #:fundamental-tree-node
    #:fundamental-tree-training-parameters
-   #:optimal-split-point
-   #:distance-function
-   #:split-point
    #:indexes
    #:initialize-leaf
    #:initialize-leaf/proxy
@@ -47,12 +47,14 @@
    #:maximal-depth
    #:minimal-difference
    #:minimal-size
+   #:optimal-split-point
    #:parallel
    #:pick-split
    #:pick-split*
    #:pick-split*/proxy
    #:point
    #:predictions
+   #:predictions-lock
    #:random-attribute-splitter
    #:requires-split-p
    #:requires-split-p/proxy
@@ -61,6 +63,7 @@
    #:split
    #:split*
    #:split*/proxy
+   #:split-point
    #:split-training-state
    #:split-training-state*
    #:split-training-state*/proxy

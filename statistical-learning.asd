@@ -16,7 +16,8 @@
   :components ((:file "aux-package")
                (:module "common"
                 :components ((:file "package")
-                             (:file "lifting-proxy")))
+                             (:file "lifting-proxy")
+                             (:file "utils")))
                (:module "data"
                 :components ((:file "package")
                              (:file "macros")
@@ -62,6 +63,14 @@
                 :components ((:file "package")
                              (:file "generics")
                              (:file "types")
+                             (:file "utils")
+                             (:file "functions")
+                             (:file "methods")))
+               (:module "isolation-forest"
+                :components ((:file "package")
+                             (:file "generics")
+                             (:file "types")
+                             (:file "variables")
                              (:file "utils")
                              (:file "functions")
                              (:file "methods")))
