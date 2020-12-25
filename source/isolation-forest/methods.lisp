@@ -6,8 +6,10 @@
      (training-parameters isolation)
      training-state)
   (declare (optimize (debug 3)))
-  (bind ((split-array (~> training-state sl.mp:data-points
-                          length sl.opt:make-split-array))
+  (bind ((split-array #1=(~> training-state sl.mp:data-points
+                             length sl.opt:make-split-array))
+         (optimal-split-array #1#)
+         (optimal-point nil)
          (new-depth (1+ (sl.tp:depth training-state)))
          (parallel (sl.tp:parallel training-parameters))
          ((:flet new-state (point position size))
@@ -38,18 +40,23 @@
                                     split-array))
       (when (or (zerop left-length) (zerop right-length))
         (continue))
-      (leave
-       (sl.tp:make-node 'isolation-tree
-                        :size (+ left-length right-length)
-                        :left-node (subtree point
-                                            sl.opt:left
-                                            left-length
-                                            parallel)
-                        :right-node (subtree point
-                                             sl.opt:right
-                                             right-length)
-                        :point point))
-      (finally (return nil)))))
+      (for score = (abs (- left-length right-length)))
+      (minimize score into min)
+      (when (= score min)
+        (rotatef optimal-split-array split-array)
+        (rotatef point optimal-point))
+      (finally
+       (when point
+         (sl.tp:make-node 'isolation-tree
+                          :size (+ left-length right-length)
+                          :left-node (subtree point
+                                              sl.opt:left
+                                              left-length
+                                              parallel)
+                          :right-node (subtree point
+                                               sl.opt:right
+                                               right-length)
+                          :point point))))))
 
 
 (defmethod sl.tp:leaf-for/proxy (splitter/proxy
