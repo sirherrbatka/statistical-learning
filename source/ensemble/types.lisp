@@ -85,7 +85,8 @@
   ((%target-data :initarg :target-data
                  :reader sl.mp:target-data)
    (%leafs-assigned-p :initarg :leafs-assigned-p
-                      :accessor leafs-assigned-p)
+                      :accessor leafs-assigned-p
+                      :documentation "For the weights calculator.")
    (%assigned-leafs :initarg :assigned-leafs
                     :accessor assigned-leafs
                     :documentation "For the weights calculator")
