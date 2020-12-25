@@ -46,17 +46,17 @@
         (rotatef optimal-split-array split-array)
         (rotatef point optimal-point))
       (finally
-       (when point
+       (when optimal-point
          (sl.tp:make-node 'isolation-tree
                           :size (+ left-length right-length)
-                          :left-node (subtree point
+                          :left-node (subtree optimal-point
                                               sl.opt:left
                                               left-length
                                               parallel)
-                          :right-node (subtree point
+                          :right-node (subtree optimal-point
                                                sl.opt:right
                                                right-length)
-                          :point point))))))
+                          :point optimal-point))))))
 
 
 (defmethod sl.tp:leaf-for/proxy (splitter/proxy
