@@ -46,12 +46,17 @@
            :reader sl.tp:depth)
    (%c :initarg :c
        :reader c)
+   (%mins :accessor mins
+          :initarg :mins)
+   (%maxs :accessor maxs
+          :initarg :maxs)
    (%train-data :initarg :train-data
           :reader sl.mp:train-data)
    (%attributes :initarg :attributes
                 :reader sl.tp:attribute-indexes)
    (%data-points :initarg :data-points
-                 :reader sl.mp:data-points)))
+                 :reader sl.mp:data-points))
+  (:default-initargs :mins nil :maxs nil))
 
 
 (defclass isolation-prediction ()

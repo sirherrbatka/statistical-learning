@@ -6,40 +6,48 @@
      (training-parameters isolation)
      training-state)
   (declare (optimize (debug 3)))
-  (bind ((split-array (~> training-state sl.mp:data-points length
-                          sl.opt:make-split-array))
-         (point (sl.tp:pick-split training-state)))
-    (setf (sl.tp:split-point training-state) point)
-    (bind (((:values left-length right-length)
-            (sl.tp:fill-split-vector training-state
-                                     split-array))
-           (new-depth (~> training-state sl.tp:depth 1+))
-           ((:flet new-state (position size))
-            (sl.tp:split-training-state*
-             training-parameters
-             training-state
-             split-array
-             position
-             size
-             `(:depth ,new-depth)
-             point))
-           ((:flet subtree-impl
-              (position size &aux (state (new-state position size))))
-            (~>> (sl.tp:make-leaf* training-parameters)
-                 (sl.tp:split state)))
-           ((:flet subtree (position size &optional parallel))
-            (if (and parallel (< new-depth 10))
-                (lparallel:future (subtree-impl position size))
-                (subtree-impl position size)))
-           (parallel (sl.tp:parallel training-parameters)))
-      (sl.tp:make-node 'isolation-tree
-                       :size (+ left-length right-length)
-                       :left-node (subtree sl.opt:left
-                                           left-length
-                                           parallel)
-                       :right-node (subtree sl.opt:right
-                                            right-length)
-                       :point point))))
+  (bind ((split-array (~> training-state sl.mp:data-points
+                          length sl.opt:make-split-array))
+         (new-depth (1+ (sl.tp:depth training-state)))
+         (parallel (sl.tp:parallel training-parameters))
+         ((:flet new-state (point position size))
+          (sl.tp:split-training-state*
+           training-parameters
+           training-state
+           split-array
+           position
+           size
+           `(:depth ,new-depth)
+           point))
+         ((:flet subtree-impl
+            (point position size &aux (state (new-state point
+                                                        position
+                                                        size))))
+          (~>> (sl.tp:make-leaf* training-parameters)
+               (sl.tp:split state)))
+         ((:flet subtree (point position size &optional parallel))
+          (if (and parallel (< new-depth 10))
+              (lparallel:future (subtree-impl point position size))
+              (subtree-impl point position size))))
+    (iterate
+      (for point = (sl.tp:pick-split training-state))
+      (setf (sl.tp:split-point training-state) point)
+      (for (values left-length right-length) =
+           (sl.tp:fill-split-vector training-state
+                                    split-array))
+      (when (or (zerop left-length) (zerop right-length))
+        (continue))
+      (leave
+       (sl.tp:make-node 'isolation-tree
+                        :size (+ left-length right-length)
+                        :left-node (subtree point
+                                            sl.opt:left
+                                            left-length
+                                            parallel)
+                        :right-node (subtree point
+                                             sl.opt:right
+                                             right-length)
+                        :point point)))))
 
 
 (defmethod sl.tp:leaf-for/proxy (splitter/proxy
@@ -109,13 +117,7 @@
                                     (splitter isolation-splitter)
                                     parameters
                                     state)
-  (bind ((data-points (sl.mp:data-points state))
-         (data (sl.mp:train-data state))
-         (attributes (sl.tp:attribute-indexes state))
-         (point (generate-point data
-                                data-points
-                                attributes)))
-    point))
+  (generate-point state))
 
 
 (defmethod sl.tp:fill-split-vector*/proxy

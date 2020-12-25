@@ -1,30 +1,6 @@
 (cl:in-package #:statistical-learning.isolation-forest)
 
 
-(-> generate-point (sl.data:double-float-data-matrix
-                    (simple-array fixnum (*))
-                    (simple-array fixnum (*)))
-    split-point)
-(defun generate-point (data samples attributes)
-  (iterate
-    (with sample = (sl.data:sample data
-                                   :data-points samples
-                                   :attributes attributes))
-    (with attributes-count = (length attributes))
-    (with min = (calculate-mins sample))
-    (with max = (calculate-maxs sample))
-    (with normals = (sl.data:make-data-matrix 1 attributes-count))
-    (for i from 0 below attributes-count)
-    (setf (sl.data:mref normals 0 i) (sl.common:gauss-random))
-    (sum (* (sl.data:mref normals 0 i)
-            (random-in-range (sl.data:mref min 0 i)
-                             (sl.data:mref max 0 i)))
-         into dot-product)
-    (finally (return (make-split-point
-                      :normals normals
-                      :dot-product dot-product)))))
-
-
 (-> scale-double-float
     (double-float double-float double-float double-float double-float)
     double-float)
@@ -60,12 +36,38 @@
        dot-product)))
 
 
-(defun calculate-mins (data-matrix)
-  (sl.data:reduce-data-points #'min data-matrix))
+(defun reduce-data-points (data samples attributes function)
+  (iterate
+    (with function = (ensure-function function))
+    (with data-points-count = (length samples))
+    (with attributes-count = (length attributes))
+    (with result = (sl.data:make-data-matrix 1 attributes-count))
+    (for i from 0 below attributes-count)
+    (for attribute = (aref attributes i))
+    (setf (sl.data:mref result 0 i)
+          (sl.data:mref data (aref samples 0) attribute))
+    (iterate
+      (for j from 1 below data-points-count)
+      (for k = (aref samples j))
+      (setf (sl.data:mref result k i)
+            (funcall function
+                     (sl.data:mref result k i)
+                     (sl.data:mref data k attribute))))
+    (finally (return result))))
 
 
-(defun calculate-maxs (data-matrix)
-  (sl.data:reduce-data-points #'max data-matrix))
+(defun calculate-mins (data-matrix samples attributes)
+  (reduce-data-points data-matrix
+                      samples
+                      attributes
+                      #'min))
+
+
+(defun calculate-maxs (data-matrix samples attributes)
+  (reduce-data-points data-matrix
+                      samples
+                      attributes
+                      #'max))
 
 
 (defun make-normals (count)
@@ -74,3 +76,27 @@
     (for i from 0 below count)
     (setf (sl.data:mref result 0 i) (sl.common:gauss-random))
     (finally (return result))))
+
+
+(-> generate-point (isolation-training-state)
+    split-point)
+(defun generate-point (state)
+  (iterate
+    (with data = (sl.mp:train-data state))
+    (with samples = (sl.mp:data-points state))
+    (with attributes = (sl.tp:attribute-indexes state))
+    (with attributes-count = (length attributes))
+    (with min = (ensure (mins state)
+                  (calculate-mins data samples attributes)))
+    (with max = (ensure (maxs state)
+                  (calculate-maxs data samples attributes)))
+    (with normals = (sl.data:make-data-matrix 1 attributes-count))
+    (for i from 0 below attributes-count)
+    (setf (sl.data:mref normals 0 i) (sl.common:gauss-random))
+    (sum (* (sl.data:mref normals 0 i)
+            (random-in-range (sl.data:mref min 0 i)
+                             (sl.data:mref max 0 i)))
+         into dot-product)
+    (finally (return (make-split-point
+                      :normals normals
+                      :dot-product dot-product)))))
