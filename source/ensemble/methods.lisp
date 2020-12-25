@@ -87,11 +87,7 @@
 
 (defmethod cl-ds.utils:cloning-information append
     ((state isolation-forest-ensemble-state))
-  '((:c sl.if:c)
-    (:global-min sl.if:global-min)
-    (:global-max sl.if:global-max)
-    (:maxs sl.if:maxs)
-    (:mins sl.if:mins)))
+  '((:c sl.if:c)))
 
 
 (defmethod initialize-instance :after ((instance dynamic-weights-calculator)
