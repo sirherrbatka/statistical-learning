@@ -30,6 +30,7 @@
               (lparallel:future (subtree-impl point position size))
               (subtree-impl point position size))))
     (iterate
+      (repeat 50)
       (for point = (sl.tp:pick-split training-state))
       (setf (sl.tp:split-point training-state) point)
       (for (values left-length right-length) =
@@ -47,7 +48,8 @@
                         :right-node (subtree point
                                              sl.opt:right
                                              right-length)
-                        :point point)))))
+                        :point point))
+      (finally (return nil)))))
 
 
 (defmethod sl.tp:leaf-for/proxy (splitter/proxy
