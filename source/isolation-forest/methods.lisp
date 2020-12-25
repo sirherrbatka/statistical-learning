@@ -30,7 +30,7 @@
               (lparallel:future (subtree-impl point position size))
               (subtree-impl point position size))))
     (iterate
-      (repeat 50)
+      (repeat (repeats training-parameters))
       (for point = (sl.tp:pick-split training-state))
       (setf (sl.tp:split-point training-state) point)
       (for (values left-length right-length) =
