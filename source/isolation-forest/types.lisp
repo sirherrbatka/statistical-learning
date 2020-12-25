@@ -17,7 +17,7 @@
    (%minimal-size :initarg :minimal-size
                   :reader sl.tp:minimal-size))
   (:default-initargs
-   :repeats 50
+   :repeats 5
    :splitter (make 'isolation-splitter)
    :parallel nil))
 
