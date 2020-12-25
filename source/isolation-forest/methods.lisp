@@ -231,3 +231,31 @@
                    :root root
                    :attributes (sl.tp:attribute-indexes state)
                    :c (c state))))
+
+
+(defmethod initialize-instance :after ((object isolation)
+                                       &rest all)
+  (declare (ignore all))
+  (bind (((:accessors access-maximal-depth
+                      access-repeats
+                      access-parallel
+                      access-minimal-size)
+          object))
+    (check-type access-maximal-depth integer)
+    (check-type access-repeats integer)
+    (check-type access-parallel boolean)
+    (check-type access-minimal-size integer)
+    (assert (> access-maximal-depth 0)
+            (access-maximal-depth)
+            'cl-ds:argument-value-out-of-bounds
+            :value access-minimal-size
+            :argument :minimal-size
+            :bounds '(> minimal-size 0)
+            :format-control "MAXIMAL-DEPTH should be greater then zero.")
+    (assert (> access-minimal-size 0)
+            (access-minimal-size)
+            'cl-ds:argument-value-out-of-bounds
+            :value access-minimal-size
+            :argument :minimal-size
+            :bounds '(> minimal-size 0)
+            :format-control "MINIMAL-SIZE should be greater then zero.")))

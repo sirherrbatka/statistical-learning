@@ -7,14 +7,19 @@
 
 (defclass isolation (sl.tp:basic-tree-training-parameters)
   ((%maximal-depth :initarg :maximal-depth
-                   :reader sl.tp:maximal-depth)
+                   :reader sl.tp:maximal-depth
+                   :accessor access-maximal-depth)
    (%repeats :initarg :repeats
+             :accessor access-repeats
              :reader repeats)
    (%parallel :initarg :parallel
+              :accessor access-parallel
               :reader sl.tp:parallel)
    (%splitter :initarg :splitter
+              :accessor access-splitter
               :reader sl.tp:splitter)
    (%minimal-size :initarg :minimal-size
+                  :accessor access-minimal-size
                   :reader sl.tp:minimal-size))
   (:default-initargs
    :repeats 5
