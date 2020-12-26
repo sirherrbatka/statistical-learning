@@ -5,7 +5,6 @@
     (parameters/proxy
      (training-parameters isolation)
      training-state)
-  (declare (optimize (debug 3)))
   (bind ((split-array #1=(~> training-state sl.mp:data-points
                              length sl.opt:make-split-array))
          (optimal-split-array #1#)
@@ -163,7 +162,7 @@
      split-vector)
   (declare (type sl.data:split-vector split-vector)
            (type split-point point)
-           (optimize (speed 0) (safety 3) (debug 3)))
+           (optimize (speed 3) (safety 0) (debug 0)))
   (bind ((data (sl.mp:train-data state))
          (data-points (sl.mp:data-points state))
          (attributes (sl.tp:attribute-indexes state)))
@@ -194,7 +193,6 @@
 (defmethod sl.tp:extract-predictions*/proxy (parameters/proxy
                                              (parameters isolation)
                                              state)
-  (declare (optimize (debug 3)))
   (let* ((trees-count (trees-count state))
          (trees-sum (trees-sum state))
          (c (c state))
