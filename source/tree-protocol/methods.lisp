@@ -74,7 +74,8 @@
                     (setf (aref new-indexes j) (aref old-indexes i))
                     (incf j))
                   (finally
-                   (assert (= j size))
+                   (assert (= j size)
+                           (j size))
                    (return new-indexes)))))
 
 

@@ -70,7 +70,9 @@
 
 
 (defclass isolation-prediction ()
-  ((%trees-count :initarg :trees-count
+  ((%parameters :initarg :parameters
+                :reader sl.mp:training-parameters)
+   (%trees-count :initarg :trees-count
                  :accessor trees-count)
    (%trees-sum :initarg :trees-sum
                :accessor trees-sum)

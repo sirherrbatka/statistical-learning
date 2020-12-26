@@ -46,3 +46,8 @@
   (sl.mp:make-unsupervised-model *isolation-forest*
                                  (vellum:to-matrix *data*
                                                    :element-type 'double-float)))
+
+(defparameter *anomaly-scores*
+  (sl.mp:predict *model*
+                 (vellum:to-matrix *data*
+                                   :element-type 'double-float)))

@@ -16,7 +16,7 @@
           (sl.tp:split-training-state*
            training-parameters
            training-state
-           split-array
+           optimal-split-array
            position
            size
            `(:depth ,new-depth)
@@ -32,6 +32,8 @@
               (lparallel:future (subtree-impl point position size))
               (subtree-impl point position size))))
     (iterate
+      (with optimal-left-length = 0)
+      (with optimal-right-length = 0)
       (repeat (repeats training-parameters))
       (for point = (sl.tp:pick-split training-state))
       (setf (sl.tp:split-point training-state) point)
@@ -43,20 +45,24 @@
       (for score = (abs (- left-length right-length)))
       (minimize score into min)
       (when (= score min)
+        (setf optimal-left-length left-length
+              optimal-right-length right-length)
         (rotatef optimal-split-array split-array)
         (rotatef point optimal-point))
       (finally
-       (when optimal-point
-         (sl.tp:make-node 'isolation-tree
-                          :size (+ left-length right-length)
-                          :left-node (subtree optimal-point
-                                              sl.opt:left
-                                              left-length
-                                              parallel)
-                          :right-node (subtree optimal-point
-                                               sl.opt:right
-                                               right-length)
-                          :point optimal-point))))))
+       (if optimal-point
+           (return (sl.tp:make-node
+                    'isolation-tree
+                    :size (+ left-length right-length)
+                    :left-node (subtree optimal-point
+                                        sl.opt:left
+                                        optimal-left-length
+                                        parallel)
+                    :right-node (subtree optimal-point
+                                         sl.opt:right
+                                         optimal-right-length)
+                    :point optimal-point))
+           (return nil))))))
 
 
 (defmethod sl.tp:leaf-for/proxy (splitter/proxy
@@ -67,12 +73,13 @@
                                  context)
   (declare (type sl.data:double-float-data-matrix data)
            (type fixnum index))
-  (bind (((:labels impl
+  (bind ((attributes (attributes context))
+         ((:labels impl
             (node depth &aux (next-depth (the fixnum (1+ depth)))))
           (declare (optimize (speed 3) (safety 0)))
           (if (sl.tp:treep node)
               (if (rightp (sl.tp:point node)
-                          (attributes context)
+                          attributes
                           index data)
                   (~> node sl.tp:right-node (impl next-depth))
                   (~> node sl.tp:left-node (impl next-depth)))
@@ -187,6 +194,7 @@
 (defmethod sl.tp:extract-predictions*/proxy (parameters/proxy
                                              (parameters isolation)
                                              state)
+  (declare (optimize (debug 3)))
   (let* ((trees-count (trees-count state))
          (trees-sum (trees-sum state))
          (c (c state))
@@ -209,16 +217,18 @@
      context
      parallel
      &optional (leaf-key #'identity))
-    (when (null state)
-      (let ((c (c context))
-            (data-points-count (sl.data:data-points-count data)))
-        (check-type c double-float)
-        (setf state (make 'isolation-prediction
-                          :indexes data-points-count
-                          :trees-sum (sl.data:make-data-matrix
-                                      data-points-count
-                                      1)
-                          :c (c context)))))
+  (declare (ignore leaf-key))
+  (when (null state)
+    (let ((c (c tree-model))
+          (data-points-count (sl.data:data-points-count data)))
+      (check-type c double-float)
+      (setf state (make 'isolation-prediction
+                        :indexes (sl.data:iota-vector data-points-count)
+                        :trees-sum (sl.data:make-data-matrix
+                                    data-points-count
+                                    1)
+                        :parameters parameters
+                        :c c))))
   (let* ((splitter (sl.tp:splitter parameters))
          (sums (trees-sum state))
          (root (sl.tp:root tree-model)))
@@ -226,15 +236,16 @@
              nil
              (lambda (data-point)
                (bind (((:values leaf depth)
-                       (~>> (sl.tp:leaf-for splitter root
-                                            data data-point
-                                            tree-model)
-                            (funcall leaf-key))))
-                 (declare (ignore leaf))
+                       (sl.tp:leaf-for splitter root
+                                       data data-point
+                                       tree-model)))
+                 (assert depth)
+                 (assert leaf)
                  (incf (sl.data:mref sums data-point 0)
                        depth)))
              (sl.tp:indexes state))
-    (incf (trees-count state))))
+    (incf (trees-count state))
+    state))
 
 
 (defmethod sl.mp:make-model*/proxy

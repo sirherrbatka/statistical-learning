@@ -49,9 +49,9 @@
     (iterate
       (for j from 1 below data-points-count)
       (for k = (aref samples j))
-      (setf (sl.data:mref result k i)
+      (setf (sl.data:mref result 0 i)
             (funcall function
-                     (sl.data:mref result k i)
+                     (sl.data:mref result 0 i)
                      (sl.data:mref data k attribute))))
     (finally (return result))))
 
