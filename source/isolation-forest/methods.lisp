@@ -236,26 +236,26 @@
 (defmethod initialize-instance :after ((object isolation)
                                        &rest all)
   (declare (ignore all))
-  (bind (((:accessors access-maximal-depth
-                      access-repeats
-                      access-parallel
-                      access-minimal-size)
+  (bind (((:accessors (maximal-depth access-maximal-depth)
+                      (repeats access-repeats)
+                      (parallel access-parallel)
+                      (minimal-size access-minimal-size))
           object))
-    (check-type access-maximal-depth integer)
-    (check-type access-repeats integer)
-    (check-type access-parallel boolean)
-    (check-type access-minimal-size integer)
-    (assert (> access-maximal-depth 0)
-            (access-maximal-depth)
+    (check-type maximal-depth integer)
+    (check-type repeats integer)
+    (check-type parallel boolean)
+    (check-type minimal-size integer)
+    (assert (> maximal-depth 0)
+            (maximal-depth)
             'cl-ds:argument-value-out-of-bounds
-            :value access-minimal-size
+            :value maximal-depth
             :argument :minimal-size
             :bounds '(> minimal-size 0)
             :format-control "MAXIMAL-DEPTH should be greater then zero.")
-    (assert (> access-minimal-size 0)
-            (access-minimal-size)
+    (assert (> minimal-size 0)
+            (minimal-size)
             'cl-ds:argument-value-out-of-bounds
-            :value access-minimal-size
+            :value minimal-size
             :argument :minimal-size
             :bounds '(> minimal-size 0)
             :format-control "MINIMAL-SIZE should be greater then zero.")))
