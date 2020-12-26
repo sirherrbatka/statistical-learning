@@ -76,9 +76,3 @@
     (for i from 0 below count)
     (setf (sl.data:mref result 0 i) (sl.common:gauss-random))
     (finally (return result))))
-
-
-(-> generate-point (isolation-training-state)
-    split-point)
-(defun generate-point (state)
-  )
