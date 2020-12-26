@@ -28,18 +28,6 @@
                       :end 520
                       :in-place t)))
 
-(vellum.plot:visualize
- :plotly
- (vellum.plot:stack *data*
-                    (vellum.plot:aesthetics
-                     :label "Heatmap"
-                     :x (vellum.plot:axis :label "X" :scale-ratio 1 :scale-anchor :y)
-                     :y (vellum.plot:axis :label "Y" :scale-ratio 1))
-                    (vellum.plot:points
-                     :aesthetics (vellum.plot:aesthetics)
-                     :mapping (vellum.plot:mapping :x 'x :y 'y)))
- "~/dist.html")
-
 (defparameter *tree-parameters*
   (make 'sl.if:isolation
         :maximal-depth 20
@@ -58,5 +46,3 @@
   (sl.mp:make-unsupervised-model *isolation-forest*
                                  (vellum:to-matrix *data*
                                                    :element-type 'double-float)))
-
-(clouseau:inspect *model*)
