@@ -55,8 +55,10 @@
    (%c :initarg :c
        :reader c)
    (%mins :accessor mins
+          :documentation "Cache for point selection."
           :initarg :mins)
    (%maxs :accessor maxs
+          :documentation "Cache for point selection."
           :initarg :maxs)
    (%train-data :initarg :train-data
           :reader sl.mp:train-data)
