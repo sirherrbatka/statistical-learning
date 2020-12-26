@@ -81,22 +81,4 @@
 (-> generate-point (isolation-training-state)
     split-point)
 (defun generate-point (state)
-  (iterate
-    (with data = (sl.mp:train-data state))
-    (with samples = (sl.mp:data-points state))
-    (with attributes = (sl.tp:attribute-indexes state))
-    (with attributes-count = (length attributes))
-    (with min = (ensure (mins state)
-                  (calculate-mins data samples attributes)))
-    (with max = (ensure (maxs state)
-                  (calculate-maxs data samples attributes)))
-    (with normals = (sl.data:make-data-matrix 1 attributes-count))
-    (for i from 0 below attributes-count)
-    (setf (sl.data:mref normals 0 i) (sl.common:gauss-random))
-    (sum (* (sl.data:mref normals 0 i)
-            (random-in-range (sl.data:mref min 0 i)
-                             (sl.data:mref max 0 i)))
-         into dot-product)
-    (finally (return (make-split-point
-                      :normals normals
-                      :dot-product dot-product)))))
+  )
