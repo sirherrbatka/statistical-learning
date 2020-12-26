@@ -160,8 +160,7 @@
   (bind ((data (sl.mp:train-data state))
          (data-points (sl.mp:data-points state))
          (attributes (sl.tp:attribute-indexes state)))
-    (declare (type sl.data:double-float-data-matrix normals)
-             (type (simple-array fixnum (*)) data-points attributes))
+    (declare (type (simple-array fixnum (*)) data-points attributes))
     (iterate
       (declare (type fixnum right-count left-count i j))
       (with right-count = 0)
