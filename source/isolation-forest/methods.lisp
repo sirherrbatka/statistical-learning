@@ -51,8 +51,7 @@
       (finally
        (if optimal-point
            (return (sl.tp:make-node
-                    'isolation-tree
-                    :size (+ left-length right-length)
+                    'sl.tp:fundamental-tree-node
                     :left-node (subtree optimal-point
                                         sl.opt:left
                                         optimal-left-length
@@ -124,7 +123,6 @@
                                         (training-parameters isolation)
                                         training-state
                                         leaf)
-  (setf (size leaf) (~> training-state sl.mp:data-points length))
   leaf)
 
 
