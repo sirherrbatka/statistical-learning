@@ -7,5 +7,8 @@
   (:export
    #:c-factor
    #:c
+   #:make-normals
+   #:calculate-mins
+   #:calculate-maxs
    #:isolation
    #:isolation-splitter))
