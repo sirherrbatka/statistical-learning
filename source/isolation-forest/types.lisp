@@ -33,7 +33,6 @@
    (%c :initarg :c :reader c)))
 
 
-
 (defclass isolation-leaf (sl.tp:fundamental-leaf-node)
   ())
 
