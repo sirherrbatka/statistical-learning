@@ -30,8 +30,9 @@
 
 (defparameter *tree-parameters*
   (make 'sl.if:isolation
-        :maximal-depth 20
-        :minimal-size 5))
+        :maximal-depth 30
+        :repeats 1
+        :minimal-size 1))
 
 (defparameter *isolation-forest*
   (make 'sl.ensemble:isolation-forest
