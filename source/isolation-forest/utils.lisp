@@ -45,48 +45,18 @@
        dot-product)))
 
 
-(declaim (inline reduce-data-points))
-(-> reduce-data-points
-    (sl.data:double-float-data-matrix
-     (simple-array fixnum (*))
-     (simple-array fixnum (*))
-     t)
-    sl.data:double-float-data-matrix)
-(defun reduce-data-points (data samples attributes function)
-  (declare (optimize (speed 3) (safety 0)))
-  (iterate
-    (declare (type fixnum i)
-             (type sl.data:double-float-data-matrix result))
-    (with data-points-count = (length samples))
-    (with attributes-count = (length attributes))
-    (with result = (sl.data:make-data-matrix 1 attributes-count))
-    (for i from 0 below attributes-count)
-    (for attribute = (aref attributes i))
-    (setf (sl.data:mref result 0 i)
-          (sl.data:mref data (aref samples 0) attribute))
-    (iterate
-      (declare (type fixnum j))
-      (for j from 1 below data-points-count)
-      (for k = (aref samples j))
-      (setf (sl.data:mref result 0 i)
-            (funcall function
-                     (sl.data:mref result 0 i)
-                     (sl.data:mref data k attribute))))
-    (finally (return result))))
-
-
 (defun calculate-mins (data-matrix samples attributes)
-  (reduce-data-points data-matrix
-                      samples
-                      attributes
-                      #'min))
+  (sl.data:reduce-data-points #'min
+                              data-matrix
+                              :data-points samples
+                              :attributes attributes))
 
 
 (defun calculate-maxs (data-matrix samples attributes)
-  (reduce-data-points data-matrix
-                      samples
-                      attributes
-                      #'max))
+  (sl.data:reduce-data-points #'max
+                              data-matrix
+                              :data-points samples
+                              :attributes attributes))
 
 
 (defun make-normals (count)

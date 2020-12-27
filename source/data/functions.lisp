@@ -103,36 +103,43 @@
 
 
 (declaim (inline reduce-data-points))
-(defun reduce-data-points (function data-matrix)
+(-> reduce-data-points (t double-float-data-matrix
+                          &key
+                          (:attributes (or null (simple-array fixnum (*))))
+                          (:data-points (or null (simple-array fixnum (*)))))
+    double-float-data-matrix)
+(defun reduce-data-points (function data &key attributes data-points)
   (declare (optimize (speed 3) (safety 0)))
-  (check-type data-matrix double-float-data-matrix)
   (iterate
-    (declare (type fixnum i attributes-count data-points-count))
-    (with function = (ensure-function function))
-    (with data-points-count = (data-points-count data-matrix))
-    (with attributes-count = (attributes-count data-matrix))
-    (with result =
-          (lret ((result (make-data-matrix 1 attributes-count)))
-            (unless (zerop data-points-count)
-              (iterate
-                (declare (type fixnum i))
-                (for i from 0 below attributes-count)
-                (setf (mref result 0 i) (mref data-matrix 0 i))))))
-    (for i from 1 below data-points-count)
+    (declare (type fixnum i first-point attributes-count data-points-count)
+             (type double-float-data-matrix result))
+    (with data-points-count = (if (null data-points)
+                                  (data-points-count data)
+                                  (length data-points)))
+    (with attributes-count = (if (null attributes)
+                                 (attributes-count data)
+                                 (length attributes)))
+    (with result = (make-data-matrix 1 attributes-count))
+    (with first-point = (if (null data-points)
+                            0
+                            (length data-points)))
+    (for i from 0 below attributes-count)
+    (for attribute = (if (null attributes)
+                         i
+                         (aref attributes i)))
+    (setf (sl.data:mref result 0 i)
+          (sl.data:mref data first-point attribute))
     (iterate
-      (declare (type fixnum j))
-      (for j from 0 below attributes-count)
-      (setf (mref result 0 j)
-            (the double-float (funcall function
-                                       (mref result 0 j)
-                                       (mref data-matrix i j)))))
-    (finally
-     (when (= 1 data-points-count)
-       (iterate
-         (declare (type fixnum i))
-         (for i from 0 below attributes-count)
-         (setf (mref result 0 i) (funcall function (mref result 0 i)))))
-     (return result))))
+      (declare (type fixnum j k))
+      (for j from 1 below data-points-count)
+      (for k = (if (null data-points)
+                   j
+                   (aref data-points j)))
+      (setf (sl.data:mref result 0 i)
+            (funcall function
+                     (sl.data:mref result 0 i)
+                     (sl.data:mref data k attribute))))
+    (finally (return result))))
 
 
 (-> split (data-matrix fixnum split-vector t (or null fixnum)) data-matrix)
