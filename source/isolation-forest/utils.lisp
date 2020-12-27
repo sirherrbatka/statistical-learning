@@ -31,11 +31,10 @@
     (finally (return result))))
 
 
-(-> rightp
-    (split-point
-     (simple-array fixnum (*))
-     fixnum
-     sl.data:double-float-data-matrix)
+(-> rightp (split-point
+            (simple-array fixnum (*))
+            fixnum
+            sl.data:double-float-data-matrix)
     boolean)
 (defun rightp (split-point attributes data-point data)
   (declare (optimize (speed 3) (safety 0)))

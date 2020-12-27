@@ -9,6 +9,8 @@
    #:c
    #:make-normals
    #:calculate-mins
+   #:rightp
+   #:make-split-point
    #:calculate-maxs
    #:isolation
    #:isolation-splitter))
