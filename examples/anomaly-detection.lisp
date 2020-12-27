@@ -32,11 +32,11 @@
   (make 'sl.if:isolation
         :maximal-depth 30
         :repeats 1
-        :minimal-size 1))
+        :minimal-size 3))
 
 (defparameter *isolation-forest*
   (make 'sl.ensemble:isolation-forest
-        :trees-count 20
+        :trees-count 500
         :parallel nil
         :tree-batch-size 5
         :tree-parameters *tree-parameters*

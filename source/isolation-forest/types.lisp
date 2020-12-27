@@ -22,7 +22,7 @@
                   :accessor access-minimal-size
                   :reader sl.tp:minimal-size))
   (:default-initargs
-   :repeats 5
+   :repeats 1
    :splitter (make 'isolation-splitter)
    :parallel nil))
 
