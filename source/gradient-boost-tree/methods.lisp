@@ -313,3 +313,8 @@
                   (for j from 0 below number-of-classes)
                   (setf (sl.data:mref result i j) (sl.data:mref expected-value 0 j)))
                 (finally (return result)))))
+
+
+(defmethod cl-ds.utils:cloning-information
+    append ((object fundamental-gradient-boost-tree-parameters))
+  '((:optimized-function optimized-function)))

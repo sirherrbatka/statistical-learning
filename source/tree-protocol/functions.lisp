@@ -12,7 +12,7 @@
 (defun make-leaf (training-state)
   (let* ((parameters (sl.mp:training-parameters training-state))
          (result (make-leaf* parameters training-state)))
-    (assert result)
+    (assert (not (null result)))
     (initialize-leaf parameters training-state result)
     result))
 
@@ -116,9 +116,9 @@
 (defun split (training-state)
   (let* ((parameters (sl.mp:training-parameters training-state))
          (splitter (splitter parameters)))
-    (if (requires-split-p splitter parameters training-state)
-        (split* (sl.mp:training-parameters training-state)
-                training-state)
+    (or (when (requires-split-p splitter parameters training-state)
+          (split* (sl.mp:training-parameters training-state)
+                  training-state))
         (make-leaf training-state))))
 
 

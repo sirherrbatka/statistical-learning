@@ -343,6 +343,7 @@
            (type fixnum index))
   (labels ((impl (node depth &aux (new-depth (the fixnum (1+ depth))))
              (declare (optimize (speed 3) (safety 0)))
+             (assert (not (null node)))
              (if (treep node)
                  (bind (((attribute-index . attribute-value) (point node)))
                    (declare (type fixnum attribute-index)
@@ -549,3 +550,13 @@
     (make 'tree-model
           :parameters parameters
           :root root)))
+
+
+(defmethod cl-ds.utils:cloning-information
+    append ((object standard-tree-training-parameters))
+  '((:maximal-depth maximal-depth)
+    (:minimal-difference minimal-difference)
+    (:minimal-size minimal-size)
+    (:trials-count trials-count)
+    (:parallel parallel)
+    (:splitter splitter)))

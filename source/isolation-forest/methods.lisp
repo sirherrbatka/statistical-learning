@@ -281,3 +281,12 @@
             :argument :minimal-size
             :bounds '(> minimal-size 0)
             :format-control "MINIMAL-SIZE should be greater then zero.")))
+
+
+(defmethod cl-ds.utils:cloning-information
+    append ((object isolation))
+  '((:maximal-depth sl.tp:maximal-depth)
+    (:repeats repeats)
+    (:splitter sl.tp:splitter)
+    (:minimal-size sl.tp:minimal-size)
+    (:parallel sl.tp:parallel)))

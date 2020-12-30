@@ -171,3 +171,8 @@
 
 (defmethod sl.opt:number-of-classes ((object classification))
   (~> object optimized-function sl.opt:number-of-classes))
+
+
+(defmethod cl-ds.utils:cloning-information
+    append ((object fundamental-decision-tree-parameters))
+  '((:optimized-function optimized-function)))

@@ -13,4 +13,5 @@
    #:random-uniform
    #:side-of-line
    #:gauss-random
+   #:strip
    #:proxy-enabled))

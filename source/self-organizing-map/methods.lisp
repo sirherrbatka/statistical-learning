@@ -143,3 +143,13 @@
 
 (defmethod unit-at ((model self-organizing-map-model) location)
   (apply #'aref (units model) location))
+
+
+(defmethod cl-ds.utils:cloning-information
+    append ((object self-organizing-map))
+  '((:initial-alpha initial-alpha)
+    (:initial-sigma initial-sigma)
+    (:decay decay)
+    (:grid-dimensions grid-dimensions)
+    (:parallel parallel)
+    (:number-of-iterations number-of-iterations)))

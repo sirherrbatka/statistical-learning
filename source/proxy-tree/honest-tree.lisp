@@ -52,17 +52,21 @@
                                indexes))
          (attributes (attributes state))
          (next-proxy (sl.common:next-proxy proxy))
+         (stripped (sl.common:strip parameters next-proxy))
          (division (sl.mp:sample-training-state*/proxy
                     next-proxy
                     parameters
-                    inner-state
+                    (cl-ds.utils:quasi-clone inner-state
+                                             :training-parameters stripped)
                     :train-attributes attributes
                     :data-points division-indexes))
          (adjust (sl.mp:sample-training-state*/proxy next-proxy
                                                      parameters
                                                      inner-state
                                                      :data-points adjust-indexes))
-         (model (sl.mp:make-model*/proxy next-proxy parameters division))
+         (model (sl.mp:make-model*/proxy next-proxy
+                                         stripped
+                                         division))
          (root (sl.tp:root model))
          (splitter (sl.tp:splitter parameters))
          ((:flet assign-leaf (index))

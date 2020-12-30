@@ -34,6 +34,16 @@
   object)
 
 
+(defmethod cl-ds.utils:cloning-information
+    append ((object proxy-enabled))
+  '((:proxy proxy)))
+
+
+(defun strip (object &optional (proxy (next-proxy (proxy object))))
+  (cl-ds.utils:quasi-clone* object
+    :proxy proxy))
+
+
 (defmacro defgeneric/proxy (name arguments
                             &optional options (strip t))
   (bind (((:flet /proxy (symbol))
@@ -113,4 +123,3 @@
                    (for p in proxy-objects)
                    (collect `(proxy ,p)))
                ,@real-arguments))))))
-
