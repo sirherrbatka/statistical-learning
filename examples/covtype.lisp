@@ -67,7 +67,7 @@
                                   (:alias Soil_Type_39 :type integer)
                                   (:alias Soil_Type_40 :type integer)
                                   (:alias Cover_Type :type integer))
-                       :body (vellum:body (cover_type horizontal_distance_to_roadways)
+                       :body (vellum:bind-row (cover_type horizontal_distance_to_roadways)
                                (decf cover_type)))))
 
 (defvar *cover-types* ; 7

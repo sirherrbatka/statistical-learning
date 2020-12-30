@@ -59,9 +59,9 @@
    #:requires-split-p/proxy
    #:right-node
    #:root
-   #:split
+   #:make-tree
    #:split*
-   #:split*/proxy
+   #:split
    #:split-point
    #:split-training-state
    #:split-training-state*

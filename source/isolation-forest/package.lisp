@@ -13,4 +13,6 @@
    #:make-split-point
    #:calculate-maxs
    #:isolation
+   #:split-point-normals
+   #:split-point-dot-product
    #:isolation-splitter))

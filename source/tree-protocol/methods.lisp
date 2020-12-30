@@ -208,13 +208,13 @@
 
 
 (defmethod make-leaf*/proxy (parameters/proxy
-                             (parameters fundamental-tree-training-parameters))
+                             (parameters fundamental-tree-training-parameters)
+                             state)
   (make 'standard-leaf-node))
 
 
-(defmethod split*/proxy
-    (parameters/proxy
-     (training-parameters basic-tree-training-parameters)
+(defmethod split*
+    ((training-parameters basic-tree-training-parameters)
      training-state)
   (declare (optimize (debug 3) (speed 0) (safety 3)))
   (bind ((trials-count (trials-count training-parameters))
@@ -274,9 +274,7 @@
            (return nil))
          (bind ((new-depth (~> training-state depth 1+))
                 ((:flet new-state (position size loss))
-                 (split-training-state*/proxy
-                  parameters/proxy
-                  training-parameters
+                 (split-training-state
                   training-state
                   optimal-array
                   position
@@ -287,9 +285,7 @@
                                       size
                                       loss
                                       &aux (state (new-state position size loss))))
-                 (~>> (make-leaf*/proxy parameters/proxy
-                                        training-parameters)
-                      (split state _ parameters/proxy)))
+                 (make-tree state))
                 ((:flet subtree (position size loss &optional parallel))
                  (if (and parallel (< new-depth 10))
                      (lparallel:future (subtree-impl position size loss))
@@ -549,8 +545,7 @@
     (parameters-proxy
      (parameters basic-tree-training-parameters)
      state)
-  (let* ((protoroot (make-leaf* parameters))
-         (root (split state protoroot parameters-proxy)))
+  (let* ((root (make-tree state)))
     (make 'tree-model
           :parameters parameters
           :root root)))

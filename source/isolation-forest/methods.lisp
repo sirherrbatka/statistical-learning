@@ -1,9 +1,8 @@
 (cl:in-package #:statistical-learning.isolation-forest)
 
 
-(defmethod sl.tp:split*/proxy
-    (parameters/proxy
-     (training-parameters isolation)
+(defmethod sl.tp:split*
+    ((training-parameters isolation)
      training-state)
   (bind ((split-array #1=(~> training-state sl.mp:data-points
                              length sl.opt:make-split-array))
@@ -20,12 +19,8 @@
            size
            `(:depth ,new-depth)
            point))
-         ((:flet subtree-impl
-            (point position size &aux (state (new-state point
-                                                        position
-                                                        size))))
-          (~>> (sl.tp:make-leaf* training-parameters)
-               (sl.tp:split state)))
+         ((:flet subtree-impl (point position size))
+          (sl.tp:split (new-state point position size)))
          ((:flet subtree (point position size &optional parallel))
           (if (and parallel (< new-depth 10))
               (lparallel:future (subtree-impl point position size))
@@ -115,7 +110,8 @@
 
 
 (defmethod sl.tp:make-leaf*/proxy (training-parameters/proxy
-                                   (training-parameters isolation))
+                                   (training-parameters isolation)
+                                   state)
   (make 'isolation-leaf))
 
 
@@ -143,8 +139,11 @@
     (for i from 0 below attributes-count)
     (setf (sl.data:mref normals 0 i) (sl.common:gauss-random))
     (sum (* (sl.data:mref normals 0 i)
-            (random-in-range (sl.data:mref min 0 i)
-                             (sl.data:mref max 0 i)))
+            (if (= (sl.data:mref min 0 i)
+                   (sl.data:mref max 0 i))
+                (sl.data:mref max 0 i)
+                (random-in-range (sl.data:mref min 0 i)
+                                 (sl.data:mref max 0 i))))
          into dot-product)
     (finally (return (make-split-point
                       :normals normals
@@ -248,8 +247,7 @@
     (parameters/proxy
      (parameters isolation)
      state)
-  (let* ((protoroot (sl.tp:make-leaf* parameters))
-         (root (sl.tp:split state protoroot parameters/proxy)))
+  (let* ((root (sl.tp:make-tree state)))
     (make-instance 'isolation-model
                    :parameters parameters
                    :root root

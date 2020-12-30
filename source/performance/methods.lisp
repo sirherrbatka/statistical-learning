@@ -190,7 +190,7 @@
          (tp 0))
     (vellum:transform
      roc-table
-     (vellum:body (threshold fpr tpr ppv npv)
+     (vellum:bind-row (threshold fpr tpr ppv npv)
        (bind ((current-point vellum.table:*current-row*)
               (target (unless (= current-point total)
                         (second (aref points current-point))))

@@ -88,7 +88,8 @@
 
 
 (defmethod sl.tp:make-leaf*/proxy ((proxy causal-tree)
-                                   parameters)
+                                   parameters
+                                   state)
   (make 'causal-leaf))
 
 
@@ -130,7 +131,7 @@
           (count i treatment-vector)))
     (iterate
       (for i from 0 below treatment-types-count)
-      (for sub-leaf = (sl.tp:make-leaf*/proxy next-proxy parameters))
+      (for sub-leaf = (sl.tp:make-leaf*/proxy next-proxy parameters training-state))
       (for treatment-size = (treatment-size i))
       (for treatment-state =
            (sl.tp:split-training-state*/proxy next-proxy
@@ -230,7 +231,7 @@
 (defmethod sl.mp:make-model*/proxy ((proxy causal-tree) parameters state)
   (make 'sl.tp:tree-model
         :parameters parameters
-        :root (~> state sl.tp:make-leaf (sl.tp:split state _ proxy))))
+        :root (sl.tp:make-tree state proxy)))
 
 
 (defmethod sl.tp:predictions ((leaf causal-leaf))

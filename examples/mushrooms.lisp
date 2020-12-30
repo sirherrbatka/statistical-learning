@@ -67,7 +67,7 @@
                                                              total-size))
          (index 0))
     (vellum:transform table
-                      (vellum:body ()
+                      (vellum:bind-row ()
                         (iterate
                           (for i from 0 below column-count)
                           (for offset in sizes)

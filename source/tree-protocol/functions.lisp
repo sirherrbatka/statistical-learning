@@ -11,24 +11,10 @@
 
 (defun make-leaf (training-state)
   (let* ((parameters (sl.mp:training-parameters training-state))
-         (result (make-leaf* parameters)))
+         (result (make-leaf* parameters training-state)))
+    (assert result)
+    (initialize-leaf parameters training-state result)
     result))
-
-
-(defun split (training-state leaf
-              &optional (parameters/proxy nil proxy-p))
-  (let* ((parameters (sl.mp:training-parameters training-state))
-         (proxy (if proxy-p
-                    parameters/proxy
-                    (sl.common:proxy parameters)))
-         (result (split*/proxy proxy
-                               parameters
-                               training-state)))
-    ;; TODO also correct initialize-leaf call to include proxy
-    (if (null result)
-        (progn (initialize-leaf/proxy parameters/proxy parameters training-state leaf)
-               leaf)
-        result)))
 
 
 (defun leafs-for* (splitter node data)
@@ -84,34 +70,18 @@
 
 
 (defun split-training-state (state split-array
-                             left-initargs right-initargs
-                             &key
-                               (left-size (count sl.opt:left split-array))
-                               (right-size (count sl.opt:right split-array))
-                             attribute-index)
+                             position
+                             size
+                             initargs
+                             point)
   (declare (optimize (speed 3)))
-  (let* ((training-parameters (sl.mp:training-parameters state))
-         (attribute-indexes (attribute-indexes state))
-         (new-attributes (if (null attribute-index)
-                             attribute-indexes
-                             (subsample-vector attribute-indexes
-                                               attribute-index))))
-    (values (split-training-state* training-parameters
-                                   state
-                                   split-array
-                                   sl.opt:left
-                                   left-size
-                                   left-initargs
-                                   attribute-index
-                                   new-attributes)
-            (split-training-state* training-parameters
-                                   state
-                                   split-array
-                                   sl.opt:right
-                                   right-size
-                                   right-initargs
-                                   attribute-index
-                                   new-attributes))))
+  (split-training-state* (sl.mp:training-parameters state)
+                         state
+                         split-array
+                         position
+                         size
+                         initargs
+                         point))
 
 
 (defun pick-split (state)
@@ -141,3 +111,16 @@
         :iterations iterations
         :repeats repeats
         :distance-function distance-function))
+
+
+(defun split (training-state)
+  (let* ((parameters (sl.mp:training-parameters training-state))
+         (splitter (splitter parameters)))
+    (if (requires-split-p splitter parameters training-state)
+        (split* (sl.mp:training-parameters training-state)
+                training-state)
+        (make-leaf training-state))))
+
+
+(defun make-tree (training-state)
+  (split training-state))

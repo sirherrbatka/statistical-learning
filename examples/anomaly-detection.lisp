@@ -14,14 +14,14 @@
                            (:alias y :type double-float)))))
     ;; build normal population
     (vellum:transform data
-                      (vellum:body (x y)
+                      (vellum:bind-row (x y)
                         (let ((re (+ 5 (sl.common:gauss-random))))
                           (setf x (+ re (random-in-range -0.1 0.1))
                                 y (+ re (random-in-range -0.1 0.1)))))
                       :end 500
                       :in-place t)
     (vellum:transform data
-                      (vellum:body (x y)
+                      (vellum:bind-row (x y)
                         (setf x (random-in-range -1.5d0 1.5d0)
                               y (random-in-range -1.5d0 1.5d0)))
                       :start 500

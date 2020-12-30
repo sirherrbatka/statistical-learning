@@ -23,7 +23,7 @@
                                   (:alias v5 :type float)
                                   (:alias v6 :type float)
                                   (:alias v7 :type float))
-                       :body (vellum:body (promotion)
+                       :body (vellum:bind-row (promotion)
                                (setf promotion (econd ((string= promotion "Yes") 1)
                                                       ((string= promotion "No") 0)))))
       (vellum:select :columns '(:take-from promotion :take-to v7)))) ; who cares about id?

@@ -14,14 +14,12 @@
 
 (sl.common:defgeneric/proxy leaf-for ((splitter) node data index context))
 
-(sl.common:defgeneric/proxy split* ((training-parameters)
-                                    training-state)
-  () nil)
+(defgeneric split* (training-parameters training-state))
 
 (sl.common:defgeneric/proxy split-training-state*
     ((parameters) state split-array position size initargs point))
 
-(sl.common:defgeneric/proxy make-leaf* ((training-parameters)))
+(sl.common:defgeneric/proxy make-leaf* ((training-parameters) state))
 
 (sl.common:defgeneric/proxy requires-split-p
     (splitter (parameters) training-state)
