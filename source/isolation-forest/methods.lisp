@@ -137,7 +137,11 @@
                   (calculate-maxs data samples attributes)))
     (with normals = (sl.data:make-data-matrix 1 attributes-count))
     (for i from 0 below attributes-count)
-    (setf (sl.data:mref normals 0 i) (sl.common:gauss-random))
+    (for avg = (/ (+ (sl.data:mref min 0 i)
+                     (sl.data:mref max 0 i))
+                  2))
+    (setf (sl.data:mref normals 0 i) (sl.common:gauss-random 0.0d0
+                                                             avg))
     (sum (* (sl.data:mref normals 0 i)
             (if (= (sl.data:mref min 0 i)
                    (sl.data:mref max 0 i))

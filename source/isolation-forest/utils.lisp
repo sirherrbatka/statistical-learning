@@ -62,5 +62,6 @@
   (iterate
     (with result = (sl.data:make-data-matrix 1 count))
     (for i from 0 below count)
-    (setf (sl.data:mref result 0 i) (sl.common:gauss-random))
+    (setf (sl.data:mref result 0 i) (sl.common:gauss-random
+                                     0.0d0 1.0d0))
     (finally (return result))))
