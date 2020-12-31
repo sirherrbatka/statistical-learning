@@ -13,11 +13,11 @@
   (~> (vellum:copy-from :csv (~>> (asdf:system-source-directory :statistical-learning)
                                   (merge-pathnames "examples/iris.data"))
                         :header nil)
-      (vellum:to-table :columns '((:alias sepal-length :type float)
-                                  (:alias sepal-width :type float)
-                                  (:alias petal-length :type float)
-                                  (:alias petal-width :type float)
-                                  (:alias class :type string)))))
+      (vellum:to-table :columns '((:name sepal-length :type float)
+                                  (:name sepal-width :type float)
+                                  (:name petal-length :type float)
+                                  (:name petal-width :type float)
+                                  (:name class :type string)))))
 
 (defvar *training-data*
   (~> *data*
@@ -41,7 +41,7 @@
 (defparameter *with-positions*
   (~> *positions* cl-ds.utils:unfold-table (batches 2)
       (cl-ds.alg:on-each #'vector :key (curry #'map 'list #'truncate))
-      (vellum:to-table :columns '((:alias position)))
+      (vellum:to-table :columns '((:name position)))
       list
       (vellum:hstack *data* _)))
 
@@ -51,10 +51,9 @@
                           (cl-ds.alg:group-by :test 'equal
                                               :key (vellum:brr class))
                           cl-ds.alg:count-elements
-                          (vellum:to-table :columns '((:alias position)
+                          (vellum:to-table :columns '((:name position)
                                                       (:alas class)
-                                                      (:alias count)))
+                                                      (:name count)))
                           (vellum:order-by 'position
                                            (curry #'cl-ds.utils:lexicographic-compare
                                                   #'< #'=))))
-

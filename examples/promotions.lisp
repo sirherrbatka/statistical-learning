@@ -13,16 +13,16 @@
   (~> (vellum:copy-from :csv (~>> (asdf:system-source-directory :statistical-learning)
                                   (merge-pathnames "examples/promotions.data"))
                         :header t)
-      (vellum:to-table :columns '((:alias id)
-                                  (:alias promotion) ; file has yes or no as values
-                                  (:alias purchase :type integer) ; either 0 or 1
-                                  (:alias v1 :type float)
-                                  (:alias v2 :type float)
-                                  (:alias v3 :type float)
-                                  (:alias v4 :type float)
-                                  (:alias v5 :type float)
-                                  (:alias v6 :type float)
-                                  (:alias v7 :type float))
+      (vellum:to-table :columns '((:name id)
+                                  (:name promotion) ; file has yes or no as values
+                                  (:name purchase :type integer) ; either 0 or 1
+                                  (:name v1 :type float)
+                                  (:name v2 :type float)
+                                  (:name v3 :type float)
+                                  (:name v4 :type float)
+                                  (:name v5 :type float)
+                                  (:name v6 :type float)
+                                  (:name v7 :type float))
                        :body (vellum:bind-row (promotion)
                                (setf promotion (econd ((string= promotion "Yes") 1)
                                                       ((string= promotion "No") 0)))))

@@ -13,12 +13,12 @@
                                   (merge-pathnames "examples/airfoil_self_noise.dat"))
                         :header nil
                         :separator #\tab)
-      (vellum:to-table :columns '((:alias frequency :type float)
-                                  (:alias angle :type float)
-                                  (:alias chord-length :type float)
-                                  (:alias velocity :type float)
-                                  (:alias displacement :type float)
-                                  (:alias sound :type float)))))
+      (vellum:to-table :columns '((:name frequency :type float)
+                                  (:name angle :type float)
+                                  (:name chord-length :type float)
+                                  (:name velocity :type float)
+                                  (:name displacement :type float)
+                                  (:name sound :type float)))))
 
 (defvar *train-data*
   (vellum:to-matrix (vellum:select *data* :columns '(:take-to displacement))

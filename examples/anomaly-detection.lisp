@@ -10,8 +10,8 @@
 
 (defparameter *data*
   (lret ((data (vellum:make-table
-                :columns '((:alias x :type double-float)
-                           (:alias y :type double-float)))))
+                :columns '((:name x :type double-float)
+                           (:name y :type double-float)))))
     ;; build normal population
     (vellum:transform data
                       (vellum:bind-row (x y)
