@@ -28,17 +28,17 @@
 
 
 (defvar *train-data*
-  (~> (vellum:select *data* :columns '(:take-from v1 :take-to v7))
+  (~> (vellum:select *data* :columns (vellum:s (vellum:between :from 'v1)))
       (vellum:to-matrix :element-type 'double-float)))
 
 
 (defvar *target-data*
-  (~> (vellum:select *data* :columns '(:v purchase))
+  (~> (vellum:select *data* :columns '(purchase))
       (vellum:to-matrix :element-type 'double-float)))
 
 
 (defvar *treatment-data*
-  (~> (vellum:select *data* :columns '(:v promotion))
+  (~> (vellum:select *data* :columns '(promotion))
       (vellum:to-matrix :element-type 'double-float)))
 
 

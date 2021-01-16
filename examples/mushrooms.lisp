@@ -60,7 +60,7 @@
          (hash-tables
            (iterate
              (for i from 0 below column-count)
-             (collect (column-encoder-hash-table (vellum:select table :columns `(:v ,i))))))
+             (collect (column-encoder-hash-table (vellum:select table :columns `(,i))))))
          (sizes (serapeum:scan #'+ hash-tables :key #'hash-table-count :initial-value 0))
          (total-size (last-elt sizes))
          (result (statistical-learning.data:make-data-matrix (vellum:row-count table)
@@ -79,7 +79,7 @@
     result))
 
 (defparameter *train-data*
-  (encode (vellum:select *data* :columns '(:take-from cap-shape :take-to habitat))))
+  (encode (vellum:select *data* :columns (vellum:s (vellum:between :from 'cap-shape)))))
 
 (defparameter *target-data*
   (lret ((result (statistical-learning.data:make-data-matrix (vellum:row-count *data*) 1)))

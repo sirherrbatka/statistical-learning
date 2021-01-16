@@ -72,19 +72,18 @@
 
 (defvar *cover-types* ; 7
   (vellum:with-table (*data*)
-    (bind (((min . max) (cl-ds.alg:extrema *data* #'< :key
-                                           (vellum:brr cover_type))))
+    (bind (((min . max) (cl-ds.alg:extrema *data* #'< :key (vellum:brr cover_type))))
       (assert (zerop min))
       (1+ (- max min)))))
 
 (defvar *train-data*
   (vellum:to-matrix (vellum:select *data*
-                      :columns '(:take-to soil_type_40))
+                      :columns (vellum:s (vellum:between :to 'cover_type)))
                     :element-type 'double-float))
 
 (defvar *target-data*
   (vellum:to-matrix (vellum:select *data*
-                      :columns '(:v cover_type))
+                      :columns '(cover_type))
                     :element-type 'double-float))
 
 (defparameter *training-parameters*

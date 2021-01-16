@@ -10,18 +10,18 @@
 
 ;; loading data set
 (defvar *data*
-  (~> (vellum:copy-from :csv (~>> (asdf:system-source-directory :statistical-learning)
-                                  (merge-pathnames "examples/iris.data"))
-                        :header nil)
-      (vellum:to-table :columns '((:name sepal-length :type float)
-                                  (:name sepal-width :type float)
-                                  (:name petal-length :type float)
-                                  (:name petal-width :type float)
-                                  (:name class :type string)))))
+  (vellum:copy-from :csv (~>> (asdf:system-source-directory :statistical-learning)
+                              (merge-pathnames "examples/iris.data"))
+                    :includes-header-p nil
+                    :columns '((:name sepal-length :type float)
+                               (:name sepal-width :type float)
+                               (:name petal-length :type float)
+                               (:name petal-width :type float)
+                               (:name class :type string))))
 
 (defvar *training-data*
   (~> *data*
-      (vellum:select :columns '(:take-from sepal-length :take-to petal-width))
+      (vellum:select :columns (vellum:s (vellum:between :to 'class)))
       (vellum:to-matrix :element-type 'double-float)))
 
 (defparameter *training-parameters*
