@@ -12,7 +12,10 @@
 
 (defclass fundamental-training-state ()
   ((%training-parameters :initarg :training-parameters
-                         :accessor training-parameters)))
+                         :accessor training-parameters)
+   (%cached :initarg :cached
+            :reader cached))
+  (:default-initargs :cached (make-hash-table)))
 
 
 (defclass supervised-model (fundamental-model)

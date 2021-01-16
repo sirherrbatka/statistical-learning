@@ -58,31 +58,9 @@
            (return nil))))))
 
 
-(defmethod sl.tp:leaf-for/proxy (splitter/proxy
-                                 (splitter isolation-splitter)
-                                 node
-                                 data
-                                 index
-                                 context)
-  (declare (type sl.data:double-float-data-matrix data)
-           (type fixnum index))
-  (bind ((attributes (attributes context))
-         ((:labels impl
-            (node depth &aux (next-depth (the fixnum (1+ depth)))))
-          (declare (optimize (speed 3) (safety 0)))
-          (if (sl.tp:treep node)
-              (if (rightp (sl.tp:point node)
-                          attributes
-                          index data)
-                  (~> node sl.tp:right-node (impl next-depth))
-                  (~> node sl.tp:left-node (impl next-depth)))
-              (values node depth))))
-    (impl node 0)))
-
-
 (defmethod sl.tp:requires-split-p/proxy and
     (parameters/proxy
-     (splitter isolation-splitter)
+     splitter
      (isolation isolation)
      training-state)
   (and (> (~> training-state sl.mp:data-points length)
@@ -120,64 +98,6 @@
                                         training-state
                                         leaf)
   leaf)
-
-
-(defmethod sl.tp:pick-split*/proxy (splitter/proxy
-                                    (splitter isolation-splitter)
-                                    parameters
-                                    state)
-  (iterate
-    (with data = (sl.mp:train-data state))
-    (with samples = (sl.mp:data-points state))
-    (with attributes = (sl.tp:attribute-indexes state))
-    (with attributes-count = (length attributes))
-    (with min = (ensure (mins state)
-                  (calculate-mins data samples attributes)))
-    (with max = (ensure (maxs state)
-                  (calculate-maxs data samples attributes)))
-    (with normals = (sl.data:make-data-matrix 1 attributes-count))
-    (for i from 0 below attributes-count)
-    (for avg = (/ (+ (sl.data:mref min 0 i)
-                     (sl.data:mref max 0 i))
-                  2))
-    (setf (sl.data:mref normals 0 i) (sl.common:gauss-random 0.0d0
-                                                             avg))
-    (sum (* (sl.data:mref normals 0 i)
-            (if (= (sl.data:mref min 0 i)
-                   (sl.data:mref max 0 i))
-                (sl.data:mref max 0 i)
-                (random-in-range (sl.data:mref min 0 i)
-                                 (sl.data:mref max 0 i))))
-         into dot-product)
-    (finally (return (make-split-point
-                      :normals normals
-                      :dot-product dot-product)))))
-
-
-(defmethod sl.tp:fill-split-vector*/proxy
-    (splitter/proxy
-     (splitter isolation-splitter)
-     parameters
-     state
-     point
-     split-vector)
-  (declare (type sl.data:split-vector split-vector)
-           (type split-point point)
-           (optimize (speed 3) (safety 0) (debug 0)))
-  (bind ((data (sl.mp:train-data state))
-         (data-points (sl.mp:data-points state))
-         (attributes (sl.tp:attribute-indexes state)))
-    (declare (type (simple-array fixnum (*)) data-points attributes))
-    (iterate
-      (declare (type fixnum right-count left-count i j))
-      (with right-count = 0)
-      (with left-count = 0)
-      (for j from 0 below (length data-points))
-      (for i = (aref data-points j))
-      (for rightp = (rightp point attributes i data))
-      (setf (aref split-vector j) rightp)
-      (if rightp (incf right-count) (incf left-count))
-      (finally (return (values left-count right-count))))))
 
 
 (defmethod cl-ds.utils:cloning-information append
@@ -251,12 +171,11 @@
     (parameters/proxy
      (parameters isolation)
      state)
-  (let* ((root (sl.tp:make-tree state)))
-    (make-instance 'isolation-model
-                   :parameters parameters
-                   :root root
-                   :attributes (sl.tp:attribute-indexes state)
-                   :c (c state))))
+  (make-instance 'isolation-model
+                 :parameters parameters
+                 :root (sl.tp:make-tree state)
+                 :attribute-indexes (sl.tp:attribute-indexes state)
+                 :c (c state)))
 
 
 (defmethod initialize-instance :after ((object isolation)

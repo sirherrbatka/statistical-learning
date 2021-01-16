@@ -68,6 +68,9 @@
    #:split-training-state*/proxy
    #:split-training-state-info
    #:split-training-state-info/proxy
+   #:mins
+   #:maxs
+   #:hyperplane-splitter
    #:splitter
    #:standard-leaf-node
    #:standard-tree-training-parameters

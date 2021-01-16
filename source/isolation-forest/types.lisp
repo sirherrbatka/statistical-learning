@@ -1,10 +1,6 @@
 (cl:in-package #:statistical-learning.isolation-forest)
 
 
-(defclass isolation-splitter (sl.tp:fundamental-splitter)
-  ())
-
-
 (defclass isolation (sl.tp:basic-tree-training-parameters)
   ((%maximal-depth :initarg :maximal-depth
                    :reader sl.tp:maximal-depth
@@ -23,14 +19,12 @@
                   :reader sl.tp:minimal-size))
   (:default-initargs
    :repeats 1
-   :splitter (make 'isolation-splitter)
+   :splitter (make 'sl.tp:hyperplane-splitter)
    :parallel nil))
 
 
 (defclass isolation-model (sl.tp:tree-model)
-  ((%attributes :initarg :attributes
-                :reader attributes)
-   (%c :initarg :c :reader c)))
+  ((%c :initarg :c :reader c)))
 
 
 (defclass isolation-leaf (sl.tp:fundamental-leaf-node)
@@ -46,19 +40,12 @@
            :reader sl.tp:depth)
    (%c :initarg :c
        :reader c)
-   (%mins :accessor mins
-          :documentation "Cache for point selection."
-          :initarg :mins)
-   (%maxs :accessor maxs
-          :documentation "Cache for point selection."
-          :initarg :maxs)
    (%train-data :initarg :train-data
           :reader sl.mp:train-data)
    (%attributes :initarg :attributes
                 :reader sl.tp:attribute-indexes)
    (%data-points :initarg :data-points
-                 :reader sl.mp:data-points))
-  (:default-initargs :mins nil :maxs nil))
+                 :reader sl.mp:data-points)))
 
 
 (defclass isolation-prediction ()

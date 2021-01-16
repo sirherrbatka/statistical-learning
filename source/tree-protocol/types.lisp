@@ -9,6 +9,10 @@
   ())
 
 
+(defclass hyperplane-splitter (fundamental-splitter)
+  ())
+
+
 (defclass distance-splitter (fundamental-splitter)
   ((%distance-function :initarg :distance-function
                        :reader distance-function)
@@ -100,6 +104,8 @@
   ((%root :initarg :root
           :writer write-root
           :reader root)
+   (%attribute-indexes :initarg :attribute-indexes
+                       :reader attribute-indexes)
    (%forced :initarg :forced
             :accessor forced))
   (:default-initargs :forced nil))

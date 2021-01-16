@@ -65,3 +65,14 @@
                   :data-points data-points)
                  initargs
                  (cl-ds.utils:cloning-list state))))
+
+
+(defmethod cache ((state fundamental-training-state)
+                  key)
+  (gethash key (cached state)))
+
+
+(defmethod (setf cache) (new-value
+                         (state fundamental-training-state)
+                         key)
+  (setf (gethash key (cached state)) new-value))

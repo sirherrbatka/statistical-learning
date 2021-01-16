@@ -364,13 +364,22 @@
   (bind ((attributes (the (simple-array fixnum (*))
                           (attribute-indexes state)))
          (data (sl.mp:train-data state))
+         (data-points (sl.mp:data-points state))
+         (maxs (ensure (sl.mp:cache state 'maxs)
+                 (sl.data:reduce-data-points #'max data
+                                             :data-points data-points
+                                             :attributes attributes)))
+         (mins (ensure (sl.mp:cache state 'mins)
+                 (sl.data:reduce-data-points #'min data
+                                               :data-points data-points
+                                               :attributes attributes)))
          (attributes-count (length attributes))
-         (attribute-index (aref attributes (random attributes-count)))
-         ((:values min max) (sl.data:data-min/max data
-                                                  attribute-index
-                                                  (sl.mp:data-points state)))
+         (attribute-index (random attributes-count))
+         (attribute (aref attributes attribute-index))
+         (min (sl.data:mref mins 0 attribute-index))
+         (max (sl.data:mref maxs 0 attribute-index))
          (threshold (if (= min max) min (sl.common:random-uniform min max))))
-    (list* attribute-index (if (= threshold max) min threshold))))
+    (list* attribute (if (= threshold max) min threshold))))
 
 
 (defmethod fill-split-vector*/proxy
@@ -549,6 +558,7 @@
   (let* ((root (make-tree state)))
     (make 'tree-model
           :parameters parameters
+          :attribute-indexes (attribute-indexes state)
           :root root)))
 
 
@@ -560,3 +570,82 @@
     (:trials-count trials-count)
     (:parallel parallel)
     (:splitter splitter)))
+
+
+(defmethod sl.tp:pick-split*/proxy (splitter/proxy
+                                    (splitter hyperplane-splitter)
+                                    parameters
+                                    state)
+  (iterate
+    (with data = (sl.mp:train-data state))
+    (with samples = (sl.mp:data-points state))
+    (with attributes = (sl.tp:attribute-indexes state))
+    (with attributes-count = (length attributes))
+    (with max = (ensure (sl.mp:cache state 'sl.tp:maxs)
+                  (sl.data:reduce-data-points #'max data
+                                              :data-points samples
+                                              :attributes attributes)))
+    (with min = (ensure (sl.mp:cache state 'sl.tp:mins)
+                  (sl.data:reduce-data-points #'min data
+                                              :data-points samples
+                                              :attributes attributes)))
+    (with normals = (sl.data:make-data-matrix 1 attributes-count))
+    (for i from 0 below attributes-count)
+    (setf (sl.data:mref normals 0 i) (sl.common:gauss-random 0.0d0 1.0d0))
+    (sum (* (sl.data:mref normals 0 i)
+            (if (= (sl.data:mref min 0 i)
+                   (sl.data:mref max 0 i))
+                (sl.data:mref max 0 i)
+                (random-in-range (sl.data:mref min 0 i)
+                                 (sl.data:mref max 0 i))))
+         into dot-product)
+    (finally (return (cons normals dot-product)))))
+
+
+(defmethod sl.tp:fill-split-vector*/proxy
+    (splitter/proxy
+     (splitter hyperplane-splitter)
+     parameters
+     state
+     point
+     split-vector)
+  (declare (type sl.data:split-vector split-vector)
+           (optimize (speed 3) (safety 0) (debug 0)))
+  (bind ((data (sl.mp:train-data state))
+         (data-points (sl.mp:data-points state))
+         ((normals . dot-product) point)
+         (attributes (sl.tp:attribute-indexes state)))
+    (declare (type (simple-array fixnum (*)) data-points attributes))
+    (iterate
+      (declare (type fixnum right-count left-count i j))
+      (with right-count = 0)
+      (with left-count = 0)
+      (for j from 0 below (length data-points))
+      (for i = (aref data-points j))
+      (for rightp = (< (wdot data normals i 0 attributes)
+                       dot-product))
+      (setf (aref split-vector j) rightp)
+      (if rightp (incf right-count) (incf left-count))
+      (finally (return (values left-count right-count))))))
+
+
+(defmethod sl.tp:leaf-for/proxy (splitter/proxy
+                                 (splitter hyperplane-splitter)
+                                 node
+                                 data
+                                 index
+                                 context)
+  (declare (type sl.data:double-float-data-matrix data)
+           (type fixnum index))
+  (bind ((attributes (attribute-indexes context))
+         ((:labels impl
+            (node depth &aux (next-depth (the fixnum (1+ depth)))))
+          (declare (optimize (speed 3) (safety 0)))
+          (if (sl.tp:treep node)
+              (bind (((normals . dot-product) (point node)))
+                (if (< (wdot data normals index 0 attributes)
+                       dot-product)
+                    (~> node right-node (impl next-depth))
+                    (~> node left-node (impl next-depth))))
+              (values node depth))))
+    (impl node 0)))

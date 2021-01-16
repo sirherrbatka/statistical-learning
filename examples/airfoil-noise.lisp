@@ -1,7 +1,6 @@
 (cl:in-package #:cl-user)
 
-(ql:quickload :statistical-learning)
-(ql:quickload :vellum)
+(ql:quickload '(:vellum :vellum-csv :statistical-learning))
 
 (defpackage #:airfoil-noise-example
   (:use #:cl #:statistical-learning.aux-package))
@@ -9,23 +8,22 @@
 (cl:in-package #:airfoil-noise-example)
 
 (defvar *data*
-  (~> (vellum:copy-from :csv (~>> (asdf:system-source-directory :statistical-learning)
-                                  (merge-pathnames "examples/airfoil_self_noise.dat"))
-                        :header nil
-                        :separator #\tab)
-      (vellum:to-table :columns '((:name frequency :type float)
-                                  (:name angle :type float)
-                                  (:name chord-length :type float)
-                                  (:name velocity :type float)
-                                  (:name displacement :type float)
-                                  (:name sound :type float)))))
+  (vellum:copy-from :csv (~>> (asdf:system-source-directory :statistical-learning)
+                              (merge-pathnames "examples/airfoil_self_noise.dat"))
+                    :separator #\tab
+                    :columns '((:name frequency :type float)
+                               (:name angle :type float)
+                               (:name chord-length :type float)
+                               (:name velocity :type float)
+                               (:name displacement :type float)
+                               (:name sound :type float))))
 
 (defvar *train-data*
-  (vellum:to-matrix (vellum:select *data* :columns '(:take-to displacement))
+  (vellum:to-matrix (vellum:select *data* :columns (vellum:s (vellum:between :to 'sound)))
                     :element-type 'double-float))
 
 (defvar *target-data*
-  (vellum:to-matrix (vellum:select *data* :columns '(:v sound))
+  (vellum:to-matrix (vellum:select *data* :columns '(sound))
                     :element-type 'double-float))
 
 (defparameter *training-parameters*

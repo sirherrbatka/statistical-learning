@@ -27,4 +27,5 @@
    #:train-data
    #:training-parameters
    #:weights
+   #:cache
    ))

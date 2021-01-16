@@ -38,4 +38,5 @@
 (defgeneric weights-data (state))
 (defgeneric data-points (state))
 (defgeneric (setf data-points) (new-value state))
-
+(defgeneric cache (state key))
+(defgeneric (setf cache) (new-value state key))
