@@ -6,7 +6,7 @@
      (parameters self-organizing-map)
      state
      &key data-points)
-  (list :data (sl.data:sample (data state)
+  (list :data (sl.data:sample (sl.mp:train-data state)
                               :data-points data-points)
         :units (cl-ds.utils:transform (units state) #'copy-array)
         :weights (let ((weights (weights state)))
@@ -16,14 +16,6 @@
                                        :data-points data-points)))))
 
 
-(defmethod cl-ds.utils:cloning-information append ((state self-organizing-map-training-state))
-  `((:data data)
-    (:units units)
-    (:all-distances all-distances)
-    (:weights weights)
-    (:all-indexes all-indexes)))
-
-
 (defmethod initialize-instance :after ((object self-organizing-map)
                                        &rest initargs)
   (declare (ignore initargs))
@@ -31,11 +23,9 @@
         (parallel (parallel object))
         (grid-dimensions (grid-dimensions object))
         (decay (decay object))
-        (alpha (initial-alpha object))
-        (sigma (initial-sigma object)))
+        (alpha (initial-alpha object)))
     (declare (ignore parallel decay))
     (check-type alpha double-float)
-    (check-type sigma double-float)
     (when (emptyp grid-dimensions)
       (error 'cl-ds:invalid-argument-value
              :argument :grid-dimensions
@@ -65,10 +55,13 @@
        weights)
   (declare (ignore initargs))
   (let* ((attributes-count (sl.data:attributes-count data))
+         (data-points (sl.data:data-points-count data))
          (grid (~> parameters grid-dimensions
                    (make-grid attributes-count))))
     (make 'self-organizing-map-training-state
           :data data
+          :initial-sigma (/ data-points 2.0d0)
+          :data-points (sl.data:iota-vector data-points)
           :training-parameters parameters
           :units grid
           :all-indexes (~> grid array-total-size sl.data:iota-vector)
@@ -146,10 +139,11 @@
 
 
 (defmethod cl-ds.utils:cloning-information
-    append ((object self-organizing-map))
-  '((:initial-alpha initial-alpha)
+    append ((object self-organizing-map-training-state))
+  '((:data sl.mp:train-data)
+    (:data-points sl.mp:data-points)
+    (:all-distances all-distances)
+    (:all-indexes all-indexes)
+    (:units units)
     (:initial-sigma initial-sigma)
-    (:decay decay)
-    (:grid-dimensions grid-dimensions)
-    (:parallel parallel)
-    (:number-of-iterations number-of-iterations)))
+    (:weights weights)))

@@ -43,7 +43,7 @@
 
 
 (defun update-units (state sample iteration)
-  (let* ((data (data state))
+  (let* ((data (sl.mp:train-data state))
          (units (units state))
          (training-parameters (sl.mp:training-parameters state))
          (parallel (parallel training-parameters))
@@ -53,7 +53,7 @@
          (decay (~> state sl.mp:training-parameters decay))
          (iterations (number-of-iterations training-parameters))
          (alpha (alpha decay (initial-alpha training-parameters) iteration iterations))
-         (sigma (sigma decay (initial-sigma training-parameters) iteration iterations))
+         (sigma (sigma decay (initial-sigma state) iteration iterations))
          (best-matching-unit (find-best-matching-unit data sample units))
          (all-indexes (all-indexes state)))
     (declare (type sl.data:double-float-data-matrix data)
@@ -91,11 +91,11 @@
 
 (defun fit (state)
   (iterate
-    (with data = (data state))
-    (with data-points-count = (sl.data:data-points-count data))
+    (with data-points = (sl.mp:data-points state))
+    (with data-points-count = (length data-points))
     (for i from 1 to (~> state sl.mp:training-parameters number-of-iterations))
     (for random = (random data-points-count))
-    (update-units state random i)))
+    (update-units state (aref data-points random) i)))
 
 
 (defun make-unit (attributes-count)

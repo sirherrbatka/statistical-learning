@@ -5,9 +5,6 @@
   ((%initial-alpha
     :initarg :initial-alpha
     :reader initial-alpha)
-   (%initial-sigma
-    :initarg :initial-sigma
-    :reader initial-sigma)
    (%decay
     :initarg :decay
     :reader decay)
@@ -24,9 +21,15 @@
 
 
 (defclass self-organizing-map-training-state (sl.mp:fundamental-training-state)
-  ((%data
+  ((%initial-sigma
+    :initarg :initial-sigma
+    :reader initial-sigma)
+   (%data
     :initarg :data
-    :accessor data)
+    :reader sl.mp:train-data)
+   (%data-points
+    :initarg :data-points
+    :reader sl.mp:data-points)
    (%all-distances
     :initarg :all-distances
     :reader all-distances)

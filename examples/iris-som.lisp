@@ -28,7 +28,6 @@
         :grid-dimensions '(4 4)
         :number-of-iterations 10000
         :initial-alpha 0.6d0
-        :initial-sigma 2.0d0
         :decay sl.som:<linear-decay>
         :parallel nil))
 
