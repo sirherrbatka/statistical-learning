@@ -1,7 +1,6 @@
 (cl:in-package #:cl-user)
 
-(ql:quickload :statistical-learning)
-(ql:quickload :vellum)
+(ql:quickload '(:vellum :vellum-csv :statistical-learning))
 
 (defpackage #:anomaly-example
   (:use #:cl #:statistical-learning.aux-package))

@@ -1,5 +1,4 @@
-(ql:quickload :statistical-learning)
-(ql:quickload :vellum)
+(ql:quickload '(:statistical-learning :vellum :vellum-csv))
 
 (cl:in-package #:cl-user)
 
