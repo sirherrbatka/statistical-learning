@@ -8,25 +8,23 @@
 
 (cl:in-package #:promotions-example)
 
-
 (defvar *data*
   (~> (vellum:copy-from :csv (~>> (asdf:system-source-directory :statistical-learning)
                                   (merge-pathnames "examples/promotions.data"))
-                        :header t)
-      (vellum:to-table :columns '((:name id)
-                                  (:name promotion) ; file has yes or no as values
-                                  (:name purchase :type integer) ; either 0 or 1
-                                  (:name v1 :type float)
-                                  (:name v2 :type float)
-                                  (:name v3 :type float)
-                                  (:name v4 :type float)
-                                  (:name v5 :type float)
-                                  (:name v6 :type float)
-                                  (:name v7 :type float))
-                       :body (vellum:bind-row (promotion)
-                               (setf promotion (econd ((string= promotion "Yes") 1)
-                                                      ((string= promotion "No") 0)))))
-      (vellum:select :columns '(:take-from promotion :take-to v7)))) ; who cares about id?
+                        :columns '((:name id)
+                                   (:name promotion) ; file has yes or no as values
+                                   (:name purchase :type integer) ; either 0 or 1
+                                   (:name v1 :type float)
+                                   (:name v2 :type float)
+                                   (:name v3 :type float)
+                                   (:name v4 :type float)
+                                   (:name v5 :type float)
+                                   (:name v6 :type float)
+                                   (:name v7 :type float))
+                        :body (vellum:bind-row (promotion)
+                                (setf promotion (econd ((string= promotion "Yes") 1)
+                                                       ((string= promotion "No") 0)))))
+      (vellum:select :columns (vellum:s (vellum:between :from 'promotion))))) ; who cares about id?
 
 
 (defvar *train-data*

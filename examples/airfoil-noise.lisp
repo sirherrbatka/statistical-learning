@@ -11,6 +11,7 @@
   (vellum:copy-from :csv (~>> (asdf:system-source-directory :statistical-learning)
                               (merge-pathnames "examples/airfoil_self_noise.dat"))
                     :separator #\tab
+                    :includes-header-p nil
                     :columns '((:name frequency :type float)
                                (:name angle :type float)
                                (:name chord-length :type float)
