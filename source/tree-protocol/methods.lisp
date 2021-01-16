@@ -216,7 +216,6 @@
 (defmethod split*
     ((training-parameters basic-tree-training-parameters)
      training-state)
-  (declare (optimize (debug 3) (speed 0) (safety 3)))
   (bind ((trials-count (trials-count training-parameters))
          (minimal-difference (minimal-difference training-parameters))
          (score (loss training-state))
