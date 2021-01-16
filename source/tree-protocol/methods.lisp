@@ -378,7 +378,7 @@
          (attribute (aref attributes attribute-index))
          (min (sl.data:mref mins 0 attribute-index))
          (max (sl.data:mref maxs 0 attribute-index))
-         (threshold (if (= min max) min (sl.common:random-uniform min max))))
+         (threshold (if (= min max) min (sl.random:random-uniform min max))))
     (list* attribute (if (= threshold max) min threshold))))
 
 

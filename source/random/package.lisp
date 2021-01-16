@@ -5,4 +5,6 @@
   (:use #:cl #:statistical-learning.aux-package)
   (:nicknames #:sl.random)
   (:export
+   #:random-uniform
+   #:gauss-random
    #:discrete-distribution))
