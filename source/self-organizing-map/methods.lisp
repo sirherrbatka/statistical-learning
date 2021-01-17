@@ -84,6 +84,7 @@
                           &optional parallel)
   (let* ((all-indexes (~> data sl.data:data-points-count sl.data:iota-vector))
          (units (units model))
+         (selector (~> model sl.mp:parameters matching-unit-selector))
          (result (sl.data:make-data-matrix (sl.data:data-points-count data)
                                            (array-rank units))))
     (funcall (if parallel #'lparallel:pmap #'map)
@@ -91,7 +92,7 @@
              (lambda (i)
                (iterate
                  (for j from 0)
-                 (for value in (~>> (find-best-matching-unit data i units)
+                 (for value in (~>> (find-best-matching-unit selector data i units)
                                     (cl-ds.utils:row-major-index-to-subscripts data)))
                  (setf (sl.data:mref result i j) (coerce value 'double-float))))
              all-indexes)
