@@ -6,6 +6,8 @@
   (:nicknames #:sl.som)
   (:export
    #:self-organizing-map
+   #:find-best-matching-unit
+   #:<euclid-matching-unit-selector>
    #:<linear-decay>
    #:<hill-decay>
    #:alpha

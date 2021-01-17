@@ -6,3 +6,4 @@
 
 (def <linear-decay> (make 'linear-decay))
 (def <hill-decay> (make 'hill-decay))
+(def <euclid-matching-unit-selector> (make 'euclid-matching-unit-selector))
