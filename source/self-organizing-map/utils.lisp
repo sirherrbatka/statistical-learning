@@ -24,24 +24,6 @@
                                                 :initial-element 0.0d0))
 
 
-(-> find-best-matching-unit (sl.data:double-float-data-matrix fixnum grid) fixnum)
-(defun find-best-matching-unit (data sample units)
-  (iterate
-    (declare (type fixnum i))
-    (for i from 0 below (array-total-size units))
-    (for unit = (row-major-aref units i))
-    (for distance = (iterate
-                      (declare (type fixnum i)
-                               (type double-float result))
-                      (with result = 0.0d0)
-                      (for i from 0 below (length unit))
-                      (incf result (~> (- (sl.data:mref data sample i)
-                                          (aref unit i))
-                                       cl-ds.utils:square))
-                      (finally (return result))))
-    (finding i minimizing distance)))
-
-
 (defun update-units (state sample iteration)
   (let* ((data (sl.mp:train-data state))
          (units (units state))
@@ -54,7 +36,11 @@
          (iterations (number-of-iterations training-parameters))
          (alpha (alpha decay (initial-alpha training-parameters) iteration iterations))
          (sigma (sigma decay (initial-sigma state) iteration iterations))
-         (best-matching-unit (find-best-matching-unit data sample units))
+         (best-matching-unit (~> training-parameters
+                                 matching-unit-selector
+                                 (find-best-matching-unit data
+                                                          sample
+                                                          units)))
          (all-indexes (all-indexes state)))
     (declare (type sl.data:double-float-data-matrix data)
              (type double-float alpha sigma weight)
@@ -91,11 +77,11 @@
 
 (defun fit (state)
   (iterate
-    (with data-points = (sl.mp:data-points state))
-    (with data-points-count = (length data-points))
+    (with data = (sl.mp:train-data state))
+    (with data-points-count = (sl.data:data-points-count data))
     (for i from 1 to (~> state sl.mp:training-parameters number-of-iterations))
     (for random = (random data-points-count))
-    (update-units state (aref data-points random) i)))
+    (update-units state random i)))
 
 
 (defun make-unit (attributes-count)

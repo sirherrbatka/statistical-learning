@@ -55,13 +55,11 @@
        weights)
   (declare (ignore initargs))
   (let* ((attributes-count (sl.data:attributes-count data))
-         (data-points (sl.data:data-points-count data))
          (grid (~> parameters grid-dimensions
                    (make-grid attributes-count))))
     (make 'self-organizing-map-training-state
           :data data
-          :initial-sigma (/ data-points 2.0d0)
-          :data-points (sl.data:iota-vector data-points)
+          :initial-sigma (~> parameters grid-dimensions first (/ 2.0d0))
           :training-parameters parameters
           :units grid
           :all-indexes (~> grid array-total-size sl.data:iota-vector)
@@ -141,9 +139,28 @@
 (defmethod cl-ds.utils:cloning-information
     append ((object self-organizing-map-training-state))
   '((:data sl.mp:train-data)
-    (:data-points sl.mp:data-points)
     (:all-distances all-distances)
     (:all-indexes all-indexes)
     (:units units)
     (:initial-sigma initial-sigma)
     (:weights weights)))
+
+
+(defmethod find-best-matching-unit ((selector euclid-matching-unit-selector)
+                                    data
+                                    sample
+                                    units)
+  (iterate
+    (declare (type fixnum i))
+    (for i from 0 below (array-total-size units))
+    (for unit = (row-major-aref units i))
+    (for distance = (iterate
+                      (declare (type fixnum i)
+                               (type double-float result))
+                      (with result = 0.0d0)
+                      (for i from 0 below (length unit))
+                      (incf result (~> (- (sl.data:mref data sample i)
+                                          (aref unit i))
+                                       cl-ds.utils:square))
+                      (finally (return result))))
+    (finding i minimizing distance)))

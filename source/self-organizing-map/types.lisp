@@ -1,6 +1,14 @@
 (cl:in-package #:sl.som)
 
 
+(defclass fundamental-matching-unit-selector ()
+  ())
+
+
+(defclass euclid-matching-unit-selector (fundamental-matching-unit-selector)
+  ())
+
+
 (defclass self-organizing-map (sl.mp:fundamental-model-parameters)
   ((%initial-alpha
     :initarg :initial-alpha
@@ -14,10 +22,14 @@
    (%parallel
     :initarg :parallel
     :reader parallel)
+   (%matching-unit-selector
+    :initarg :matching-unit-selector
+    :reader matching-unit-selector)
    (%number-of-iterations
     :initarg :number-of-iterations
     :reader number-of-iterations))
-  (:default-initargs :parallel nil))
+  (:default-initargs :parallel nil
+                     :matching-unit-selector (make 'euclid-matching-unit-selector)))
 
 
 (defclass self-organizing-map-training-state (sl.mp:fundamental-training-state)
@@ -27,9 +39,6 @@
    (%data
     :initarg :data
     :reader sl.mp:train-data)
-   (%data-points
-    :initarg :data-points
-    :reader sl.mp:data-points)
    (%all-distances
     :initarg :all-distances
     :reader all-distances)
