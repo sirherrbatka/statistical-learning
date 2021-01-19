@@ -590,7 +590,7 @@
                                               :attributes attributes)))
     (with normals = (sl.data:make-data-matrix 1 attributes-count))
     (for i from 0 below attributes-count)
-    (setf (sl.data:mref normals 0 i) (sl.common:gauss-random 0.0d0 1.0d0))
+    (setf (sl.data:mref normals 0 i) (sl.random:gauss-random 0.0d0 1.0d0))
     (sum (* (sl.data:mref normals 0 i)
             (if (= (sl.data:mref min 0 i)
                    (sl.data:mref max 0 i))
