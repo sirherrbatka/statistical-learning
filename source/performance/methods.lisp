@@ -181,11 +181,11 @@
                               2)))
             (setf last-field (list fpr tpr))))
          (roc-table (vellum.table:make-table
-                     :columns '((:alias threshold :type double-float)
-                                (:alias fpr :type double-float)
-                                (:alias tpr :type double-float)
-                                (:alias npv :type double-float)
-                                (:alias ppv :type double-float))))
+                     :columns '((:name threshold :type double-float)
+                                (:name fpr :type double-float)
+                                (:name tpr :type double-float)
+                                (:name npv :type double-float)
+                                (:name ppv :type double-float))))
          (fp 0)
          (tp 0))
     (vellum:transform
