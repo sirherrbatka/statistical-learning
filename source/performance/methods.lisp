@@ -56,12 +56,16 @@
 (defmethod average-performance-metric* ((parameters fundamental-prediction)
                                         (types list)
                                         metrics)
-  (mapcar (lambda (type metric)
-            (average-performance-metric* parameters
-                                         type
-                                         metric))
-          types
-          metrics))
+  (~> metrics
+      (cl-ds.alg:on-each (rcurry #'coerce 'vector))
+      cl-ds.alg:array-elementwise
+      cl-ds.alg:to-list
+      (map 'list (lambda (type metric)
+                   (average-performance-metric* parameters
+                                                type
+                                                metric))
+           types
+           _)))
 
 
 (defmethod average-performance-metric* ((parameters regression)
@@ -102,7 +106,7 @@
   (iterate
     (with result = (~> metrics first-elt copy-array))
     (for i from 1 below (length metrics))
-    (for confusion-matrix = (aref metrics i))
+    (for confusion-matrix = (elt metrics i))
     (sum-matrices confusion-matrix result)
     (finally (return result))))
 
