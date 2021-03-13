@@ -186,24 +186,34 @@
                       (parallel access-parallel)
                       (minimal-size access-minimal-size))
           object))
-    (check-type maximal-depth integer)
-    (check-type repeats integer)
     (check-type parallel boolean)
-    (check-type minimal-size integer)
-    (assert (> maximal-depth 0)
-            (maximal-depth)
-            'cl-ds:argument-value-out-of-bounds
-            :value maximal-depth
-            :argument :minimal-size
-            :bounds '(> minimal-size 0)
-            :format-control "MAXIMAL-DEPTH should be greater then zero.")
-    (assert (> minimal-size 0)
-            (minimal-size)
-            'cl-ds:argument-value-out-of-bounds
-            :value minimal-size
-            :argument :minimal-size
-            :bounds '(> minimal-size 0)
-            :format-control "MINIMAL-SIZE should be greater then zero.")))
+    (cl-ds.utils:check-value repeats
+      (check-type repeats integer)
+      (assert (> repeats 0)
+              (repeats)
+              'cl-ds:argument-value-out-of-bounds
+              :value repeats
+              :argument :repeat
+              :bounds '(> repeats 0)
+              :format-control "REPEATS should be greater then zero."))
+    (cl-ds.utils:check-value maximal-depth
+      (check-type maximal-depth integer)
+      (assert (> maximal-depth 0)
+              (maximal-depth)
+              'cl-ds:argument-value-out-of-bounds
+              :value maximal-depth
+              :argument :maximal-depth
+              :bounds '(> maximal-depth 0)
+              :format-control "MAXIMAL-DEPTH should be greater then zero."))
+    (cl-ds.utils:check-value minimal-size
+      (check-type minimal-size integer)
+      (assert (> minimal-size 0)
+              (minimal-size)
+              'cl-ds:argument-value-out-of-bounds
+              :value minimal-size
+              :argument :minimal-size
+              :bounds '(> minimal-size 0)
+              :format-control "MINIMAL-SIZE should be greater then zero."))))
 
 
 (defmethod cl-ds.utils:cloning-information
