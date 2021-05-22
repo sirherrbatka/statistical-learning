@@ -3,17 +3,15 @@
 
 (defmethod sl.mp:sample-training-state-info/proxy append
     (parameters/proxy
-     (parameters self-organizing-map)
+     (parameters abstract-self-organizing-map)
      state
      &key data-points)
   (list :data (sl.data:sample (sl.mp:train-data state)
                               :data-points data-points)
         :units (cl-ds.utils:transform (units state) #'copy-array)
-        :weights (let ((weights (weights state)))
-                   (if (null weights)
-                       nil
-                       (sl.data:sample weights
-                                       :data-points data-points)))))
+        :weights (if-let ((weights (weights state)))
+                   (sl.data:sample weights :data-points data-points)
+                   nil)))
 
 
 (defmethod initialize-instance :after ((object self-organizing-map)
@@ -49,7 +47,7 @@
 
 (defmethod sl.mp:make-training-state/proxy
     (parameters/proxy
-     (parameters self-organizing-map)
+     (parameters abstract-self-organizing-map)
      &rest initargs
      &key data
        weights)
@@ -73,10 +71,44 @@
 (defmethod sl.mp:make-model*/proxy (parameters/proxy
                                     (parameters self-organizing-map)
                                     training-state)
-  (fit training-state)
+  (fit parameters training-state)
   (make 'self-organizing-map-model
         :parameters parameters
         :units (units training-state)))
+
+
+(defmethod sl.mp:make-model*/proxy (parameters/proxy
+                                    (parameters random-forest-self-organizing-map)
+                                    training-state)
+  (fit parameters training-state)
+  (let* ((parallel (parallel parameters))
+         (forest (forest parameters))
+         (units (units training-state))
+         (units-data-matrix (units-data-matrix units))
+         (units-leafs (sl.ensemble:leafs forest
+                                         units-data-matrix
+                                         parallel)))
+    (make 'random-forest-self-organizing-map-model
+          :parameters parameters
+          :units-leafs units-leafs
+          :units units)))
+
+
+(defmethod make-units-container ((model self-organizing-map) data index)
+  (make 'units-container
+        :data data
+        :index index
+        :units (units model)
+        :parameters (sl.mp:parameters model)))
+
+
+(defmethod make-units-container ((model random-forest-self-organizing-map) data index)
+  (make 'units-container-with-unit-leafs
+        :units-leafs (units-leafs model)
+        :data data
+        :index index
+        :units (units model)
+        :parameters (sl.mp:parameters model)))
 
 
 (defmethod sl.mp:predict ((model self-organizing-map-model)
@@ -84,7 +116,7 @@
                           &optional parallel)
   (let* ((all-indexes (~> data sl.data:data-points-count sl.data:iota-vector))
          (units (units model))
-         (selector (~> model sl.mp:parameters matching-unit-selector))
+         (parameters (sl.mp:parameters model))
          (result (sl.data:make-data-matrix (sl.data:data-points-count data)
                                            (array-rank units))))
     (funcall (if parallel #'lparallel:pmap #'map)
@@ -92,7 +124,8 @@
              (lambda (i)
                (iterate
                  (for j from 0)
-                 (for value in (~>> (find-best-matching-unit selector data i units)
+                 (for value in (~>> (make-units-container model data i)
+                                    (find-best-matching-unit parameters)
                                     (cl-ds.utils:row-major-index-to-subscripts data)))
                  (setf (sl.data:mref result i j) (coerce value 'double-float))))
              all-indexes)
@@ -147,10 +180,12 @@
     (:weights weights)))
 
 
-(defmethod find-best-matching-unit ((selector euclid-matching-unit-selector)
-                                    data
-                                    sample
-                                    units)
+(defmethod find-best-matching-unit-with-selector
+    ((selector euclid-matching-unit-selector)
+     parameters
+     data
+     sample
+     units)
   (iterate
     (declare (type fixnum i))
     (for i from 0 below (array-total-size units))
@@ -165,3 +200,68 @@
                                        cl-ds.utils:square))
                       (finally (return result))))
     (finding i minimizing distance)))
+
+
+(defmethod find-best-matching-unit ((parameters self-organizing-map)
+                                    (units-container units-container))
+  (find-best-matching-unit-with-selector (matching-unit-selector parameters)
+                                         parameters
+                                         (data units-container)
+                                         (index units-container)
+                                         (units units-container)))
+
+
+(defmethod units-leafs ((container units-container))
+  (let* ((parameters (sl.mp:parameters container))
+         (parallel (parallel parameters))
+         (forest (forest parameters))
+         (units (units container))
+         (units-data-matrix (units-data-matrix units)))
+    (sl.ensemble:leafs forest
+                       units-data-matrix
+                       parallel)))
+
+
+(defmethod find-best-matching-unit ((parameters random-forest-self-organizing-map)
+                                    (units-container units-container))
+  (iterate
+    (declare (type fixnum i))
+    (with unit-leafs = (units-leafs units-container))
+    (with leafs = (data units-container))
+    (with sample = (index units-container))
+    (with sample-leafs = (aref leafs sample))
+    (for i from 0 below (length unit-leafs))
+    (for unit = (aref unit-leafs i))
+    (for distance = (jaccard-distance sample-leafs unit))
+    (finding i minimizing distance)))
+
+
+(defmethod fit ((parameters self-organizing-map) state)
+  (iterate
+    (with data = (sl.mp:train-data state))
+    (with data-points-count = (sl.data:data-points-count data))
+    (for i from 1 to (~> state sl.mp:training-parameters number-of-iterations))
+    (for random = (random data-points-count))
+    (for container = (make-instance 'units-container
+                                    :data data
+                                    :index random
+                                    :parameters parameters
+                                    :units (units state)))
+    (update-units state i container data)))
+
+
+(defmethod fit ((parameters random-forest-self-organizing-map) state)
+  (iterate
+    (with data = (sl.mp:train-data state))
+    (with data-points-count = (sl.data:data-points-count data))
+    (with parallel = (parallel parameters))
+    (with forest = (forest parameters))
+    (with leafs = (sl.ensemble:leafs forest data parallel))
+    (for i from 1 to (~> state sl.mp:training-parameters number-of-iterations))
+    (for random = (random data-points-count))
+    (for container = (make-instance 'units-container
+                                    :data leafs
+                                    :index random
+                                    :parameters parameters
+                                    :units (units state)))
+    (update-units state i container leafs)))

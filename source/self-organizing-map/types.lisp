@@ -9,7 +9,27 @@
   ())
 
 
-(defclass self-organizing-map (sl.mp:fundamental-model-parameters)
+(defclass fundamental-self-organizing-map (sl.mp:fundamental-model-parameters)
+  ())
+
+
+(defclass units-container ()
+  ((%data :initarg :data
+          :reader data)
+   (%index :initarg :index
+           :reader index)
+   (%units :initarg :units
+           :reader units)
+   (%parameters :initarg :parameters
+                :reader sl.mp:parameters)))
+
+
+(defclass units-container-with-unit-leafs (units-container)
+  ((%unit-leafs :initarg :unit-leafs
+                :reader unit-leafs)))
+
+
+(defclass abstract-self-organizing-map (fundamental-self-organizing-map)
   ((%initial-alpha
     :initarg :initial-alpha
     :reader initial-alpha)
@@ -22,14 +42,22 @@
    (%parallel
     :initarg :parallel
     :reader parallel)
-   (%matching-unit-selector
-    :initarg :matching-unit-selector
-    :reader matching-unit-selector)
    (%number-of-iterations
     :initarg :number-of-iterations
     :reader number-of-iterations))
-  (:default-initargs :parallel nil
-                     :matching-unit-selector (make 'euclid-matching-unit-selector)))
+  (:default-initargs :parallel nil))
+
+
+(defclass self-organizing-map (abstract-self-organizing-map)
+  ((%matching-unit-selector
+    :initarg :matching-unit-selector
+    :reader matching-unit-selector))
+  (:default-initargs :matching-unit-selector <euclid-matching-unit-selector>))
+
+
+(defclass random-forest-self-organizing-map (abstract-self-organizing-map)
+  ((%forest :initarg :forest
+            :reader forest)))
 
 
 (defclass self-organizing-map-training-state (sl.mp:fundamental-training-state)
@@ -56,6 +84,13 @@
 (defclass self-organizing-map-model (sl.mp:fundamental-model)
   ((%units :initarg :units
            :reader units)))
+
+
+(defclass random-forest-self-organizing-map-model (self-organizing-map)
+  ((%unit-leafs :initarg :unit-leafs
+                :reader unit-leafs)
+   (%units-leafs :initarg :units-leafs
+                 :reader units-leafs)))
 
 
 (defclass decay ()

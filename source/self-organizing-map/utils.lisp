@@ -24,31 +24,55 @@
                                                 :initial-element 0.0d0))
 
 
-(defun update-units (state sample iteration)
-  (let* ((data (sl.mp:train-data state))
-         (units (units state))
-         (training-parameters (sl.mp:training-parameters state))
+(defun units-data-matrix (units)
+  (iterate
+    (with data-points-count = (array-total-size units))
+    (with attributes-count = (length (row-major-aref units 0)))
+    (with result = (sl.data:make-data-matrix data-points-count
+                                             attributes-count))
+    (for i from 0 below data-points-count)
+    (for unit = (row-major-aref units i))
+    (iterate
+      (for j from 0 below attributes-count)
+      (setf (sl.data:mref result i j) (aref unit j)))
+    (finally (return result))))
+
+
+(defun jaccard-distance (leafs-1 leafs-2)
+  (let ((length-1 (length leafs-1))
+        (length-2 (length leafs-2)))
+    (assert (= length-1 length-2))
+    (iterate
+      (with result = length-1)
+      (for i from 0 below length-1)
+      (when (eq (aref leafs-1 i)
+                (aref leafs-2 i))
+        (decf result))
+      (finally (return result)))))
+
+
+(defun update-units (state iteration units-container training-data)
+  (let* ((training-parameters (sl.mp:training-parameters state))
          (parallel (parallel training-parameters))
          (distances (all-distances state))
          (weights (weights state))
+         (sample (index units-container))
          (weight (sl.opt:weight-at weights sample))
          (decay (~> state sl.mp:training-parameters decay))
          (iterations (number-of-iterations training-parameters))
          (alpha (alpha decay (initial-alpha training-parameters) iteration iterations))
          (sigma (sigma decay (initial-sigma state) iteration iterations))
-         (best-matching-unit (~> training-parameters
-                                 matching-unit-selector
-                                 (find-best-matching-unit data
-                                                          sample
-                                                          units)))
+         (best-matching-unit
+           (find-best-matching-unit training-parameters
+                                    units-container))
+         (units (units units-container))
          (all-indexes (all-indexes state)))
-    (declare (type sl.data:double-float-data-matrix data)
+    (declare (type sl.data:double-float-data-matrix training-data)
              (type double-float alpha sigma weight)
              (type fixnum best-matching-unit)
              (type grid units))
     (flet ((update-weight (unit-index)
-             (declare (type array-index unit-index)
-                      (optimize (speed 3)))
+             (declare (type array-index unit-index))
              (iterate
                (declare (type fixnum i)
                         (type unit unit)
@@ -66,22 +90,13 @@
                              (* weight)))
                (with unit = (row-major-aref units unit-index))
                (for i from 0 below (length unit))
-               (for v = (sl.data:mref data sample i))
+               (for v = (sl.data:mref training-data sample i))
                (decf #1=(aref unit i)
                      (* h (- #1# v))))))
       (funcall (if parallel #'lparallel:pmap #'map)
                nil
                #'update-weight
                all-indexes))))
-
-
-(defun fit (state)
-  (iterate
-    (with data = (sl.mp:train-data state))
-    (with data-points-count = (sl.data:data-points-count data))
-    (for i from 1 to (~> state sl.mp:training-parameters number-of-iterations))
-    (for random = (random data-points-count))
-    (update-units state random i)))
 
 
 (defun make-unit (attributes-count)
