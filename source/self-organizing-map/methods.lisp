@@ -14,7 +14,7 @@
                    nil)))
 
 
-(defmethod initialize-instance :after ((object self-organizing-map)
+(defmethod initialize-instance :after ((object abstract-self-organizing-map)
                                        &rest initargs)
   (declare (ignore initargs))
   (let ((number-of-iterations (number-of-iterations object))
@@ -43,6 +43,13 @@
              :argument :iterations
              :value number-of-iterations
              :bounds '(> number-of-iterations 0)))))
+
+
+(defmethod initialize-instance :after ((object abstract-self-organizing-map)
+                                       &rest initargs)
+  (declare (ignore initargs))
+  ; this is there simply to ensure that that the matching-unit-selector has been passed
+  (assert (matching-unit-selector object)))
 
 
 (defmethod sl.mp:make-training-state/proxy
@@ -94,7 +101,7 @@
           :units units)))
 
 
-(defmethod make-units-container ((model self-organizing-map) data index)
+(defmethod make-units-container ((model self-organizing-map-model) data index)
   (make 'units-container
         :data data
         :index index
@@ -102,7 +109,7 @@
         :parameters (sl.mp:parameters model)))
 
 
-(defmethod make-units-container ((model random-forest-self-organizing-map) data index)
+(defmethod make-units-container ((model random-forest-self-organizing-map-model) data index)
   (make 'units-container-with-unit-leafs
         :units-leafs (units-leafs model)
         :data data

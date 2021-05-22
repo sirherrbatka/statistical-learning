@@ -29,6 +29,23 @@
                 :reader unit-leafs)))
 
 
+(defclass decay ()
+  ())
+
+
+(defclass hill-decay (decay)
+  ())
+
+
+(defclass linear-decay (decay)
+  ())
+
+
+(def <linear-decay> (make 'linear-decay))
+(def <hill-decay> (make 'hill-decay))
+(def <euclid-matching-unit-selector> (make 'euclid-matching-unit-selector))
+
+
 (defclass abstract-self-organizing-map (fundamental-self-organizing-map)
   ((%initial-alpha
     :initarg :initial-alpha
@@ -91,18 +108,6 @@
                 :reader unit-leafs)
    (%units-leafs :initarg :units-leafs
                  :reader units-leafs)))
-
-
-(defclass decay ()
-  ())
-
-
-(defclass hill-decay (decay)
-  ())
-
-
-(defclass linear-decay (decay)
-  ())
 
 
 (deftype unit ()

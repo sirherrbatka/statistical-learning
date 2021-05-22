@@ -27,7 +27,7 @@
   (make 'sl.som:self-organizing-map
         :grid-dimensions '(4 4)
         :number-of-iterations 10000
-        :initial-alpha 0.6d0
+        :initial-alpha 0.2d0
         :decay sl.som:<linear-decay>
         :parallel nil))
 
@@ -40,8 +40,8 @@
   (~> *positions* cl-ds.utils:unfold-table (batches 2)
       (cl-ds.alg:on-each #'vector :key (curry #'map 'list #'truncate))
       (vellum:to-table :columns '((:name position)))
-      list
-      (vellum:hstack *data* _)))
+      (list *data* _)
+      vellum:hstack ))
 
 (defparameter *classes* (vellum:pipeline (*with-positions*)
                           (cl-ds.alg:group-by :test 'equal
