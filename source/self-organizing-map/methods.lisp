@@ -138,7 +138,7 @@
                  (for j from 0)
                  (for value in (~>> (make-units-container model data i)
                                     (find-best-matching-unit parameters)
-                                    (cl-ds.utils:row-major-index-to-subscripts data)))
+                                    (serapeum:array-index-row-major units)))
                  (setf (sl.data:mref result i j) (coerce value 'double-float))))
              all-indexes)
     result))
