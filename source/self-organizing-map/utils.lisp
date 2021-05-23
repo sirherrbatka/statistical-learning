@@ -102,12 +102,13 @@
 (defun make-unit (attributes-count random-ranges)
   (lret ((result (make-array attributes-count
                              :element-type 'double-float)))
-    (if (null random-ranges)
-        (map-into result (curry #'random-in-range -1.0d0 1.0d0))
-        (map-into result
-                  (compose (rcurry #'coerce 'double-float)
-                           (curry #'apply #'random-in-range))
-                  random-ranges))))
+    (map-into result (curry #'random-in-range -1.0d0 1.0d0))
+    (unless (null random-ranges)
+      (map-into result
+                (compose (rcurry #'coerce 'double-float)
+                         (curry #'apply #'random-in-range))
+                random-ranges))
+    result))
 
 
 (defun make-grid (grid-dimensions attributes-count random-ranges)
