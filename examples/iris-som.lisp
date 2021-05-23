@@ -36,11 +36,11 @@
 
 (defparameter *training-parameters*
   (make 'sl.som:self-organizing-map
-        :grid-dimensions '(2 2)
+        :grid-dimensions '(4 4)
         :random-ranges *ranges*
-        :number-of-iterations 10000
-        :initial-alpha 0.4d0
-        :decay sl.som:<linear-decay>
+        :number-of-iterations 1000
+        :initial-alpha 1.0d0
+        :decay sl.som:<hill-decay>
         :parallel nil))
 
 (defparameter *model*
