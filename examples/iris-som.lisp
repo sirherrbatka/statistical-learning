@@ -18,6 +18,17 @@
                                (:name petal-width :type float)
                                (:name class :type string))))
 
+(defvar *ranges*
+  (vellum:pipeline (*data*)
+    (cl-ds.alg:on-each
+     (vellum:bind-row ()
+       (~> (vellum:between :to 'class)
+           vellum:vs
+           cl-ds.alg:to-vector)))
+    cl-ds.alg:array-elementwise
+    (cl-ds.alg:extrema #'<)
+    (cl-ds.alg:to-list :key (lambda (x) (list (car x) (cdr x))))))
+
 (defvar *training-data*
   (~> *data*
       (vellum:select :columns (vellum:s (vellum:between :to 'class)))
@@ -26,8 +37,9 @@
 (defparameter *training-parameters*
   (make 'sl.som:self-organizing-map
         :grid-dimensions '(4 4)
+        :random-ranges *ranges*
         :number-of-iterations 10000
-        :initial-alpha 0.2d0
+        :initial-alpha 0.3d0
         :decay sl.som:<linear-decay>
         :parallel nil))
 
@@ -41,7 +53,7 @@
       (cl-ds.alg:on-each #'vector :key (curry #'map 'list #'truncate))
       (vellum:to-table :columns '((:name position)))
       (list *data* _)
-      vellum:hstack ))
+      vellum:hstack))
 
 (defparameter *classes* (vellum:pipeline (*with-positions*)
                           (cl-ds.alg:group-by :test 'equal

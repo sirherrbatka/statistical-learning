@@ -50,6 +50,9 @@
   ((%initial-alpha
     :initarg :initial-alpha
     :reader initial-alpha)
+   (%random-ranges
+    :initarg :random-ranges
+    :reader random-ranges)
    (%decay
     :initarg :decay
     :reader decay)
@@ -62,7 +65,9 @@
    (%number-of-iterations
     :initarg :number-of-iterations
     :reader number-of-iterations))
-  (:default-initargs :parallel nil))
+  (:default-initargs
+   :random-ranges nil
+   :parallel nil))
 
 
 (defclass self-organizing-map (abstract-self-organizing-map)

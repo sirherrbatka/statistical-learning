@@ -21,9 +21,11 @@
         (parallel (parallel object))
         (grid-dimensions (grid-dimensions object))
         (decay (decay object))
-        (alpha (initial-alpha object)))
+        (alpha (initial-alpha object))
+        (random-ranges (random-ranges object)))
     (declare (ignore parallel decay))
     (check-type alpha double-float)
+    (check-type random-ranges (or null sequence))
     (when (emptyp grid-dimensions)
       (error 'cl-ds:invalid-argument-value
              :argument :grid-dimensions
@@ -45,7 +47,7 @@
              :bounds '(> number-of-iterations 0)))))
 
 
-(defmethod initialize-instance :after ((object abstract-self-organizing-map)
+(defmethod initialize-instance :after ((object self-organizing-map)
                                        &rest initargs)
   (declare (ignore initargs))
   ; this is there simply to ensure that that the matching-unit-selector has been passed
@@ -60,8 +62,11 @@
        weights)
   (declare (ignore initargs))
   (let* ((attributes-count (sl.data:attributes-count data))
-         (grid (~> parameters grid-dimensions
-                   (make-grid attributes-count))))
+         (grid-dimensions (grid-dimensions parameters))
+         (random-ranges (random-ranges parameters))
+         (grid (make-grid grid-dimensions
+                          attributes-count
+                          random-ranges)))
     (make 'self-organizing-map-training-state
           :data data
           :initial-sigma (~> parameters grid-dimensions first (/ 2.0d0))

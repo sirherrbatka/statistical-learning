@@ -99,13 +99,18 @@
                all-indexes))))
 
 
-(defun make-unit (attributes-count)
+(defun make-unit (attributes-count random-ranges)
   (lret ((result (make-array attributes-count
                              :element-type 'double-float)))
-    (map-into result (curry #'random-in-range -1.0d0 1.0d0))))
+    (if (null random-ranges)
+        (map-into result (curry #'random-in-range -1.0d0 1.0d0))
+        (map-into result
+                  (compose (rcurry #'coerce 'double-float)
+                           (curry #'apply #'random-in-range))
+                  random-ranges))))
 
 
-(defun make-grid (grid-dimensions attributes-count)
+(defun make-grid (grid-dimensions attributes-count random-ranges)
   (lret ((result (make-array grid-dimensions :element-type 'unit)))
     (map-into (cl-ds.utils:unfold-table result)
-              (curry #'make-unit attributes-count))))
+              (curry #'make-unit attributes-count random-ranges))))
