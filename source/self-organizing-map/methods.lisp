@@ -97,12 +97,12 @@
          (forest (forest parameters))
          (units (units training-state))
          (units-data-matrix (units-data-matrix units))
-         (units-leafs (sl.ensemble:leafs forest
+         (unit-leafs (sl.ensemble:leafs forest
                                          units-data-matrix
                                          parallel)))
     (make-instance 'random-forest-self-organizing-map-model
                    :parameters parameters
-                   :unit-leafs units-leafs
+                   :unit-leafs unit-leafs
                    :units units)))
 
 
@@ -116,7 +116,7 @@
 
 (defmethod make-units-container ((model random-forest-self-organizing-map-model) data index)
   (make 'units-container-with-unit-leafs
-        :units-leafs (units-leafs model)
+        :unit-leafs (unit-leafs model)
         :data data
         :index index
         :units (units model)
@@ -223,7 +223,7 @@
                                          (units units-container)))
 
 
-(defmethod units-leafs ((container units-container))
+(defmethod unit-leafs ((container units-container))
   (let* ((parameters (sl.mp:parameters container))
          (parallel (parallel parameters))
          (forest (forest parameters))
@@ -238,7 +238,7 @@
                                     (units-container units-container))
   (iterate
     (declare (type fixnum i))
-    (with unit-leafs = (units-leafs units-container))
+    (with unit-leafs = (unit-leafs units-container))
     (with leafs = (data units-container))
     (with sample = (index units-container))
     (with sample-leafs = (sl.data:mref leafs sample 0))
