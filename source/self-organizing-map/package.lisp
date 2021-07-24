@@ -6,6 +6,7 @@
   (:nicknames #:sl.som)
   (:export
    #:random-forest-matching-unit-selector
+   #:random-forest-self-organizing-map
    #:self-organizing-map
    #:find-best-matching-unit
    #:find-best-matching-unit-with-selector

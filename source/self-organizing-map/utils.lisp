@@ -67,16 +67,17 @@
                                     units-container))
          (units (units units-container))
          (all-indexes (all-indexes state)))
-    (declare (type sl.data:double-float-data-matrix training-data)
+    (declare (type sl.data:data-matrix training-data)
              (type double-float alpha sigma weight)
              (type fixnum best-matching-unit)
              (type grid units))
     (flet ((update-weight (unit-index)
-             (declare (type array-index unit-index))
+             (declare (type array-index unit-index)
+                      (optimize (debug 3) (safety 3) (speed 0)))
              (iterate
                (declare (type fixnum i)
                         (type unit unit)
-                        (type double-float h v distance))
+                        (type double-float h distance))
                (with distance = (if (= unit-index best-matching-unit)
                                     0.0d0
                                     (cl-ds.utils:mref distances

@@ -108,11 +108,9 @@
            :reader units)))
 
 
-(defclass random-forest-self-organizing-map-model (self-organizing-map)
+(defclass random-forest-self-organizing-map-model (self-organizing-map-model)
   ((%unit-leafs :initarg :unit-leafs
-                :reader unit-leafs)
-   (%units-leafs :initarg :units-leafs
-                 :reader units-leafs)))
+                :reader unit-leafs)))
 
 
 (deftype unit ()

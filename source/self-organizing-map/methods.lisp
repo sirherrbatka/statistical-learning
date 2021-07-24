@@ -100,10 +100,10 @@
          (units-leafs (sl.ensemble:leafs forest
                                          units-data-matrix
                                          parallel)))
-    (make 'random-forest-self-organizing-map-model
-          :parameters parameters
-          :units-leafs units-leafs
-          :units units)))
+    (make-instance 'random-forest-self-organizing-map-model
+                   :parameters parameters
+                   :unit-leafs units-leafs
+                   :units units)))
 
 
 (defmethod make-units-container ((model self-organizing-map-model) data index)
@@ -241,9 +241,9 @@
     (with unit-leafs = (units-leafs units-container))
     (with leafs = (data units-container))
     (with sample = (index units-container))
-    (with sample-leafs = (aref leafs sample))
-    (for i from 0 below (length unit-leafs))
-    (for unit = (aref unit-leafs i))
+    (with sample-leafs = (sl.data:mref leafs sample 0))
+    (for i from 0 below (sl.data:data-points-count unit-leafs))
+    (for unit = (sl.data:mref unit-leafs i 0))
     (for distance = (jaccard-distance sample-leafs unit))
     (finding i minimizing distance)))
 
@@ -276,4 +276,4 @@
                                     :index random
                                     :parameters parameters
                                     :units (units state)))
-    (update-units state i container leafs)))
+    (update-units state i container data)))
