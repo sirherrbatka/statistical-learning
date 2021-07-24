@@ -114,9 +114,15 @@
         :parameters (sl.mp:parameters model)))
 
 
-(defmethod make-units-container ((model random-forest-self-organizing-map-model) data index)
+(defmethod make-units-container ((model random-forest-self-organizing-map-model)
+                                 data index)
   (make 'units-container-with-unit-leafs
         :unit-leafs (unit-leafs model)
+        :leafs (sl.ensemble:leafs (~> model sl.mp:parameters forest)
+                                  data
+                                  (~> model
+                                      sl.mp:parameters
+                                      parallel))
         :data data
         :index index
         :units (units model)
@@ -130,13 +136,14 @@
          (units (units model))
          (parameters (sl.mp:parameters model))
          (result (sl.data:make-data-matrix (sl.data:data-points-count data)
-                                           (array-rank units))))
+                                           (array-rank units)))
+         (units-container (make-units-container model data 0)))
     (funcall (if parallel #'lparallel:pmap #'map)
              nil
              (lambda (i)
                (iterate
                  (for j from 0)
-                 (for value in (~>> (make-units-container model data i)
+                 (for value in (~>> (cl-ds.utils:quasi-clone units-container :index i)
                                     (find-best-matching-unit parameters)
                                     (serapeum:array-index-row-major units)))
                  (setf (sl.data:mref result i j) (coerce value 'double-float))))
@@ -234,12 +241,28 @@
                        parallel)))
 
 
+(defmethod cl-ds.utils:cloning-information append ((container units-container))
+  `((:data data)
+    (:index index)
+    (:units units)
+    (:parameters sl.mp:parameters)))
+
+
+(defmethod cl-ds.utils:cloning-information append ((container units-container-with-unit-leafs))
+  `((:leafs leafs)
+    (:unit-leafs unit-leafs)))
+
+
+(defmethod leafs ((units-container units-container))
+  (data units-container))
+
+
 (defmethod find-best-matching-unit ((parameters random-forest-self-organizing-map)
                                     (units-container units-container))
   (iterate
     (declare (type fixnum i))
     (with unit-leafs = (unit-leafs units-container))
-    (with leafs = (data units-container))
+    (with leafs = (leafs units-container))
     (with sample = (index units-container))
     (with sample-leafs = (sl.data:mref leafs sample 0))
     (for i from 0 below (sl.data:data-points-count unit-leafs))

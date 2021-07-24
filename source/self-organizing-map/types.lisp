@@ -26,7 +26,9 @@
 
 (defclass units-container-with-unit-leafs (units-container)
   ((%unit-leafs :initarg :unit-leafs
-                :reader unit-leafs)))
+                :reader unit-leafs)
+   (%leafs :initarg :leafs
+           :reader leafs)))
 
 
 (defclass decay ()

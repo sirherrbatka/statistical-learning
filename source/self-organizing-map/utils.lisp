@@ -72,8 +72,7 @@
              (type fixnum best-matching-unit)
              (type grid units))
     (flet ((update-weight (unit-index)
-             (declare (type array-index unit-index)
-                      (optimize (debug 3) (safety 3) (speed 0)))
+             (declare (type array-index unit-index))
              (iterate
                (declare (type fixnum i)
                         (type unit unit)

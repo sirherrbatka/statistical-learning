@@ -51,8 +51,35 @@
                                                      *train-data*
                                                      *target-data*
                                                      :parallel nil))
+(defparameter *forest*
+  (sl.mp:make-supervised-model *forest-parameters*
+                               *train-data*
+                               *target-data*
+                               :parallel nil))
 
 (print *mean-error*) ; 19.14110529750509d0 (squared error)
+
+(defparameter *som-model*
+  (sl.mp:make-unsupervised-model
+   (make-instance 'sl.som:random-forest-self-organizing-map
+                  :parallel nil
+                  :forest *forest*
+                  :random-ranges (vellum:pipeline (*data*)
+                                   (cl-ds.alg:on-each
+                                    (vellum:bind-row ()
+                                      (~> (vellum:between :to 'sound)
+                                          vellum:vs
+                                          cl-ds.alg:to-vector)))
+                                   cl-ds.alg:array-elementwise
+                                   (cl-ds.alg:extrema #'<)
+                                   (cl-ds.alg:to-list :key (lambda (x) (list (car x) (cdr x)))))
+                  :grid-dimensions '(10 10)
+                  :number-of-iterations 1000
+                  :initial-alpha 1.0d0
+                  :decay sl.som:<hill-decay>)
+   *train-data*))
+
+(defparameter *positions* (sl.mp:predict *som-model* *train-data*))
 
 (print (statistical-learning.performance:cross-validation
         (make 'statistical-learning.ensemble:gradient-boost-ensemble
