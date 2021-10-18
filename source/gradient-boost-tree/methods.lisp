@@ -70,8 +70,10 @@
                                                    model)
                                    (funcall leaf-key)))
                         (predictions (sl.tp:predictions leaf)))
-                   (incf (sl.data:mref sums data-point 0)
-                         (* shrinkage predictions))))
+                   (iterate
+                     (for i from 0 below (sl.data:attributes-count predictions))
+                     (incf (sl.data:mref sums data-point i)
+                           (* shrinkage (sl.data:mref predictions 0 i))))))
                (sl.tp:indexes state)))
     (incf (sl.tp:contributions-count state))
     state))
@@ -207,8 +209,14 @@
 
 (defmethod target ((parameters regression)
                    target-data expected-value)
-  (sl.data:map-data-matrix (lambda (x) (- x expected-value))
-                           target-data))
+  (iterate
+    (with result = (sl.data:make-data-matrix-like target-data))
+    (for i from 0 below (sl.data:data-points-count result))
+    (iterate
+      (for ii from 0 below (sl.data:attributes-count result))
+      (setf (sl.data:mref result i ii)
+            (- (sl.data:mref target-data i ii)
+               (sl.data:mref expected-value 0 ii))))))
 
 
 (defmethod sl.tp:initialize-leaf/proxy
@@ -262,7 +270,24 @@
 
 
 (defmethod calculate-expected-value ((parameters regression) data)
-  (~> data cl-ds.utils:unfold-table mean))
+  (iterate
+    (declare (type fixnum i)
+             (type sl.data:double-float-data-matrix result))
+    (with number-of-attributes = (sl.data:attributes-count data))
+    (with result = (sl.data:make-data-matrix 1 number-of-attributes))
+    (for i from 0 below (sl.data:data-points-count data))
+    (iterate
+      (for ii from 0 below number-of-attributes)
+      (incf (sl.data:mref result 0 ii)
+            (sl.data:mref data i ii)))
+    (finally
+     (iterate
+       (declare (type fixnum j))
+       (for j from 0 below number-of-attributes)
+       (for avg = (/ #1=(sl.data:mref result 0 j)
+                     (sl.data:data-points-count data)))
+       (setf #1# avg))
+     (return result))))
 
 
 (defmethod calculate-response ((parameters regression)
@@ -291,9 +316,18 @@
   (make 'sl.tp:contributed-predictions
         :indexes (sl.data:iota-vector data-points-count)
         :training-parameters parameters
-        :sums (sl.data:make-data-matrix data-points-count
-                                        1
-                                        (expected-value model))))
+        :sums (iterate
+                (with expected-value = (expected-value model))
+                (with attributes-count =
+                      (sl.data:attributes-count expected-value))
+                (with result = (sl.data:make-data-matrix data-points-count
+                                                         attributes-count))
+                (for i from 0 below data-points-count)
+                (iterate
+                  (for ii from 0 below attributes-count)
+                  (setf (sl.data:mref result i ii)
+                        (sl.data:mref expected-value 0 ii)))
+                (finally (return result)))))
 
 
 (defmethod contributed-predictions ((parameters classification)

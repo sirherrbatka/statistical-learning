@@ -121,7 +121,7 @@
    (%indexes :initarg :indexes
              :reader indexes)
    (%sums :initarg :sums
-          :reader sums))
+          :accessor sums))
   (:default-initargs
    :contributions-count 0
    :predictions-lock (bt:make-lock)))

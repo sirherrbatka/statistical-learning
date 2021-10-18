@@ -4,8 +4,11 @@
 (defmethod response ((function squared-error-function)
                      expected
                      function-output)
-  (declare (optimize (speed 3) (safety 0))
-           (type sl.data:double-float-data-matrix expected
+  (declare (optimize (speed 3) (safety 0)
+                     (debug 0) (space 0)
+                     (compilation-speed 0))
+           (type sl.data:double-float-data-matrix
+                 expected
                  function-output))
   (sl.data:check-data-points expected function-output)
   (iterate
@@ -13,9 +16,12 @@
              (type sl.data:double-float-data-matrix result))
     (with result = (sl.data:make-data-matrix-like expected))
     (for i from 0 below (sl.data:data-points-count result))
-    (setf (sl.data:mref result i 0)
-          (- (sl.data:mref expected i 0)
-             (sl.data:mref function-output i 0)))
+    (iterate
+      (declare (type fixnum ii))
+      (for ii from 0 below (sl.data:attributes-count function-output))
+      (setf (sl.data:mref result i ii)
+            (- (the double-float (sl.data:mref expected i ii))
+               (the double-float (sl.data:mref function-output i ii)))))
     (finally (return result))))
 
 
@@ -28,50 +34,55 @@
            (type sl.data:double-float-data-matrix target-data)
            (type (or null sl.data:split-vector) split-array)
            (type (simple-array fixnum (*)) data-points)
-           (optimize (speed 3) (safety 0) (debug 0)))
-  (cl-ds.utils:cases ((null weights)
-                      (null split-array))
-    (let ((left-sum 0.0d0)
-          (right-sum 0.0d0)
-          (left-count 0)
-          (right-count 0))
-      (declare (type double-float left-sum right-sum)
-               (type statistical-learning.data:data-matrix target-data)
-               (type fixnum left-count right-count))
+           (optimize (speed 3) (safety 0)
+                     (debug 0) (space 0)
+                     (compilation-speed 0)))
+  (let* ((target-data-width (sl.data:attributes-count target-data))
+         (left-sum (make-array target-data-width :element-type 'double-float
+                                                 :initial-element 0.0d0))
+         (right-sum (make-array target-data-width :element-type 'double-float
+                                                  :initial-element 0.0d0))
+         (left-count 0)
+         (right-count 0))
+    (declare (type (simple-array double-float (*)) left-sum right-sum)
+             (type fixnum left-count right-count))
+    (cl-ds.utils:cases ((null split-array))
       (iterate
-        (declare (type fixnum i j)
-                 (type double-float value))
+        (declare (type fixnum i j))
         (for j from 0 below (length data-points))
         (for i = (aref data-points j))
-        (for value = (sl.data:mref target-data i 0))
-        (if (and split-array (eql right (aref split-array j)))
-            (setf right-count (1+ right-count)
-                  right-sum (+ right-sum value))
-            (setf left-count (1+ left-count)
-                  left-sum (+ left-sum value))))
+        (for rightp = (and split-array (eql right (aref split-array j))))
+        (if rightp (incf right-count) (incf left-count))
+        (iterate
+          (declare (type fixnum ii)
+                   (type double-float value))
+          (for ii from 0 below target-data-width)
+          (for value = (sl.data:mref target-data i ii))
+          (if rightp
+              (incf (aref right-sum ii) value)
+              (incf (aref left-sum ii) value))))
       (iterate
         (declare (type double-float
-                       left-error right-error
-                       left-avg right-avg value)
+                       left-error right-error)
+                 (type (simple-array double-float (*))
+                       left-avg right-avg)
                  (type fixnum i j))
         (with left-error = 0.0d0)
         (with right-error = 0.0d0)
-        (with left-avg = (if (zerop left-count)
-                             0.0d0
-                             (/ left-sum left-count)))
-        (with right-avg = (if (zerop right-count)
-                              0.0d0
-                              (/ right-sum right-count)))
+        (with right-avg = (sl.data:vector-avg right-sum right-count))
+        (with left-avg = (sl.data:vector-avg left-sum left-count))
         (for j from 0 below (length data-points))
         (for i = (aref data-points j))
-        (for value = (sl.data:mref target-data i 0))
-        (if (and split-array (eql (aref split-array j) right))
-            (incf right-error (square (if (null weights)
-                                          #1=(- value right-avg)
-                                          (* (weight-at weights i) #1#))))
-            (incf left-error (square (if (null weights)
-                                         #2=(- value left-avg)
-                                         (* (weight-at weights i) #2#)))))
+        (for rightp = (and split-array (eql right (aref split-array j))))
+        (if rightp
+            (incf right-error (data-point-squared-error right-avg
+                                                        target-data
+                                                        weights
+                                                        i))
+            (incf left-error (data-point-squared-error left-avg
+                                                       target-data
+                                                       weights
+                                                       i)))
         (finally (return (values (if (zerop left-count)
                                      0.0d0
                                      (/ left-error left-count))
@@ -83,7 +94,9 @@
 (defmethod response ((function k-logistic-function)
                      expected
                      sums)
-  (declare (optimize (speed 3) (safety 0))
+  (declare (optimize (speed 3) (safety 0)
+                     (space 0) (debug 0)
+                     (compilation-speed 0))
            (type sl.data:double-float-data-matrix sums expected))
   (iterate
     (declare (type fixnum i number-of-classes)
@@ -111,7 +124,9 @@
            (type (simple-array fixnum (*)) data-points)
            (type sl.data:double-float-data-matrix target-data)
            (type (or null sl.data:split-vector) split-array)
-           (optimize (speed 3) (safety 0) (debug 0)))
+           (optimize (speed 3) (safety 0)
+                     (debug 0) (space 0)
+                     (compilation-speed 0)))
   (cl-ds.utils:cases ((null split-array)
                       (null weights))
     (iterate

@@ -7,6 +7,8 @@
   (:export
    #:split-vector
    #:split
+   #:vector-avg
+   #:data-matrix-avg
    #:attributes-count
    #:universal-data-matrix
    #:double-float-data-matrix

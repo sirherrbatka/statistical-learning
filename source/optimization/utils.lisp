@@ -40,3 +40,27 @@
           (for p = (/ sum grand-total))
           (incf impurity (* p p))
           (finally (return (- 1.0d0 impurity)))))))
+
+
+
+(-> data-point-squared-error ((simple-array double-float (*))
+                              sl.data:double-float-data-matrix
+                              (or null weights-data-matrix)
+                              fixnum)
+    double-float)
+(declaim (inline data-point-squared-error))
+(defun data-point-squared-error (avg-vector target-data weights i)
+  (declare (optimize (speed 3) (safety 0) (debug 0) (space 0)))
+  (iterate
+    (declare (type fixnum ii)
+             (type double-float error avg value result))
+    (with weight = (if (null weights)
+                       1.0d0
+                       (weight-at weights i)))
+    (with result = 0.0d0)
+    (for ii from 0 below (array-dimension target-data 1))
+    (for value = (sl.data:mref target-data i ii))
+    (for avg = (aref avg-vector ii))
+    (for error = (* weight (square (- value avg))))
+    (incf result error)
+    (finally (return result))))

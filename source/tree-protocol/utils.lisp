@@ -8,7 +8,9 @@
           (simple-array fixnum (*)))
     double-float)
 (defun wdot (first second first-point second-point attributes)
-  (declare (optimize (speed 3) (safety 0) (debug 0)))
+  (declare (optimize (speed 3) (safety 0)
+                     (debug 0) (space 0)
+                     (compilation-speed 0)))
   (iterate
     (declare (type fixnum i)
              (type double-float result))

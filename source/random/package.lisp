@@ -6,5 +6,5 @@
   (:nicknames #:sl.random)
   (:export
    #:random-uniform
-   #:gauss-random
+   #:random-gauss
    #:discrete-distribution))

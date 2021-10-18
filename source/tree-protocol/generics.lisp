@@ -70,6 +70,7 @@
 (defgeneric predictions (node))
 (defgeneric (setf predictions) (new-value node))
 (defgeneric sums (predictions))
+(defgeneric (setf sums) (new-value predictions))
 (defgeneric indexes (predictions))
 (defgeneric contributions-count (predictions))
 (defgeneric training-parameters (predictions))

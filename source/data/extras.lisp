@@ -95,3 +95,19 @@
           (cl-ds:send-recur (list* train validation)
                             :index (+ index validation-size)
                             :fold (1+ fold)))))))
+
+
+(-> vector-avg ((simple-array double-float (*)) fixnum)
+    (simple-array double-float (*)))
+(defun vector-avg (vector count)
+  (if (zerop count)
+      vector
+      (cl-ds.utils:transform (rcurry #'/ count) vector)))
+
+
+(-> data-matrix-avg (double-float-data-matrix fixnum)
+    double-float-data-matrix)
+(defun data-matrix-avg (matrix count)
+  (if (zerop count)
+      matrix
+      (map-data-matrix (rcurry #'/ count) matrix t)))
