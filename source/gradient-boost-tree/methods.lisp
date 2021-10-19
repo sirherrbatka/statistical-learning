@@ -209,14 +209,21 @@
 
 (defmethod target ((parameters regression)
                    target-data expected-value)
+  (declare (optimize (speed 3) (safety 0)
+                     (space 0) (debug 0)
+                     (compilation-speed 0))
+           (type sl.data:double-float-data-matrix target-data expected-value))
   (iterate
+    (declare (type sl.data:double-float-data-matrix result)
+             (type fixnum i))
     (with result = (sl.data:make-data-matrix-like target-data))
     (for i from 0 below (sl.data:data-points-count result))
     (iterate
+      (declare (type fixnum ii))
       (for ii from 0 below (sl.data:attributes-count result))
       (setf (sl.data:mref result i ii)
-            (- (sl.data:mref target-data i ii)
-               (sl.data:mref expected-value 0 ii))))
+            (- (the double-float (sl.data:mref target-data i ii))
+               (the double-float (sl.data:mref expected-value 0 ii)))))
     (finally (return result))))
 
 
