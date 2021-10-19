@@ -216,7 +216,8 @@
       (for ii from 0 below (sl.data:attributes-count result))
       (setf (sl.data:mref result i ii)
             (- (sl.data:mref target-data i ii)
-               (sl.data:mref expected-value 0 ii))))))
+               (sl.data:mref expected-value 0 ii))))
+    (finally (return result))))
 
 
 (defmethod sl.tp:initialize-leaf/proxy
