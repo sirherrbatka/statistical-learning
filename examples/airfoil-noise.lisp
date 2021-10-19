@@ -84,7 +84,7 @@
 (print (statistical-learning.performance:cross-validation
         (make 'statistical-learning.ensemble:gradient-boost-ensemble
               :trees-count 500
-              :parallel nil
+              :parallel t
               :tree-batch-size 10
               :shrinkage 0.1d0
               :tree-attributes-count 5
