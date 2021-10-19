@@ -99,4 +99,4 @@
         4
         *train-data*
         *target-data*
-        :parallel nil)) ; 3.97 (also squared error, obviously a lot better)
+        :parallel nil)) ; ~3.4 (also squared error, obviously a lot better)
