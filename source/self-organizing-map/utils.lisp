@@ -9,12 +9,15 @@
     result))
 
 
+(-> manhattan-distance (t t) double-float)
 (defun manhattan-distance (a b)
   (iterate
+    (declare (type double-float result))
+    (with result = 0.0d0)
     (for ea in a)
     (for eb in b)
-    (sum (abs (- ea eb)) into result)
-    (finally (return (coerce result 'double-float)))))
+    (incf result (abs (- ea eb)) )
+    (finally (return result))))
 
 
 (defun all-manhattan-distances (grid)
