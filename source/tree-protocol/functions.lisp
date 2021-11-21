@@ -23,7 +23,7 @@
     (cl-ds:xpr (:i 0)
       (declare (type fixnum i))
       (when (< i length)
-        (cl-ds:send-recur (leaf-for splitter node data i)
+        (cl-ds:send-recur (leaf-for splitter node data i nil)
                           :i (1+ i))))))
 
 
@@ -55,6 +55,7 @@
                            model
                            data
                            state
+                           nil
                            parallel))
 
 

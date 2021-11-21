@@ -62,21 +62,22 @@
      position
      size
      point)
-  (list
-   :data-points (iterate
-                  (declare (type (simple-array fixnum (*))
-                                 old-indexes new-indexes))
-                  (with old-indexes = (sl.mp:data-points state))
-                  (with new-indexes = (make-array size :element-type 'fixnum))
-                  (with j = 0)
-                  (for i from 0 below (length old-indexes))
-                  (when (eql position (aref split-array i))
-                    (setf (aref new-indexes j) (aref old-indexes i))
-                    (incf j))
-                  (finally
-                   (assert (= j size)
-                           (j size))
-                   (return new-indexes)))))
+  (let ((old-indexes (sl.mp:data-points state)))
+    (assert (= (length split-array) (length old-indexes)))
+    (list
+     :data-points (iterate
+                    (declare (type (simple-array fixnum (*))
+                                   old-indexes new-indexes))
+                    (with new-indexes = (make-array size :element-type 'fixnum))
+                    (with j = 0)
+                    (for i from 0 below (length old-indexes))
+                    (when (eql position (aref split-array i))
+                      (setf (aref new-indexes j) (aref old-indexes i))
+                      (incf j))
+                    (finally
+                     (assert (= j size)
+                             (j size))
+                     (return new-indexes))))))
 
 
 (defmethod split-training-state-info/proxy append
@@ -245,6 +246,7 @@
       (for (values left-length right-length) = (fill-split-vector
                                                 training-state
                                                 split-array))
+      (assert (= (+ left-length right-length) data-size))
       (when (or (< left-length minimal-size)
                 (< right-length minimal-size))
         (next-iteration))
@@ -367,16 +369,12 @@
            (ignore parameters))
   (bind ((attributes (the (simple-array fixnum (*))
                           (attribute-indexes state)))
-         (data (sl.mp:train-data state))
+         (data (the sl.data:double-float-data-matrix (sl.mp:train-data state)))
          (data-points (sl.mp:data-points state))
-         (maxs (ensure (sl.mp:cache state 'maxs)
-                 (sl.data:reduce-data-points #'max data
-                                             :data-points data-points
-                                             :attributes attributes)))
-         (mins (ensure (sl.mp:cache state 'mins)
-                 (sl.data:reduce-data-points #'min data
-                                             :data-points data-points
-                                             :attributes attributes)))
+         ((mins . maxs)
+          (ensure (sl.mp:cache state 'mins/maxs)
+            (sl.data:mins/maxs data :data-points data-points
+                                    :attributes attributes)))
          (attributes-count (length attributes))
          (attribute-index (random attributes-count))
          (attribute (aref attributes attribute-index))
@@ -602,13 +600,13 @@
     (with attributes = (sl.tp:attribute-indexes state))
     (with attributes-count = (length attributes))
     (with max = (ensure (sl.mp:cache state 'sl.tp:maxs)
-                  (sl.data:reduce-data-points #'max data
-                                              :data-points samples
-                                              :attributes attributes)))
+                  (sl.data:maxs data
+                              :data-points samples
+                              :attributes attributes)))
     (with min = (ensure (sl.mp:cache state 'sl.tp:mins)
-                  (sl.data:reduce-data-points #'min data
-                                              :data-points samples
-                                              :attributes attributes)))
+                  (sl.data:mins data
+                                :data-points samples
+                                :attributes attributes)))
     (with normals = (sl.data:make-data-matrix 1 attributes-count))
     (for i from 0 below attributes-count)
     (setf (sl.data:mref normals 0 i) (sl.random:random-gauss 0.0d0 1.0d0))

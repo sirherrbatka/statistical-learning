@@ -83,6 +83,7 @@
                              (:file "methods")))
                (:module "ensemble"
                 :components ((:file "package")
+                             (:file "variables")
                              (:file "generics")
                              (:file "types")
                              (:file "utils")

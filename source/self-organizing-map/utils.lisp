@@ -17,7 +17,7 @@
     (for ea in a)
     (for eb in b)
     (incf result (abs (- ea eb)) )
-    (finally (return result))))
+    (finally (return (the double-float result)))))
 
 
 (defun all-manhattan-distances (grid)

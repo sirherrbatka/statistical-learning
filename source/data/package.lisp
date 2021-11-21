@@ -18,6 +18,9 @@
    #:data-matrix
    #:data-matrix-dimensions
    #:mref
+   #:maxs
+   #:mins
+   #:mins/maxs
    #:map-data-matrix
    #:make-data-matrix-like
    #:reduce-data-points
