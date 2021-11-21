@@ -109,7 +109,6 @@
         :tree-sample-rate 0.3
         :tree-parameters *training-parameters*))
 
-
 (defparameter *confusion-matrix*
   (statistical-learning.performance:cross-validation *forest-parameters*
                                                      4

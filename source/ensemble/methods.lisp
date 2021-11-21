@@ -113,6 +113,7 @@
   (let* ((parallel (~> ensemble-state sl.mp:parameters parallel))
          (indexes (indexes ensemble-state))
          (target-data (sl.mp:target-data ensemble-state))
+         (prev-trees (trees-view ensemble-state))
          (counts (counts calculator))
          (assigned-leafs (assigned-leafs ensemble-state))
          (weights (sl.mp:weights ensemble-state)))
@@ -124,12 +125,14 @@
              (lambda (index)
                (declare (type fixnum index))
                (iterate
-                 (declare (type double-float expected))
+                 (declare (type double-float expected)
+                          (ignorable tree))
                  (with expected = (sl.data:mref (the sl.data:double-float-data-matrix target-data)
                                                 index
                                                 0))
                  (with leafs = (aref assigned-leafs index))
                  (for i from (~> leafs length 1-) downto 0)
+                 (for tree in-vector prev-trees)
                  (for leaf = (aref leafs i))
                  (incf (aref counts index 0))
                  (for predictions = (sl.tp:predictions leaf))

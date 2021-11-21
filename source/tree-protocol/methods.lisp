@@ -371,10 +371,9 @@
                           (attribute-indexes state)))
          (data (the sl.data:double-float-data-matrix (sl.mp:train-data state)))
          (data-points (sl.mp:data-points state))
-         ((mins . maxs)
-          (ensure (sl.mp:cache state 'mins/maxs)
-            (sl.data:mins/maxs data :data-points data-points
-                                    :attributes attributes)))
+         ((mins . maxs) (ensure (sl.mp:cache state 'mins/maxs)
+                          (sl.data:mins/maxs data :data-points data-points
+                                                  :attributes attributes)))
          (attributes-count (length attributes))
          (attribute-index (random attributes-count))
          (attribute (aref attributes attribute-index))
@@ -630,11 +629,11 @@
     (with samples = (sl.mp:data-points state))
     (with attributes = (sl.tp:attribute-indexes state))
     (with attributes-count = (length attributes))
-    (with max = (ensure (sl.mp:cache state 'sl.tp:maxs)
+    (with max = (ensure (sl.mp:cache state 'maxs)
                   (sl.data:maxs data
                               :data-points samples
                               :attributes attributes)))
-    (with min = (ensure (sl.mp:cache state 'sl.tp:mins)
+    (with min = (ensure (sl.mp:cache state 'mins)
                   (sl.data:mins data
                                 :data-points samples
                                 :attributes attributes)))
