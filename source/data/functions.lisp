@@ -174,18 +174,12 @@
       (for j from 1 below data-points-count)
       (for k1 = (if (null data-points) j (aref data-points j)))
       (iterate
-        (declare (type fixnum i1 i2))
-        (for i1 from 0 below attributes-count by 2)
-        (for i2 = (+ i1 1))
+        (declare (type fixnum i1))
+        (for i1 from 0 below attributes-count by 1)
         (let ((attribute (if (null attributes)
                              i1
                              (aref attributes i1))))
-          (maxf (sl.data:mref result-max 0 i1) (sl.data:mref data k1 attribute)))
-        (when (< i2 attributes-count)
-          (let ((attribute (if (null attributes)
-                               i2
-                               (aref attributes i2))))
-            (maxf (sl.data:mref result-max 0 i2) (sl.data:mref data k1 attribute)))))
+          (maxf (sl.data:mref result-max 0 i1) (sl.data:mref data k1 attribute))))
       (finally (return result-max)))))
 
 
@@ -223,22 +217,14 @@
       (for j from 1 below data-points-count)
       (for k1 = (if (null data-points) j (aref data-points j)))
       (iterate
-        (declare (type fixnum i1 i2))
-        (for i1 from 0 below attributes-count by 2)
-        (for i2 = (+ i1 1))
+        (declare (type fixnum i1))
+        (for i1 from 0 below attributes-count by 1)
         (let* ((attribute (if (null attributes)
                                i1
                                (aref attributes i1)))
                (value (sl.data:mref data k1 attribute)))
           (minf (sl.data:mref result-min 0 i1) value)
-          (maxf (sl.data:mref result-max 0 i1) value))
-        (when (< i2 attributes-count)
-          (let* ((attribute (if (null attributes)
-                               i2
-                               (aref attributes i2)))
-                 (value (sl.data:mref data k1 attribute)))
-            (minf (sl.data:mref result-min 0 i2) value)
-            (maxf (sl.data:mref result-max 0 i2) value))))
+          (maxf (sl.data:mref result-max 0 i1) value)))
       (finally (return (cons result-min result-max))))))
 
 
@@ -274,18 +260,12 @@
       (for j from 1 below data-points-count)
       (for k1 = (if (null data-points) j (aref data-points j)))
       (iterate
-        (declare (type fixnum i1 i2))
-        (for i1 from 0 below attributes-count by 2)
-        (for i2 = (+ i1 1))
+        (declare (type fixnum i1))
+        (for i1 from 0 below attributes-count by 1)
         (let ((attribute (if (null attributes)
                              i1
                              (aref attributes i1))))
-          (minf (sl.data:mref result-min 0 i1) (sl.data:mref data k1 attribute)))
-        (when (< i2 attributes-count)
-          (let ((attribute (if (null attributes)
-                               i2
-                               (aref attributes i2))))
-            (minf (sl.data:mref result-min 0 i2) (sl.data:mref data k1 attribute)))))
+          (minf (sl.data:mref result-min 0 i1) (sl.data:mref data k1 attribute))))
       (finally (return result-min)))))
 
 
