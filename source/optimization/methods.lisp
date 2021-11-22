@@ -127,33 +127,57 @@
            (optimize (speed 3) (safety 0)
                      (debug 0) (space 0)
                      (compilation-speed 0)))
-  (cl-ds.utils:cases ((null split-array)
-                      (null weights))
-    (iterate
-      (declare (type fixnum j i)
-               (type (simple-array double-float (*))
-                     left-sums right-sums)
-               (optimize (speed 3) (safety 0) (debug 0)))
-      (with number-of-classes = (number-of-classes function))
-      (with left-sums = (make-array number-of-classes
-                                    :initial-element 0.0d0
-                                    :element-type 'double-float))
-      (with right-sums = (make-array number-of-classes
-                                     :initial-element 0.0d0
-                                     :element-type 'double-float))
-      (for j from 0 below (length data-points))
-      (for i = (aref data-points j))
-      (for target = (truncate (statistical-learning.data:mref target-data i 0)))
-      (if (and split-array (eql right (aref split-array j)))
-          (incf (aref right-sums target) (if (null weights)
-                                             1.0d0
-                                             (weight-at weights i)))
-          (incf (aref left-sums target) (if (null weights)
-                                            1.0d0
-                                            (weight-at weights i))))
-      (finally
-       (return (values (vector-impurity left-sums)
-                       (vector-impurity right-sums)))))))
+  (cl-ds.utils:cases ((null split-array))
+    (if (null weights)
+        (iterate
+          (declare (type fixnum j1 i1 j2 target1 length)
+                   (type (simple-array fixnum (*))
+                         left-sums right-sums))
+          (with number-of-classes = (number-of-classes function))
+          (with left-sums = (make-array number-of-classes
+                                        :initial-element 0
+                                        :element-type 'fixnum))
+          (with right-sums = (make-array number-of-classes
+                                         :initial-element 0
+                                         :element-type 'fixnum))
+          (with length = (length data-points))
+          (for j1 from 0 below length by 2)
+          (for j2 = (+ j1 1))
+          (for i1 = (aref data-points j1))
+          (for target1 = (truncate (statistical-learning.data:mref target-data i1 0)))
+          (if (and split-array (eql right (aref split-array j1)))
+              (incf (aref right-sums target1))
+              (incf (aref left-sums target1)))
+          (when (< j2 length)
+            (let* ((i2 (aref data-points j2))
+                   (target2 (truncate (statistical-learning.data:mref target-data i2 0))))
+              (declare (type fixnum i2 target2))
+              (if (and split-array (eql right (aref split-array j2)))
+                  (incf (aref right-sums target2))
+                  (incf (aref left-sums target2)))))
+          (finally
+           (return (values (vector-impurity left-sums)
+                           (vector-impurity right-sums)))))
+        (iterate
+          (declare (type fixnum j i)
+                   (type (simple-array double-float (*))
+                         left-sums right-sums))
+          (with number-of-classes = (number-of-classes function))
+          (with left-sums = (make-array number-of-classes
+                                        :initial-element 0.0d0
+                                        :element-type 'double-float))
+          (with right-sums = (make-array number-of-classes
+                                         :initial-element 0.0d0
+                                         :element-type 'double-float))
+          (for j from 0 below (length data-points))
+          (for i = (aref data-points j))
+          (for target = (truncate (statistical-learning.data:mref target-data i 0)))
+          (if (and split-array (eql right (aref split-array j)))
+              (incf (aref right-sums target) (weight-at weights i))
+              (incf (aref left-sums target) (weight-at weights i)))
+          (finally
+           (return (values (vector-impurity left-sums)
+                           (vector-impurity right-sums))))))))
 
 
 (defmethod initialize-instance :after ((function k-logistic-function)

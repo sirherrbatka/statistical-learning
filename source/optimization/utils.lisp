@@ -15,7 +15,7 @@
   (* x x))
 
 
-(-> vector-impurity ((simple-array double-float *)) double-float)
+(-> vector-impurity ((or (simple-array double-float (*)) (simple-array fixnum (*)))) double-float)
 (defun vector-impurity (sums)
   (declare (optimize (speed 3) (safety 0) (debug 0)))
   (let* ((length (array-total-size sums))
