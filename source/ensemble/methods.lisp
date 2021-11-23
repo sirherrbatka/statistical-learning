@@ -465,7 +465,9 @@
                                            nil
                                            t))
          (unfolded (cl-ds.utils:unfold-table result)))
-    (map-into unfolded (cl-ds:iota-range))
+    (iterate
+      (for i from 0 below (length unfolded))
+      (setf (aref unfolded i) i))
     (funcall (if parallel #'lparallel:pmap-into #'map-into)
              unfolded
              (lambda (index)

@@ -46,21 +46,29 @@
          (right-count 0))
     (declare (type (simple-array double-float (*)) left-sum right-sum)
              (type fixnum left-count right-count))
-    (cl-ds.utils:cases ((null split-array))
+    (cl-ds.utils:cases ((null split-array)
+                        (null weights))
       (iterate
         (declare (type fixnum i j))
-        (for j from 0 below (length data-points))
+        (with length = (length data-points))
+        (for j from 0 below length)
         (for i = (aref data-points j))
         (for rightp = (and split-array (eql right (aref split-array j))))
-        (if rightp (incf right-count) (incf left-count))
-        (iterate
-          (declare (type fixnum ii)
-                   (type double-float value))
-          (for ii from 0 below target-data-width)
-          (for value = (sl.data:mref target-data i ii))
-          (if rightp
-              (incf (aref right-sum ii) value)
-              (incf (aref left-sum ii) value))))
+        (if rightp
+            (progn (incf right-count)
+                   (iterate
+                     (declare (type fixnum ii)
+                              (type double-float value))
+                     (for ii from 0 below target-data-width)
+                     (for value = (sl.data:mref target-data i ii))
+                     (incf (aref right-sum ii) value)))
+            (progn (incf left-count)
+                   (iterate
+                     (declare (type fixnum ii)
+                              (type double-float value))
+                     (for ii from 0 below target-data-width)
+                     (for value = (sl.data:mref target-data i ii))
+                     (incf (aref left-sum ii) value)))))
       (iterate
         (declare (type double-float
                        left-error right-error)
