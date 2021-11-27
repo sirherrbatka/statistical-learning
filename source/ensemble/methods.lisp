@@ -72,6 +72,7 @@
 (defmethod cl-ds.utils:cloning-information append
     ((state ensemble-state))
   '((:all-args all-args)
+    (:parameters sl.mp:parameters)
     (:trees trees)
     (:attributes attributes)
     (:samples samples)
@@ -79,6 +80,7 @@
     (:attributes-view attributes-view)
     (:samples-view samples-view)
     (:sampler-state sampler-state)
+    (:train-data sl.mp:train-data)
     (:indexes indexes)))
 
 
