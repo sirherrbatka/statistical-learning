@@ -30,7 +30,7 @@
   ())
 
 
-(defclass weights-based-data-points-sampler (fundamental-weights-calculator)
+(defclass weights-based-data-points-sampler (fundamental-data-points-sampler)
   ())
 
 
