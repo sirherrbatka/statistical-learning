@@ -98,7 +98,7 @@
   (make 'statistical-learning.ensemble:random-forest
         :trees-count 250
         :parallel t
-        :weights-calculator-class (make-instance 'sl.ensemble:dynamic-weights-calculator)
+        :weights-calculator (make-instance 'sl.ensemble:dynamic-weights-calculator)
         :tree-batch-size 5
         :tree-attributes-count 50
         :tree-sample-rate 0.2
@@ -111,7 +111,7 @@
                                                      *target-data*
                                                      :parallel t))
 
-(print (statistical-learning.performance:accuracy *confusion-matrix*)) ; 0.80
+(print (statistical-learning.performance:accuracy *confusion-matrix*)) ; ~0.84
 
 (~> (make 'statistical-learning.ensemble:gradient-boost-ensemble
           :trees-count 250
@@ -132,4 +132,4 @@
                                                        *target-data*
                                                        :parallel t)
     statistical-learning.performance:accuracy
-    print) ; 0.84
+    print) ; ~0.88

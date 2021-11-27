@@ -120,9 +120,13 @@
     (funcall (if parallel #'lparallel:pmap #'map)
              nil
              (lambda (index)
-               (declare (type fixnum index))
+               (declare (type fixnum index)
+                        (optimize (speed 3)))
                (iterate
                  (declare (type double-float expected)
+                          (type vector leafs)
+                          (type vector assigned-leafs)
+                          (type fixnum index)
                           (ignorable tree))
                  (with expected = (sl.data:mref (the sl.data:double-float-data-matrix target-data)
                                                 index
@@ -189,16 +193,21 @@
                                tree-sample-size
                                data-points-count)
   (if-let ((weights (sl.mp:weights state)))
-    (map-into (make-array count) (curry #'sl.data:select-random-indexes
-                                        tree-sample-size
-                                        data-points-count))
     (map-into (make-array count)
               (curry #'weighted-sample
                      tree-sample-size
-                     (sl.random:discrete-distribution weights)))))
+                     (sl.random:discrete-distribution weights)))
+    (map-into (make-array count) (curry #'sl.data:select-random-indexes
+                                        tree-sample-size
+                                        data-points-count))))
 
 
 (defmethod make-weights-calculator-state ((weights-calculator fundamental-weights-calculator)
+                                          ensemle-state)
+  nil)
+
+
+(defmethod make-weights-calculator-state ((weights-calculator dynamic-weights-calculator)
                                           ensemble-state)
   (let* ((weights (sl.mp:weights ensemble-state))
          (data-points-count (sl.data:data-points-count weights)))
@@ -211,7 +220,6 @@
 (defmethod sl.mp:make-model*/proxy (parameters/proxy
                                     (parameters random-forest)
                                     state)
-  (declare (optimize (debug 3)))
   (bind ((train-data (sl.mp:train-data state))
          (target-data (sl.mp:target-data state))
          (train-data-attributes (sl.data:attributes-count train-data))
@@ -225,6 +233,7 @@
          (attributes-generator (sl.data:selecting-random-indexes
                                 tree-attributes-count
                                 train-data-attributes))
+         (attributes-count (sl.data:attributes-count target-data))
          ((:flet array-view (array &key (from 0) (to trees-count)))
           (make-array (- (min trees-count to) from)
                       :displaced-index-offset (min trees-count from)
@@ -232,7 +241,7 @@
          (model (make 'random-forest-model
                       :trees trees
                       :parameters parameters
-                      :target-attributes-count (sl.data:attributes-count target-data))))
+                      :target-attributes-count attributes-count)))
     (statistical-learning.data:bind-data-matrix-dimensions
         ((train-data-data-points train-data-attributes train-data))
       (setf weights (if (null weights)
@@ -240,9 +249,10 @@
                                                   1
                                                   1.0d0)
                         (copy-array weights)))
-      (setf (weights-calculator-state state) (~> parameters
-                                                 weights-calculator
-                                                 (make-weights-calculator-state state)))
+      (setf (weights-calculator-state state)
+            (~> parameters
+                weights-calculator
+                (make-weights-calculator-state state)))
       (cl-progress-bar:with-progress-bar (trees-count "Fitting random forest of ~a trees." trees-count)
         (iterate
           (with index = 0)
