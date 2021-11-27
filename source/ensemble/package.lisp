@@ -10,8 +10,10 @@
    #:after-tree-fitting/proxy
    #:assign-leafs
    #:assigned-leafs
+   #:data-points-samples
    #:dynamic-weights-calculator
    #:ensemble-model
+   #:fundamental-data-points-sampler
    #:gradient-boost-ensemble
    #:gradient-boost-ensemble-model
    #:indexes
@@ -29,4 +31,5 @@
    #:tree-sample-rate
    #:trees
    #:trees-view
-   #:update-weights))
+   #:update-weights
+   #:weights-based-data-points-sampler))

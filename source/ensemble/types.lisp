@@ -26,6 +26,14 @@
   ())
 
 
+(defclass fundamental-data-points-sampler ()
+  ())
+
+
+(defclass weights-based-data-points-sampler (fundamental-weights-calculator)
+  ())
+
+
 (defclass ensemble (sl.mp:fundamental-model-parameters)
   ((%trees-count :initarg :trees-count
                  :reader trees-count
@@ -40,7 +48,11 @@
    (%tree-sample-rate :initarg :tree-sample-rate
                       :reader tree-sample-rate)
    (%tree-parameters :initarg :tree-parameters
-                     :reader tree-parameters)))
+                     :reader tree-parameters)
+   (%data-points-sampler :initarg :data-points-sampler
+                         :reader data-points-sampler))
+  (:default-initargs
+   :data-points-sampler (make 'weights-based-data-points-sampler)))
 
 
 (defclass isolation-forest (ensemble)
@@ -93,7 +105,12 @@
    (%weights :initarg :weights
              :accessor sl.mp:weights))
   (:default-initargs
+   :weights nil
    :leafs-assigned-p nil))
+
+
+(defclass random-forest-state (supervised-ensemble-state)
+  ())
 
 
 (defclass gradient-boost-ensemble-state-mixin ()

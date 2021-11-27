@@ -6,14 +6,6 @@
             distribution))
 
 
-(defun bootstrap-sample (tree-sample-size data-points-count
-                         distribution)
-  (if (null distribution)
-      (sl.data:select-random-indexes tree-sample-size
-                                     data-points-count)
-      (weighted-sample tree-sample-size distribution)))
-
-
 (defun fit-tree-batch (initargs state)
   (cl-ds.utils:with-rebind (cl-progress-bar:*progress-bar*)
     (bind ((parameters (sl.mp:parameters state))
@@ -21,7 +13,6 @@
            (trees (trees-view state))
            (samples (samples-view state))
            (all-attributes (attributes-view state))
-           (sampling-weights (sl.mp:weights state))
            (tree-sample-rate (tree-sample-rate parameters))
            (tree-parameters (tree-parameters parameters))
            (train-data (sl.mp:train-data state))
@@ -29,9 +20,6 @@
            (tree-sample-size (ceiling (* tree-sample-rate
                                          data-points-count)))
            (complete-initargs (append initargs (all-args state)))
-           (distribution (if (null sampling-weights)
-                             nil
-                             (sl.random:discrete-distribution sampling-weights)))
            ((:flet make-model (attributes sample))
             (cl-ds.utils:rebind
              (bind ((*state* state)
@@ -46,10 +34,11 @@
                                               sub-state)))
                (cl-progress-bar:update 1)
                model))))
-      (map-into samples (curry #'bootstrap-sample
-                               tree-sample-size
-                               data-points-count
-                               distribution))
+      (replace samples (data-point-samples (data-points-sampler parameters)
+                                           (length samples)
+                                           state
+                                           tree-sample-size
+                                           data-points-count))
       (funcall (if parallel #'lparallel:pmap-into #'map-into)
                trees
                #'make-model

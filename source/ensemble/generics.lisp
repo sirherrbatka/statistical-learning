@@ -19,6 +19,10 @@
      attributes
      data-points
      initargs))
+(defgeneric data-point-samples (sampler state
+                                count
+                                tree-sample-size
+                                data-points-count))
 (sl.common:defgeneric/proxy after-tree-fitting
     ((ensemble-parameters)
      (tree-parametres)
