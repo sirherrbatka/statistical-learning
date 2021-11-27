@@ -33,12 +33,14 @@
                     (model (sl.mp:make-model* tree-parameters
                                               sub-state)))
                (cl-progress-bar:update 1)
-               model))))
-      (replace samples (data-point-samples (data-points-sampler parameters)
-                                           (length samples)
-                                           state
-                                           tree-sample-size
-                                           data-points-count))
+               model)))
+           (number-of-samples (length samples)))
+      (~> (data-points-sampler parameters)
+          (data-points-samples number-of-samples
+                               state
+                               tree-sample-size
+                               data-points-count)
+          (replace samples _))
       (funcall (if parallel #'lparallel:pmap-into #'map-into)
                trees
                #'make-model

@@ -17,6 +17,13 @@
   ())
 
 
+(defclass gradient-based-one-side-sampler (fundamental-data-points-sampler)
+  ((%large-gradient-sampling-rate :initarg :large-gradient-sampling-rate
+                                  :reader large-gradient-sampling-rate)
+   (%small-gradient-sampling-rate :initarg :small-gradient-sampling-rate
+                                  :reader small-gradient-sampling-rate)))
+
+
 (defclass dynamic-weights-calculator (fundamental-weights-calculator)
   ())
 
@@ -80,10 +87,13 @@
    (%train-data :initarg :train-data
                 :reader sl.mp:train-data)
    (%indexes :initarg :indexes
-             :reader indexes))
+             :reader indexes)
+   (%sampler-state :initarg :sampler-state
+                   :accessor sampler-state))
   (:default-initargs
    :samples-view nil
    :attributes-view nil
+   :sampler-state nil
    :trees-view nil))
 
 
@@ -95,19 +105,19 @@
                       :documentation "For the weights calculator.")
    (%assigned-leafs :initarg :assigned-leafs
                     :accessor assigned-leafs
-                    :documentation "For the weights calculator")
-   (%weights :initarg :weights
+                    :documentation "For the weights calculator"))
+  (:default-initargs
+   :leafs-assigned-p nil))
+
+
+(defclass random-forest-state (supervised-ensemble-state)
+  ((%weights :initarg :weights
              :accessor sl.mp:weights)
    (%weights-calculator-state :initarg :weights-calculator-state
                               :accessor weights-calculator-state))
   (:default-initargs
    :weights nil
-   :weights-calculator-state nil
-   :leafs-assigned-p nil))
-
-
-(defclass random-forest-state (supervised-ensemble-state)
-  ())
+   :weights-calculator-state nil))
 
 
 (defclass gradient-boost-ensemble-state-mixin ()
@@ -156,3 +166,8 @@
 
 (defclass isolation-forest-model (ensemble-model)
   ())
+
+
+(defmethod make-data-points-sampler-state ((data-point-sampler fundamental-data-points-sampler)
+                                           ensemble-state)
+  nil)

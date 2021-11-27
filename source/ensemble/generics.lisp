@@ -21,10 +21,10 @@
      attributes
      data-points
      initargs))
-(defgeneric data-point-samples (sampler state
-                                count
-                                tree-sample-size
-                                data-points-count))
+(defgeneric data-points-samples (sampler state
+                                 count
+                                 tree-sample-size
+                                 data-points-count))
 (sl.common:defgeneric/proxy after-tree-fitting
     ((ensemble-parameters)
      (tree-parametres)
@@ -39,3 +39,4 @@
 (defgeneric samples-view (ensemble-state))
 (defgeneric (setf samples-view) (new-value ensemble-state))
 (defgeneric make-weights-calculator-state (weights-calculator ensemble-state))
+(defgeneric make-data-point-sampler-state (data-points-sampler ensemble-state))

@@ -14,6 +14,7 @@
    #:dynamic-weights-calculator
    #:ensemble-model
    #:fundamental-data-points-sampler
+   #:gradient-based-one-side-sampler
    #:gradient-boost-ensemble
    #:gradient-boost-ensemble-model
    #:indexes
@@ -32,4 +33,5 @@
    #:trees
    #:trees-view
    #:update-weights
+   #:data-points-sample
    #:weights-based-data-points-sampler))

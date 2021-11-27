@@ -78,17 +78,21 @@
     (:trees-view trees-view)
     (:attributes-view attributes-view)
     (:samples-view samples-view)
+    (:sampler-state sampler-state)
     (:indexes indexes)))
 
 
 (defmethod cl-ds.utils:cloning-information append
     ((state supervised-ensemble-state))
   '((:target-data sl.mp:target-data)
-    (:sampling-weights sampling-weights)
     (:assigned-leafs assigned-leafs)
-    (:leafs-assigned-p leafs-assigned-p)
-    (:weights-calculator-state weights-calculator-state)
-    (:weights weights)))
+    (:leafs-assigned-p leafs-assigned-p)))
+
+
+(defmethod cl-ds.utils:cloning-information append
+    ((state random-forest-state))
+  '((:weights sl.mp:weights)
+    (:weights-calculator-state weights-calculator-state)))
 
 
 (defmethod cl-ds.utils:cloning-information append
@@ -187,11 +191,11 @@
           :all-args initargs)))
 
 
-(defmethod data-point-samples ((sampler weights-based-data-points-sampler)
-                               count
-                               state
-                               tree-sample-size
-                               data-points-count)
+(defmethod data-points-samples ((sampler weights-based-data-points-sampler)
+                                count
+                                state
+                                tree-sample-size
+                                data-points-count)
   (if-let ((weights (sl.mp:weights state)))
     (map-into (make-array count)
               (curry #'weighted-sample
@@ -358,7 +362,7 @@
 (defmethod sl.mp:make-training-state/proxy (parameters/proxy
                                             (parameters gradient-boost-ensemble)
                                             &rest initargs
-                                            &key target-data train-data weights)
+                                            &key target-data train-data)
   (let* ((tree-parameters (tree-parameters parameters))
          (expected-value (sl.gbt:calculate-expected-value
                           tree-parameters
@@ -381,8 +385,15 @@
           :attributes attributes
           :samples samples
           :target-data target-data
-          :weights weights
           :training-parameters parameters)))
+
+
+(defmethod sl.mp:make-model*/proxy :before
+    (parameters/proxy (parameters ensemble-model) state)
+  (setf (sampler-state state)
+        (~> parameters
+            weights-calculator
+            (make-data-points-sampler-state state))))
 
 
 (defmethod sl.mp:make-model*/proxy (parameters/proxy
@@ -399,8 +410,7 @@
          (tree-attributes-count (tree-attributes-count parameters))
          ((:accessors trees samples attributes attributes-view
                       samples-view trees-view
-                      (response gradients)
-                      (weights sl.mp:weights))
+                      (response gradients))
           state)
          (attributes-generator (sl.data:selecting-random-indexes
                                 tree-attributes-count
@@ -413,44 +423,37 @@
                       :trees trees
                       :parameters parameters
                       :target-attributes-count target-data-attributes)))
-    (statistical-learning.data:bind-data-matrix-dimensions
-        ((train-data-data-points train-data-attributes train-data))
-      (setf weights (if (null weights)
-                        (sl.data:make-data-matrix train-data-data-points
-                                                  1
-                                                  1.0d0)
-                        (copy-array weights)))
-  (cl-progress-bar:with-progress-bar (trees-count "Fitting gradient boost ensemble of ~a trees." trees-count)
-    (iterate
-      (with contributed = nil)
-      (with shrinkage = (shrinkage parameters))
-      (for index
-           from 0
-           below trees-count
-           by tree-batch-size)
-      (while (< index trees-count))
-      (setf trees-view (array-view trees
-                                   :from index
-                                   :to (+ index tree-batch-size)))
-      (setf attributes-view (array-view attributes
-                                        :from index
-                                        :to (+ index tree-batch-size)))
-      (map-into attributes-view attributes-generator)
-      (setf samples-view (array-view samples
+    (cl-progress-bar:with-progress-bar (trees-count "Fitting gradient boost ensemble of ~a trees." trees-count)
+      (iterate
+        (with contributed = nil)
+        (with shrinkage = (shrinkage parameters))
+        (for index
+             from 0
+             below trees-count
+             by tree-batch-size)
+        (while (< index trees-count))
+        (setf trees-view (array-view trees
                                      :from index
                                      :to (+ index tree-batch-size)))
-      (fit-tree-batch `(:response ,response :shrinkage ,shrinkage)
-                      state)
-      (for new-contributed = (contribute-trees model
-                                               tree-parameters
-                                               trees-view
-                                               train-data
-                                               parallel
-                                               contributed))
-      (setf response (sl.gbt:calculate-response tree-parameters
-                                                new-contributed
-                                                target-data)
-            contributed new-contributed))))
+        (setf attributes-view (array-view attributes
+                                          :from index
+                                          :to (+ index tree-batch-size)))
+        (map-into attributes-view attributes-generator)
+        (setf samples-view (array-view samples
+                                       :from index
+                                       :to (+ index tree-batch-size)))
+        (fit-tree-batch `(:response ,response :shrinkage ,shrinkage)
+                        state)
+        (for new-contributed = (contribute-trees model
+                                                 tree-parameters
+                                                 trees-view
+                                                 train-data
+                                                 parallel
+                                                 contributed))
+        (setf response (sl.gbt:calculate-response tree-parameters
+                                                  new-contributed
+                                                  target-data)
+              contributed new-contributed)))
     model))
 
 
@@ -575,3 +578,7 @@
              indexes)
     (setf (leafs-assigned-p state) t)
     nil))
+
+
+(defmethod sl.mp:weights ((state gradient-boost-ensemble-state-mixin))
+  nil)
