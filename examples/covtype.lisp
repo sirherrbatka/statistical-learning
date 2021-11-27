@@ -98,7 +98,7 @@
   (make 'statistical-learning.ensemble:random-forest
         :trees-count 250
         :parallel t
-        :weights-calculator-class 'sl.ensemble:dynamic-weights-calculator
+        :weights-calculator-class (make-instance 'sl.ensemble:dynamic-weights-calculator)
         :tree-batch-size 5
         :tree-attributes-count 50
         :tree-sample-rate 0.2

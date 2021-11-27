@@ -87,6 +87,7 @@
     (:sampling-weights sampling-weights)
     (:assigned-leafs assigned-leafs)
     (:leafs-assigned-p leafs-assigned-p)
+    (:weights-calculator-state weights-calculator-state)
     (:weights weights)))
 
 
@@ -95,36 +96,27 @@
   '((:c sl.if:c)))
 
 
-(defmethod initialize-instance :after ((instance dynamic-weights-calculator)
-                                       &rest initargs
-                                       &key &allow-other-keys)
-  (declare (ignore initargs))
-  (let* ((weights (weights instance))
-         (data-points-count (sl.data:data-points-count weights)))
-    (setf (counts instance) (make-array `(,data-points-count 2)
-                                        :element-type 'fixnum
-                                        :initial-element 0))))
-
-
 (defmethod update-weights ((calculator static-weights-calculator)
                            tree-parameters
-                           ensemble-state)
+                           ensemble-state
+                           ensemble-model)
   nil)
 
 
 (defmethod update-weights ((calculator dynamic-weights-calculator)
                            (tree-parameters sl.perf:classification)
-                           ensemble-state)
+                           ensemble-state
+                           ensemble-model)
   (let* ((parallel (~> ensemble-state sl.mp:parameters parallel))
          (indexes (indexes ensemble-state))
          (target-data (sl.mp:target-data ensemble-state))
          (prev-trees (trees-view ensemble-state))
-         (counts (counts calculator))
+         (counts (~> ensemble-state weights-calculator-state counts))
          (assigned-leafs (assigned-leafs ensemble-state))
          (weights (sl.mp:weights ensemble-state)))
     (declare (type (simple-array fixnum (* *)) counts)
              (type sl.data:double-float-data-matrix target-data weights))
-    (assign-leafs ensemble-state (ensemble calculator))
+    (assign-leafs ensemble-state ensemble-model)
     (funcall (if parallel #'lparallel:pmap #'map)
              nil
              (lambda (index)
@@ -206,6 +198,16 @@
                      (sl.random:discrete-distribution weights)))))
 
 
+(defmethod make-weights-calculator-state ((weights-calculator fundamental-weights-calculator)
+                                          ensemble-state)
+  (let* ((weights (sl.mp:weights ensemble-state))
+         (data-points-count (sl.data:data-points-count weights)))
+    (make 'dynamic-weights-calculator-state
+          :counts (make-array `(,data-points-count 2)
+                              :element-type 'fixnum
+                              :initial-element 0))))
+
+
 (defmethod sl.mp:make-model*/proxy (parameters/proxy
                                     (parameters random-forest)
                                     state)
@@ -216,12 +218,10 @@
          (tree-batch-size (tree-batch-size parameters))
          (tree-parameters (tree-parameters parameters))
          (trees-count (trees-count parameters))
-         (parallel (parallel parameters))
          (tree-attributes-count (tree-attributes-count parameters))
          ((:accessors trees samples attributes attributes-view
                       samples-view trees-view (weights sl.mp:weights))
           state)
-         (weights-calculator nil)
          (attributes-generator (sl.data:selecting-random-indexes
                                 tree-attributes-count
                                 train-data-attributes))
@@ -240,12 +240,9 @@
                                                   1
                                                   1.0d0)
                         (copy-array weights)))
-      (setf weights-calculator (make (weights-calculator-class parameters)
-                                     :parallel parallel
-                                     :weights weights
-                                     :ensemble model
-                                     :train-data train-data
-                                     :target-data target-data))
+      (setf (weights-calculator-state state) (~> parameters
+                                                 weights-calculator
+                                                 (make-weights-calculator-state state)))
       (cl-progress-bar:with-progress-bar (trees-count "Fitting random forest of ~a trees." trees-count)
         (iterate
           (with index = 0)
@@ -269,9 +266,10 @@
           (setf index (min trees-count (+ index tree-batch-size)))
           (for new-trees = (- index prev-index))
           (unless (zerop new-trees)
-            (update-weights weights-calculator
+            (update-weights (weights-calculator parameters)
                             tree-parameters
-                            state))))
+                            state
+                            model))))
       model)))
 
 

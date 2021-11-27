@@ -2,24 +2,7 @@
 
 
 (defclass fundamental-weights-calculator ()
-  ((%weights :initarg :weights
-             :reader weights)
-   (%ensemble :initarg :ensemble
-              :reader ensemble)
-   (%train-data :initarg :train-data
-                :reader train-data)
-   (%target-data :initarg :target-data
-                 :reader target-data)
-   (%parallel :initarg :parallel
-              :reader parallel)))
-
-
-(defclass dynamic-weights-calculator (fundamental-weights-calculator)
-  ((%counts :initarg :counts
-            :accessor counts))
-  (:default-initargs
-   :indexes nil
-   :counts nil))
+  ())
 
 
 (defclass static-weights-calculator (fundamental-weights-calculator)
@@ -32,6 +15,17 @@
 
 (defclass weights-based-data-points-sampler (fundamental-data-points-sampler)
   ())
+
+
+(defclass dynamic-weights-calculator (fundamental-weights-calculator)
+  ())
+
+
+(defclass dynamic-weights-calculator-state ()
+  ((%counts :initarg :counts
+            :accessor counts))
+  (:default-initargs
+   :counts nil))
 
 
 (defclass ensemble (sl.mp:fundamental-model-parameters)
@@ -60,10 +54,10 @@
 
 
 (defclass random-forest (ensemble)
-  ((%weights-calculator-class :initarg :weights-calculator-class
-                              :reader weights-calculator-class))
+  ((%weights-calculator :initarg :weights-calculator
+                        :reader weights-calculator))
   (:default-initargs
-   :weights-calculator-class 'static-weights-calculator))
+   :weights-calculator (make 'static-weights-calculator)))
 
 
 (defclass ensemble-state (sl.mp:fundamental-training-state)
@@ -103,9 +97,12 @@
                     :accessor assigned-leafs
                     :documentation "For the weights calculator")
    (%weights :initarg :weights
-             :accessor sl.mp:weights))
+             :accessor sl.mp:weights)
+   (%weights-calculator-state :initarg :weights-calculator-state
+                              :accessor weights-calculator-state))
   (:default-initargs
    :weights nil
+   :weights-calculator-state nil
    :leafs-assigned-p nil))
 
 

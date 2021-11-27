@@ -8,8 +8,10 @@
 (defgeneric tree-parameters (parameters))
 (defgeneric tree-sample-rate (parameters))
 (defgeneric tree-batch-size (parameters))
-(defgeneric update-weights (calculator tree-parameters
-                            ensemble-state))
+(defgeneric update-weights (calculator
+                            tree-parameters
+                            ensemble-state
+                            ensemble-model))
 (defgeneric leafs (ensemble data &optional parallel))
 (defgeneric assign-leafs (state model))
 (sl.common:defgeneric/proxy make-tree-training-state
@@ -36,3 +38,4 @@
 (defgeneric (setf trees-view) (new-value ensemble-state))
 (defgeneric samples-view (ensemble-state))
 (defgeneric (setf samples-view) (new-value ensemble-state))
+(defgeneric make-weights-calculator-state (weights-calculator ensemble-state))
