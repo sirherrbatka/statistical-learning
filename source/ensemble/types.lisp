@@ -96,6 +96,22 @@
    :leafs-assigned-p nil))
 
 
+(defclass gradient-boost-ensemble-state-mixin ()
+  ((%gradients :initarg :gradients
+               :accessor gradients))
+  (:default-initargs :gradients nil))
+
+
+(defclass gradient-boost-ensemble-state (gradient-boost-ensemble-state-mixin
+                                         supervised-ensemble-state)
+  ())
+
+
+(defclass supervised-gradient-boost-ensemble-state (gradient-boost-ensemble-state-mixin
+                                                    supervised-ensemble-state)
+  ())
+
+
 (defclass isolation-forest-ensemble-state (ensemble-state)
   ())
 

@@ -65,6 +65,11 @@
 
 
 (defmethod cl-ds.utils:cloning-information append
+    ((state gradient-boost-ensemble-state-mixin))
+  '((:gradients gradients)))
+
+
+(defmethod cl-ds.utils:cloning-information append
     ((state ensemble-state))
   '((:all-args all-args)
     (:trees trees)
@@ -343,7 +348,7 @@
          (attributes (make-array trees-count))
          (trees (make-array trees-count))
          (samples (make-array trees-count)))
-    (make 'supervised-ensemble-state
+    (make 'supervised-gradient-boost-ensemble-state
           :all-args `(,@initargs :expected-value ,expected-value)
           :parameters parameters
           :train-data train-data
@@ -370,7 +375,7 @@
          (parallel (parallel parameters))
          (tree-attributes-count (tree-attributes-count parameters))
          ((:accessors trees samples attributes attributes-view
-                      samples-view trees-view)
+                      samples-view trees-view (response gradients))
           state)
          (attributes-generator (sl.data:selecting-random-indexes
                                 tree-attributes-count
@@ -385,7 +390,6 @@
                       :target-attributes-count target-data-attributes)))
     (cl-progress-bar:with-progress-bar (trees-count "Fitting gradient boost ensemble of ~a trees." trees-count)
       (iterate
-        (with response = nil)
         (with contributed = nil)
         (with shrinkage = (shrinkage parameters))
         (for index
