@@ -40,7 +40,11 @@
    (%tree-sample-rate :initarg :tree-sample-rate
                       :reader tree-sample-rate)
    (%tree-parameters :initarg :tree-parameters
-                     :reader tree-parameters)))
+                     :reader tree-parameters)
+   (%weights-calculator-class :initarg :weights-calculator-class
+                              :reader weights-calculator-class))
+  (:default-initargs
+   :weights-calculator-class 'static-weights-calculator))
 
 
 (defclass isolation-forest (ensemble)
@@ -48,10 +52,7 @@
 
 
 (defclass random-forest (ensemble)
-  ((%weights-calculator-class :initarg :weights-calculator-class
-                              :reader weights-calculator-class))
-  (:default-initargs
-   :weights-calculator-class 'static-weights-calculator))
+  ())
 
 
 (defclass ensemble-state (sl.mp:fundamental-training-state)

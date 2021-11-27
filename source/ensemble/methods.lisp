@@ -375,8 +375,10 @@
          (parallel (parallel parameters))
          (tree-attributes-count (tree-attributes-count parameters))
          ((:accessors trees samples attributes attributes-view
-                      samples-view trees-view (response gradients))
+                      samples-view trees-view (response gradients)
+                      (weights sl.mp:weights))
           state)
+         (weights-calculator nil)
          (attributes-generator (sl.data:selecting-random-indexes
                                 tree-attributes-count
                                 train-data-attributes))
@@ -388,6 +390,19 @@
                       :trees trees
                       :parameters parameters
                       :target-attributes-count target-data-attributes)))
+    (statistical-learning.data:bind-data-matrix-dimensions
+        ((train-data-data-points train-data-attributes train-data))
+      (setf weights (if (null weights)
+                        (sl.data:make-data-matrix train-data-data-points
+                                                  1
+                                                  1.0d0)
+                        (copy-array weights)))
+      (setf weights-calculator (make (weights-calculator-class parameters)
+                                     :parallel parallel
+                                     :weights weights
+                                     :ensemble model
+                                     :train-data train-data
+                                     :target-data target-data)))
     (cl-progress-bar:with-progress-bar (trees-count "Fitting gradient boost ensemble of ~a trees." trees-count)
       (iterate
         (with contributed = nil)
@@ -418,7 +433,11 @@
         (setf response (sl.gbt:calculate-response tree-parameters
                                                   new-contributed
                                                   target-data)
-              contributed new-contributed)))
+              contributed new-contributed)
+        (unless (zerop (length trees-view))
+          (update-weights weights-calculator
+                          tree-parameters
+                          state))))
     model))
 
 
