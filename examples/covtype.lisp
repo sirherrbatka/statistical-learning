@@ -101,7 +101,8 @@
         :weights-calculator (make-instance 'sl.ensemble:dynamic-weights-calculator)
         :tree-batch-size 5
         :tree-attributes-count 50
-        :tree-sample-rate 0.2
+        :data-points-sampler (make-instance 'sl.ensemble:weights-based-data-points-sampler
+                                            :sampling-rate 0.2)
         :tree-parameters *training-parameters*))
 
 (defparameter *confusion-matrix*
@@ -119,7 +120,8 @@
           :tree-batch-size 5
           :tree-attributes-count 50
           :shrinkage 0.2d0
-          :tree-sample-rate 0.2
+          :data-points-sampler (make-instance 'sl.ensemble:weights-based-data-points-sampler
+                                              :sampling-rate 0.2)
           :tree-parameters (make 'sl.gbt:classification
                                  :optimized-function (sl.opt:k-logistic *cover-types*)
                                  :maximal-depth 25

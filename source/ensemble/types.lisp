@@ -14,7 +14,8 @@
 
 
 (defclass weights-based-data-points-sampler (fundamental-data-points-sampler)
-  ())
+  ((%sampling-rate :initarg :sampling-rate
+                   :reader sampling-rate)))
 
 
 (defclass gradient-based-one-side-sampler (fundamental-data-points-sampler)
@@ -46,14 +47,13 @@
    (%tree-batch-size :initarg :tree-batch-size
                      :reader tree-batch-size
                      :type positive-integer)
-   (%tree-sample-rate :initarg :tree-sample-rate
-                      :reader tree-sample-rate)
    (%tree-parameters :initarg :tree-parameters
                      :reader tree-parameters)
    (%data-points-sampler :initarg :data-points-sampler
                          :reader data-points-sampler))
   (:default-initargs
-   :data-points-sampler (make 'weights-based-data-points-sampler)))
+   :data-points-sampler (make 'weights-based-data-points-sampler
+                              :sampling-rate 0.1d0)))
 
 
 (defclass isolation-forest (ensemble)

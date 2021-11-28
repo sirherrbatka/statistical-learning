@@ -13,12 +13,7 @@
            (trees (trees-view state))
            (samples (samples-view state))
            (all-attributes (attributes-view state))
-           (tree-sample-rate (tree-sample-rate parameters))
            (tree-parameters (tree-parameters parameters))
-           (train-data (sl.mp:train-data state))
-           (data-points-count (sl.data:data-points-count train-data))
-           (tree-sample-size (ceiling (* tree-sample-rate
-                                         data-points-count)))
            (complete-initargs (append initargs (all-args state)))
            ((:flet make-model (attributes sample))
             (cl-ds.utils:rebind
@@ -36,10 +31,7 @@
                model)))
            (number-of-samples (length samples)))
       (~> (data-points-sampler parameters)
-          (data-points-samples number-of-samples
-                               state
-                               tree-sample-size
-                               data-points-count)
+          (data-points-samples state number-of-samples)
           (replace samples _))
       (funcall (if parallel #'lparallel:pmap-into #'map-into)
                trees

@@ -48,17 +48,18 @@
             :minimal-difference 0.0d0
             :minimal-size 50
             :trials-count 15
-            :parallel nil)
+            :parallel t)
       (sl.pt:causal 10 2) ; 10 data points for promotion + 10 data points for no promotions required, 0 designates no promotion, 1 designates promotion
-      sl.pt:honest))
+      ))
 
 (defparameter *forest-parameters*
   (make 'statistical-learning.ensemble:random-forest
         :trees-count 500
-        :parallel nil
+        :parallel t
         :tree-batch-size 100
         :tree-attributes-count 3
-        :tree-sample-rate 0.5
+        :data-points-sampler (make-instance 'sl.ensemble:weights-based-data-points-sampler
+                                            :sampling-rate 0.5)
         :tree-parameters *training-parameters*))
 
 (defparameter *model*

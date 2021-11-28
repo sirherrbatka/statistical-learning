@@ -8,13 +8,7 @@
   (let* ((trees-count (trees-count instance))
          (tree-batch-size (tree-batch-size instance))
          (tree-attributes-count (tree-attributes-count instance))
-         (tree-sample-rate (tree-sample-rate instance))
          (tree-parameters (tree-parameters instance)))
-    (unless (< 0.0 tree-sample-rate 1.0)
-      (error 'cl-ds:argument-value-out-of-bounds
-             :value tree-sample-rate
-             :bounds '(< 0 tree-sample-rate 1.0)
-             :argument :tree-sample-rate))
     (unless (integerp tree-attributes-count)
       (error 'type-error
              :expected-type 'integer
@@ -194,18 +188,20 @@
 
 
 (defmethod data-points-samples ((sampler weights-based-data-points-sampler)
-                                count
                                 state
-                                tree-sample-size
-                                data-points-count)
-  (if-let ((weights (sl.mp:weights state)))
-    (map-into (make-array count)
-              (curry #'weighted-sample
-                     tree-sample-size
-                     (sl.random:discrete-distribution weights)))
-    (map-into (make-array count) (curry #'sl.data:select-random-indexes
-                                        tree-sample-size
-                                        data-points-count))))
+                                count)
+  (let* ((train-data (sl.mp:train-data state))
+         (data-points-count (sl.data:data-points-count train-data))
+         (sampling-rate (sampling-rate sampler))
+         (tree-sample-size (floor (* sampling-rate data-points-count))))
+    (if-let ((weights (sl.mp:weights state)))
+      (map-into (make-array count)
+                (curry #'weighted-sample
+                       tree-sample-size
+                       (sl.random:discrete-distribution weights)))
+      (map-into (make-array count) (curry #'sl.data:select-random-indexes
+                                          tree-sample-size
+                                          data-points-count)))))
 
 
 (defmethod make-weights-calculator-state ((weights-calculator fundamental-weights-calculator)

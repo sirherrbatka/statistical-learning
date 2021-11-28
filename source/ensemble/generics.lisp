@@ -6,7 +6,6 @@
 (defgeneric tree-attributes-count (ensemble-parameters))
 (defgeneric parallel (parameters))
 (defgeneric tree-parameters (parameters))
-(defgeneric tree-sample-rate (parameters))
 (defgeneric tree-batch-size (parameters))
 (defgeneric update-weights (calculator
                             tree-parameters
@@ -21,10 +20,7 @@
      attributes
      data-points
      initargs))
-(defgeneric data-points-samples (sampler state
-                                 count
-                                 tree-sample-size
-                                 data-points-count))
+(defgeneric data-points-samples (sampler state count))
 (sl.common:defgeneric/proxy after-tree-fitting
     ((ensemble-parameters)
      (tree-parametres)

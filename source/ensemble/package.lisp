@@ -29,7 +29,6 @@
    #:random-forest-model
    #:static-weights-calculator
    #:tree-batch-size
-   #:tree-sample-rate
    #:trees
    #:trees-view
    #:update-weights

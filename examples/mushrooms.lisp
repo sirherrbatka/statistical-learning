@@ -106,7 +106,8 @@
         :weights-calculator (make-instance 'sl.ensemble:dynamic-weights-calculator)
         :tree-batch-size 5
         :tree-attributes-count 30
-        :tree-sample-rate 0.3
+        :data-points-sampler (make-instance 'sl.ensemble:weights-based-data-points-sampler
+                                            :sampling-rate 0.3)
         :tree-parameters *training-parameters*))
 
 (defparameter *confusion-matrix*

@@ -42,7 +42,8 @@
         :parallel t
         :tree-batch-size 25
         :tree-attributes-count 5
-        :tree-sample-rate 0.2
+        :data-points-sampler (make-instance 'sl.ensemble:weights-based-data-points-sampler
+                                            :sampling-rate 0.2)
         :tree-parameters *training-parameters*))
 
 (defparameter *mean-error*
@@ -88,7 +89,8 @@
               :tree-batch-size 10
               :shrinkage 0.1d0
               :tree-attributes-count 5
-              :tree-sample-rate 0.5
+              :data-points-sampler (make-instance 'sl.ensemble:weights-based-data-points-sampler
+                                                  :sampling-rate 0.5)
               :tree-parameters (make 'sl.gbt:regression
                                      :optimized-function (sl.opt:squared-error)
                                      :maximal-depth 5
