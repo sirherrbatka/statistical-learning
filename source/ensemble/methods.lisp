@@ -2,6 +2,39 @@
 
 
 (defmethod initialize-instance :after
+    ((instance weights-based-data-points-sampler)
+     &rest initargs)
+  (declare (ignore initargs))
+  (let ((sampling-rate (sampling-rate instance)))
+    (check-type sampling-rate real)
+    (unless (< 0.0 sampling-rate 1.0)
+      (error 'cl-ds:argument-value-out-of-bounds
+             :value sampling-rate
+             :bounds '(< 0 sampling-rate 1.0)
+             :argument :sampling-rate))))
+
+
+(defmethod initialize-instance :after
+    ((instance gradient-based-one-side-sampler)
+     &rest initargs)
+  (declare (ignore initargs))
+  (let ((large-gradient-sampling-rate (large-gradient-sampling-rate instance))
+        (small-gradient-sampling-rate (small-gradient-sampling-rate instance)))
+    (check-type large-gradient-sampling-rate real)
+    (check-type small-gradient-sampling-rate real)
+    (unless (< 0.0 large-gradient-sampling-rate 1.0)
+      (error 'cl-ds:argument-value-out-of-bounds
+             :value large-gradient-sampling-rate
+             :bounds '(< 0 large-gradient-sampling-rate 1.0)
+             :argument :large-gradient-sampling-rate))
+    (unless (< 0.0 small-gradient-sampling-rate 1.0)
+      (error 'cl-ds:argument-value-out-of-bounds
+             :value small-gradient-sampling-rate
+             :bounds '(< 0 small-gradient-sampling-rate 1.0)
+             :argument :small-gradient-sampling-rate))))
+
+
+(defmethod initialize-instance :after
     ((instance ensemble)
      &rest initargs)
   (declare (ignore initargs))
