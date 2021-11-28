@@ -246,22 +246,34 @@
                                     (sort #'>gradient)))
            (large-gradient-count (min (ceiling (* large-gradient-sampling-rate data-points-count))
                                       data-points-count))
-           (small-gradient-count (min (ceiling (* small-gradient-sampling-rate data-points-count))
+           (small-gradient-count (min (floor (* small-gradient-sampling-rate data-points-count))
                                       (- data-points-count large-gradient-count)))
            (total-count (+ large-gradient-count small-gradient-count)))
+      (declare (type fixnum total-count large-gradient-count))
       (funcall (if (~> state sl.mp:parameters parallel)
                    #'lparallel:pmap-into
                    #'map-into)
                (make-array count)
                (lambda (&aux (r (make-array total-count :element-type 'fixnum)))
-                 (declare (optimize (speed 3) (safety 0))
+                 (declare (optimize (speed 3) (safety 0) (debug 0))
                           (type (simple-array fixnum (*)) r))
-                 (replace r ordered-data-points :end1 large-gradient-count
-                                                :end2 large-gradient-count)
-                 (~> (sl.data:select-random-indexes small-gradient-count
-                                                    data-points-count
-                                                    :start large-gradient-count)
-                     (replace r _ :start1 large-gradient-count)))))
+                 (replace r ordered-data-points
+                          :start1 0
+                          :start2 0
+                          :end1 large-gradient-count
+                          :end2 large-gradient-count)
+                 (~>> (sl.data:select-random-indexes small-gradient-count
+                                                     (- data-points-count
+                                                        large-gradient-count))
+                      (cl-ds.utils:transform (lambda (i) (declare (type fixnum i))
+                                               (aref ordered-data-points
+                                                     (the fixnum (+ large-gradient-count i)))))
+                      (the (simple-array fixnum (*)) _)
+                      (replace r _
+                               :start1 large-gradient-count
+                               :start2 0
+                               :end1 total-count))
+                 r)))
     (~>> state
          sl.mp:train-data
          sl.data:data-points-count

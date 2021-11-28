@@ -24,12 +24,12 @@
 
 
 (-> select-random-indexes
-    (fixnum fixnum &key (:start fixnum))
+    (fixnum fixnum)
     (simple-array fixnum (*)))
-(defun select-random-indexes (selected-count total-count &key (start 0))
+(defun select-random-indexes (selected-count total-count)
   (declare (optimize (speed 3) (safety 0)))
   (let* ((table (make-hash-table :size total-count))
-         (limit (min selected-count (- total-count start)))
+         (limit (min selected-count total-count))
          (result (make-array limit :element-type 'fixnum)))
     (iterate
       (declare (type fixnum i random-position value next-value
