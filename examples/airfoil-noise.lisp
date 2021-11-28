@@ -58,7 +58,7 @@
                                *target-data*
                                :parallel nil))
 
-(print *mean-error*) ; 19.14110529750509d0 (squared error)
+(format t "~3$~%" *mean-error*) ; 19.36 (squared error)
 
 (defparameter *som-model*
   (sl.mp:make-unsupervised-model
@@ -82,23 +82,24 @@
 
 (defparameter *positions* (sl.mp:predict *som-model* *train-data*))
 
-(print (statistical-learning.performance:cross-validation
-        (make 'statistical-learning.ensemble:gradient-boost-ensemble
-              :trees-count 500
-              :parallel t
-              :tree-batch-size 10
-              :shrinkage 0.1d0
-              :tree-attributes-count 5
-              :data-points-sampler (make-instance 'sl.ensemble:weights-based-data-points-sampler
-                                                  :sampling-rate 0.5)
-              :tree-parameters (make 'sl.gbt:regression
-                                     :optimized-function (sl.opt:squared-error)
-                                     :maximal-depth 5
-                                     :minimal-size 5
-                                     :minimal-difference 0.00001d0
-                                     :trials-count 15
-                                     :parallel t))
-        4
-        *train-data*
-        *target-data*
-        :parallel nil)) ; ~3.4 (also squared error, obviously a lot better)
+(format t "~3$~%"
+        (statistical-learning.performance:cross-validation
+         (make 'statistical-learning.ensemble:gradient-boost-ensemble
+               :trees-count 500
+               :parallel t
+               :tree-batch-size 10
+               :shrinkage 0.1d0
+               :tree-attributes-count 5
+               :data-points-sampler (make 'sl.ensemble:weights-based-data-points-sampler
+                                          :sampling-rate 0.5)
+               :tree-parameters (make 'sl.gbt:regression
+                                      :optimized-function (sl.opt:squared-error)
+                                      :maximal-depth 5
+                                      :minimal-size 5
+                                      :minimal-difference 0.00001d0
+                                      :trials-count 15
+                                      :parallel t))
+         4
+         *train-data*
+         *target-data*
+         :parallel nil)) ; ~3.5 (also squared error, obviously a lot better)

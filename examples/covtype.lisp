@@ -112,7 +112,7 @@
                                                      *target-data*
                                                      :parallel t))
 
-(print (statistical-learning.performance:accuracy *confusion-matrix*)) ; ~0.84
+(format t "~3$~%" (statistical-learning.performance:accuracy *confusion-matrix*)) ; ~0.84
 
 (~> (make 'statistical-learning.ensemble:gradient-boost-ensemble
           :trees-count 250
@@ -120,8 +120,9 @@
           :tree-batch-size 5
           :tree-attributes-count 50
           :shrinkage 0.2d0
-          :data-points-sampler (make-instance 'sl.ensemble:weights-based-data-points-sampler
-                                              :sampling-rate 0.2)
+          :data-points-sampler (make 'sl.ensemble:gradient-based-one-side-sampler
+                                     :small-gradient-sampling-rate 0.05
+                                     :large-gradient-sampling-rate 0.05)
           :tree-parameters (make 'sl.gbt:classification
                                  :optimized-function (sl.opt:k-logistic *cover-types*)
                                  :maximal-depth 25
@@ -134,4 +135,4 @@
                                                        *target-data*
                                                        :parallel t)
     statistical-learning.performance:accuracy
-    print) ; ~0.88
+    (format t "~3$~%" _)) ; ~0.88

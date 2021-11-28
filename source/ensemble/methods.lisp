@@ -220,6 +220,56 @@
           :all-args initargs)))
 
 
+(defmethod data-points-samples ((sampler gradient-based-one-side-sampler)
+                                state
+                                count)
+  (if-let ((response (gradients state)))
+    (bind ((data-points-count (sl.data:data-points-count response))
+           (attributes-count (sl.data:attributes-count response))
+           ((:flet response-at-point (point))
+            (declare (optimize (speed 3) (safety 0)))
+            (iterate
+              (declare (type fixnum i)
+                       (type double-float result))
+              (with result = 0.0d0)
+              (for i from 0 below attributes-count)
+              (incf result (sl.data:mref (the sl.data:double-float-data-matrix response)
+                                         point i))
+              (finally (return result))))
+           ((:flet >gradient (point-a point-b))
+            (declare (optimize (speed 3) (safety 0)))
+            (> (response-at-point point-a)
+               (response-at-point point-b)))
+           (small-gradient-sampling-rate (small-gradient-sampling-rate sampler))
+           (large-gradient-sampling-rate (large-gradient-sampling-rate sampler))
+           (ordered-data-points (~> (sl.data:iota-vector data-points-count)
+                                    (sort #'>gradient)))
+           (large-gradient-count (min (ceiling (* large-gradient-sampling-rate data-points-count))
+                                      data-points-count))
+           (small-gradient-count (min (ceiling (* small-gradient-sampling-rate data-points-count))
+                                      (- data-points-count large-gradient-count)))
+           (total-count (+ large-gradient-count small-gradient-count)))
+      (funcall (if (~> state sl.mp:parameters parallel)
+                   #'lparallel:pmap-into
+                   #'map-into)
+               (make-array count)
+               (lambda (&aux (r (make-array total-count :element-type 'fixnum)))
+                 (declare (optimize (speed 3) (safety 0))
+                          (type (simple-array fixnum (*)) r))
+                 (replace r ordered-data-points :end1 large-gradient-count)
+                 (~> (sl.data:select-random-indexes small-gradient-count
+                                                    data-points-count
+                                                    :start large-gradient-count)
+                     (replace r _ :start1 large-gradient-count)))))
+    (~>> state
+         sl.mp:train-data
+         sl.data:data-points-count
+         (curry #'sl.data:select-random-indexes
+                (max (small-gradient-sampling-rate sampler)
+                     (large-gradient-sampling-rate sampler)))
+         (map-into (make-array count)))))
+
+
 (defmethod data-points-samples ((sampler weights-based-data-points-sampler)
                                 state
                                 count)
