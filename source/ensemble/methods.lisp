@@ -249,6 +249,7 @@
            (small-gradient-count (min (floor (* small-gradient-sampling-rate data-points-count))
                                       (- data-points-count large-gradient-count)))
            (total-count (+ large-gradient-count small-gradient-count))
+           ;; (normalization (/ (- 1.0d0 large-gradient-sampling-rate) small-gradient-sampling-rate))
            ((:flet generate-sample (&aux (r (make-array total-count
                                                         :element-type 'fixnum))))
             (declare (optimize (speed 3) (safety 0) (debug 0))
@@ -272,6 +273,13 @@
                           :end1 total-count))
             r))
       (declare (type fixnum total-count large-gradient-count))
+      ;; (iterate
+      ;;   (for i from large-gradient-count below data-points-count)
+      ;;   (for point = (aref ordered-data-points i))
+      ;;   (iterate
+      ;;     (for j from 0 below (sl.data:attributes-count response))
+      ;;     (setf #1=(sl.data:mref response point j)
+      ;;           (* normalization #1#))))
       (funcall (if (~> state sl.mp:parameters parallel)
                    #'lparallel:pmap-into
                    #'map-into)
