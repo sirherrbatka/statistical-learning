@@ -256,7 +256,8 @@
                (lambda (&aux (r (make-array total-count :element-type 'fixnum)))
                  (declare (optimize (speed 3) (safety 0))
                           (type (simple-array fixnum (*)) r))
-                 (replace r ordered-data-points :end1 large-gradient-count)
+                 (replace r ordered-data-points :end1 large-gradient-count
+                                                :end2 large-gradient-count)
                  (~> (sl.data:select-random-indexes small-gradient-count
                                                     data-points-count
                                                     :start large-gradient-count)

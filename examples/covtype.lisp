@@ -119,14 +119,14 @@
           :parallel t
           :tree-batch-size 5
           :tree-attributes-count 50
-          :shrinkage 0.2d0
+          :shrinkage 0.3d0
           :data-points-sampler (make 'sl.ensemble:gradient-based-one-side-sampler
-                                     :small-gradient-sampling-rate 0.05
+                                     :small-gradient-sampling-rate 0.1
                                      :large-gradient-sampling-rate 0.05)
           :tree-parameters (make 'sl.gbt:classification
                                  :optimized-function (sl.opt:k-logistic *cover-types*)
                                  :maximal-depth 25
-                                 :minimal-size 10
+                                 :minimal-size 20
                                  :minimal-difference 0.00001d0
                                  :trials-count 50
                                  :parallel t))
