@@ -5,7 +5,9 @@
     (parameters/proxy
      (parameters fundamental-decision-tree-parameters)
      state
-     split-array)
+     split-array
+     left-length
+     right-length)
   (sl.opt:loss (optimized-function parameters)
                (sl.mp:target-data state)
                (sl.mp:weights state)
@@ -24,10 +26,7 @@
     (make 'sl.tp:tree-training-state
           :training-parameters parameters
           :data-points data-points
-          :loss (sl.opt:loss optimized-function
-                             target-data
-                             weights
-                             data-points)
+          :loss (sl.opt:loss optimized-function target-data weights data-points)
           :weights weights
           :attributes attributes
           :target-data target-data

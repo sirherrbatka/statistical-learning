@@ -30,17 +30,30 @@
    #:fundamental-node
    #:fundamental-splitter
    #:fundamental-tree-node
+   #:random-splitter
    #:fundamental-tree-training-parameters
    #:indexes
    #:initialize-leaf
    #:initialize-leaf/proxy
+   #:split-vector
+   #:left-length
+   #:right-length
+   #:left-score
+   #:right-score
    #:leaf-for
    #:leaf-for/proxy
+   #:split-result-improved-p
+   #:split-result-improved-p/proxy
+   #:split-result-accepted-p
+   #:split-result-accepted-p/proxy
    #:leafp
    #:leafs-for
    #:left-node
    #:loss
    #:make-leaf
+   #:split-using-splitter/proxy
+   #:split-using-splitter
+   #:random-splitter
    #:make-leaf*
    #:make-leaf*/proxy
    #:make-node

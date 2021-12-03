@@ -294,6 +294,11 @@
          (map-into (make-array count)))))
 
 
+(defmethod data-points-sampler ((parameters isolation-forest))
+  (make-instance 'weights-based-data-points-sampler
+                 :sampling-rate (tree-sample-rate parameters)))
+
+
 (defmethod data-points-samples ((sampler weights-based-data-points-sampler)
                                 state
                                 count)
@@ -437,8 +442,10 @@
             :trees trees
             :parameters parameters))))
 
+
 (defmethod sl.mp:weights ((object isolation-forest-ensemble-state))
   nil)
+
 
 (defmethod sl.mp:make-training-state/proxy (parameters/proxy
                                             (parameters isolation-forest)

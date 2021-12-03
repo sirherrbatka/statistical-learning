@@ -1,8 +1,28 @@
 (cl:in-package #:statistical-learning.tree-protocol)
 
 
+(defclass split-result ()
+  ((%split-vector :initarg :split-vector
+                  :reader split-vector)
+   (%split-point :initarg :split-point
+                 :reader split-point)
+   (%left-length :initarg :left-length
+                 :reader left-length)
+   (%right-length :initarg :right-length
+                  :reader right-length)
+   (%left-score :initarg :left-score
+                :reader left-score)
+   (%right-score :initarg :right-score
+                 :reader right-score)))
+
+
 (defclass fundamental-splitter (sl.common:proxy-enabled)
   ())
+
+
+(defclass random-splitter (sl.common:lifting-proxy)
+  ((%trials-count :initarg :trials-count
+                  :reader trials-count)))
 
 
 (defclass random-attribute-splitter (fundamental-splitter)
@@ -63,14 +83,14 @@
                         :reader minimal-difference)
    (%minimal-size :initarg :minimal-size
                   :reader minimal-size)
-   (%trials-count :initarg :trials-count
-                  :reader trials-count)
    (%parallel :initarg :parallel
               :reader parallel)
    (%splitter :initarg :splitter
               :reader splitter))
   (:default-initargs
-   :splitter (make-instance 'random-attribute-splitter)))
+   :splitter (sl.common:lift (make 'random-attribute-splitter)
+                             'random-splitter
+                             :trials-count 20)))
 
 
 (defclass tree-training-state (sl.mp:fundamental-training-state)
@@ -88,8 +108,6 @@
              :reader sl.mp:weights)
    (%split-point :initarg :split-point
                  :accessor split-point)
-   (%optimal-split-point :initarg :optimal-split-point
-                         :accessor optimal-split-point)
    (%train-data :initarg :train-data
                 :reader sl.mp:train-data))
   (:default-initargs :depth 0

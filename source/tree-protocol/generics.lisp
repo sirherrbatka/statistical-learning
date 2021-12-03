@@ -16,6 +16,9 @@
 
 (defgeneric split* (training-parameters training-state))
 
+(sl.common:defgeneric/proxy split-using-splitter
+    ((splitter) parameters state))
+
 (sl.common:defgeneric/proxy split-training-state*
     ((parameters) state split-array position size initargs point))
 
@@ -39,7 +42,18 @@
     ((splitter) parameters state))
 
 (sl.common:defgeneric/proxy calculate-loss*
-    ((parameters) state split-array))
+    ((parameters) state split-array left-length right-length))
+
+(sl.common:defgeneric/proxy split-result-accepted-p
+    ((parameters)
+     state
+     result))
+
+(sl.common:defgeneric/proxy split-result-improved-p
+    ((parameters)
+     state
+     new-result
+     old-result))
 
 (defgeneric root (model))
 (defgeneric treep (node))

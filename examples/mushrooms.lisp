@@ -96,8 +96,10 @@
          :maximal-depth 8
          :minimal-difference 0.0001d0
          :minimal-size 10
-         :trials-count 80
-         :parallel nil)))
+         :parallel nil
+         :splitter (sl.common:lift (make-instance 'sl.tp:random-attribute-splitter)
+                                   'sl.tp:random-splitter
+                                   :trials-count 20))))
 
 (defparameter *forest-parameters*
   (make 'statistical-learning.ensemble:random-forest

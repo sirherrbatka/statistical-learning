@@ -48,23 +48,23 @@
                      :reader tree-batch-size
                      :type positive-integer)
    (%tree-parameters :initarg :tree-parameters
-                     :reader tree-parameters)
-   (%data-points-sampler :initarg :data-points-sampler
-                         :reader data-points-sampler))
-  (:default-initargs
-   :data-points-sampler (make 'weights-based-data-points-sampler
-                              :sampling-rate 0.1d0)))
+                     :reader tree-parameters))
+  (:default-initargs))
 
 
 (defclass isolation-forest (ensemble)
-  ())
+  ((%tree-sample-rate :initarg :tree-sample-rate
+                      :reader tree-sample-rate)))
 
 
 (defclass random-forest (ensemble)
   ((%weights-calculator :initarg :weights-calculator
-                        :reader weights-calculator))
+                        :reader weights-calculator)
+   (%data-points-sampler :initarg :data-points-sampler
+                         :reader data-points-sampler))
   (:default-initargs
-   :weights-calculator (make 'static-weights-calculator)))
+   :weights-calculator (make 'static-weights-calculator)
+   :data-points-sampler (make 'weights-based-data-points-sampler :sampling-rate 0.1d0)))
 
 
 (defclass ensemble-state (sl.mp:fundamental-training-state)
@@ -142,8 +142,12 @@
 
 (defclass gradient-boost-ensemble (ensemble)
   ((%shrinkage :initarg :shrinkage
-               :reader shrinkage))
-  (:default-initargs :shrinkage 0.01d0))
+               :reader shrinkage)
+   (%data-points-sampler :initarg :data-points-sampler
+                         :reader data-points-sampler))
+  (:default-initargs
+   :shrinkage 0.01d0
+   :data-points-sampler (make 'weights-based-data-points-sampler :sampling-rate 0.1d0)))
 
 
 (defclass ensemble-model (sl.mp:fundamental-model)

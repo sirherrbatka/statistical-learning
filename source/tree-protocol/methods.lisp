@@ -45,7 +45,6 @@
   `((:depth depth)
     (:split-point split-point)
     (:optimal-split-point optimal-split-point)
-    (:loss loss)
     (:attributes attribute-indexes)
     (:data-points sl.mp:data-points)
     (:weights sl.mp:weights)
@@ -182,8 +181,7 @@
   (declare (ignore initargs))
   (let ((maximal-depth (maximal-depth instance))
         (minimal-size (minimal-size instance))
-        (minimal-difference (minimal-difference instance))
-        (trials-count (trials-count instance)))
+        (minimal-difference (minimal-difference instance)))
     (parallel instance) ; here just to check if slot is bound
     (check-type maximal-depth integer)
     (check-type minimal-difference double-float)
@@ -197,15 +195,24 @@
       (error 'cl-ds:argument-value-out-of-bounds
              :argument :minimal-size
              :bounds '(<= 0 :minimal-size)
-             :value minimal-size))
-    (unless (integerp trials-count)
-      (error 'type-error :expected 'integer
-                         :datum trials-count))
-    (unless (< 0 trials-count)
-      (error 'cl-ds:argument-value-out-of-bounds
-             :argument :trials-count
-             :bounds '(< 0 :trials-count)
-             :value trials-count))))
+             :value minimal-size))))
+
+
+(defmethod initialize-instance :after
+    ((instance random-splitter)
+     &rest
+       initargs
+     &aux
+       (trials-count (trials-count instance)))
+  (declare (ignore initargs))
+  (unless (integerp trials-count)
+    (error 'type-error :expected 'integer
+                       :datum trials-count))
+  (unless (< 0 trials-count)
+    (error 'cl-ds:argument-value-out-of-bounds
+           :argument :trials-count
+           :bounds '(< 0 :trials-count)
+           :value trials-count)))
 
 
 (defmethod make-leaf*/proxy (parameters/proxy
@@ -214,92 +221,129 @@
   (make 'standard-leaf-node))
 
 
+(defmethod split-result-accepted-p/proxy (parameters/proxy
+                                          (parameters standard-tree-training-parameters)
+                                          state
+                                          result)
+  (let ((minimal-size (minimal-size parameters))
+        (left-length (left-length result))
+        (right-length (right-length result)))
+    (if (or (< left-length minimal-size)
+            (< right-length  minimal-size)
+            (< (- (loss state) (split-result-loss result state))
+               (minimal-difference parameters)))
+        nil
+        t)))
+
+
+(defmethod split-result-improved-p/proxy (parameters/proxy
+                                          (parameters standard-tree-training-parameters)
+                                          state
+                                          new-result
+                                          old-result)
+  (if (null old-result)
+      t
+      (< (split-result-loss new-result state)
+         (split-result-loss old-result state))))
+
+
+(defmethod split-using-splitter/proxy (splitter/proxy
+                                       (splitter fundamental-splitter)
+                                       (training-parameters fundamental-tree-training-parameters)
+                                       training-state)
+  (bind ((data-size (~> training-state
+                        sl.mp:data-points
+                        length))
+         (split-array (sl.opt:make-split-array data-size))
+         (point (pick-split training-state))
+         ((:values left-length right-length)
+          (progn
+            (setf (split-point training-state) point)
+            (fill-split-vector training-state
+                               split-array)))
+         ((:values left-score right-score)
+          (calculate-loss* training-parameters
+                           training-state
+                           split-array
+                           left-length
+                           right-length)))
+    (assert (= (+ left-length right-length) data-size))
+    (let ((result (make 'split-result
+                        :split-point point
+                        :split-vector split-array
+                        :left-score left-score
+                        :right-score right-score
+                        :left-length left-length
+                        :right-length right-length)))
+      (if (split-result-accepted-p training-parameters training-state result)
+          result
+          nil))))
+
+
+(defmethod split-using-splitter/proxy ((splitter/proxy random-splitter)
+                                       (splitter fundamental-splitter)
+                                       (training-parameters fundamental-tree-training-parameters)
+                                       training-state)
+  (iterate
+    (declare (type fixnum attempt left-length right-length data-size
+                   trials-count))
+    (with trials-count = (trials-count splitter/proxy))
+    (with data-size = (~> training-state sl.mp:data-points length))
+    (with optimal-split-result = nil)
+    (for attempt from 0 below (min data-size trials-count))
+    (for split-result = (call-next-method))
+    (when (null split-result) (next-iteration))
+    (for point = (split-point split-result))
+    (setf (split-point training-state) point)
+    (for left-length = (left-length split-result))
+    (for right-length = (right-length split-result))
+    (assert (= (+ left-length right-length) data-size))
+    (when (or (null optimal-split-result)
+              (and split-result
+                   (split-result-improved-p training-parameters
+                                            training-state
+                                            split-result
+                                            optimal-split-result)))
+      (setf optimal-split-result split-result))
+    (finally (return optimal-split-result))))
+
+
 (defmethod split*
-    ((training-parameters basic-tree-training-parameters)
+    ((training-parameters fundamental-tree-training-parameters)
      training-state)
-  (bind ((trials-count (trials-count training-parameters))
-         (minimal-difference (minimal-difference training-parameters))
-         (score (loss training-state))
-         (minimal-size (minimal-size training-parameters))
-         (parallel (parallel training-parameters)))
-    (declare (type fixnum trials-count)
-             (type double-float score minimal-difference)
-             (type boolean parallel))
-    (iterate
-      (declare (type fixnum attempt left-length right-length
-                     optimal-left-length optimal-right-length data-size)
-               (type double-float left-score right-score minimal-score))
-      (with optimal-left-length = -1)
-      (with optimal-right-length = -1)
-      (with optimal-point = nil)
-      (with minimal-score = most-positive-double-float)
-      (with minimal-left-score = most-positive-double-float)
-      (with minimal-right-score = most-positive-double-float)
-      (with data-size = (~> training-state
-                            sl.mp:data-points
-                            length))
-      (with split-array = (sl.opt:make-split-array data-size))
-      (with optimal-array = (sl.opt:make-split-array data-size))
-      (for attempt from 0 below (min data-size trials-count))
-      (for point = (pick-split training-state))
-      (setf (split-point training-state) point)
-      (for (values left-length right-length) = (fill-split-vector
-                                                training-state
-                                                split-array))
-      (assert (= (+ left-length right-length) data-size))
-      (when (or (< left-length minimal-size)
-                (< right-length minimal-size))
-        (next-iteration))
-      (for (values left-score right-score) =
-           (calculate-loss* training-parameters
-                            training-state
-                            split-array))
-      (for split-score = (+ (* (/ left-length data-size)
-                               left-score)
-                            (* (/ right-length data-size)
-                               right-score)))
-      (when (< split-score minimal-score)
-        (setf minimal-score split-score
-              optimal-point point
-              (optimal-split-point training-state) optimal-point
-              optimal-left-length left-length
-              optimal-right-length right-length
-              minimal-left-score left-score
-              minimal-right-score right-score)
-        (rotatef split-array optimal-array))
-      (finally
-       (let ((difference (- (the double-float score)
-                            (the double-float minimal-score))))
-         (declare (type double-float difference))
-         (when (< difference minimal-difference)
-           (return nil))
-         (bind ((new-depth (~> training-state depth 1+))
-                ((:flet new-state (position size loss))
-                 (split-training-state
-                  training-state
-                  optimal-array
-                  position
-                  size
-                  `(:depth ,new-depth :loss ,loss)
-                  optimal-point))
-                ((:flet subtree-impl (position
-                                      size
-                                      loss
-                                      &aux (state (new-state position size loss))))
-                 (make-tree state))
-                ((:flet subtree (position size loss &optional parallel))
-                 (if (and parallel (< new-depth 10))
-                     (lparallel:future (subtree-impl position size loss))
-                     (subtree-impl position size loss))))
-           (return (make-node 'fundamental-tree-node
-                              :left-node (subtree sl.opt:left
-                                                  optimal-left-length
-                                                  minimal-left-score
-                                                  parallel)
-                              :right-node (subtree sl.opt:right
-                                                   optimal-right-length
-                                                   minimal-right-score)
-                              :point optimal-point))))))))
+  (bind ((split-result (split-using-splitter (splitter training-parameters)
+                                             training-parameters
+                                             training-state))
+         (parallel (parallel training-parameters))
+         (new-depth (~> training-state depth 1+))
+         ((:flet new-state (position size loss))
+          (split-training-state
+           training-state
+           (split-vector split-result)
+           position
+           size
+           `(:depth ,new-depth :loss ,loss)
+           (split-point split-result)))
+         ((:flet subtree-impl (position
+                               size
+                               loss
+                               &aux (state (new-state position size loss))))
+          (make-tree state))
+         ((:flet subtree (position size loss &optional parallel))
+          (if (and parallel (< new-depth 10))
+              (lparallel:future (subtree-impl position size loss))
+              (subtree-impl position size loss))))
+    (if (null split-result)
+        nil
+        (make-node 'fundamental-tree-node
+                   :left-node (subtree sl.opt:left
+                                       (left-length split-result)
+                                       (left-score split-result)
+                                       parallel)
+                   :right-node (subtree sl.opt:right
+                                        (right-length split-result)
+                                        (right-score split-result))
+                   :point (split-point split-result)))))
 
 
 (defmethod split-training-state*/proxy
@@ -608,7 +652,6 @@
   '((:maximal-depth maximal-depth)
     (:minimal-difference minimal-difference)
     (:minimal-size minimal-size)
-    (:trials-count trials-count)
     (:parallel parallel)
     (:splitter splitter)))
 
@@ -657,10 +700,7 @@
      state
      point
      split-vector)
-  (declare (type sl.data:split-vector split-vector)
-           (optimize (speed 3) (safety 0)
-                     (debug 0) (space 0)
-                     (compilation-speed 0)))
+  (declare (type sl.data:split-vector split-vector))
   (bind ((data (sl.mp:train-data state))
          (data-points (sl.mp:data-points state))
          ((normals . dot-product) point)
@@ -670,7 +710,7 @@
       (declare (type fixnum right-count left-count i j))
       (with right-count = 0)
       (with left-count = 0)
-      (for j from 0 below (length data-points) by 4)
+      (for j from 0 below (length data-points))
       (for i = (aref data-points j))
       (for rightp = (< (wdot data normals i 0 attributes)
                        (the double-float dot-product)))

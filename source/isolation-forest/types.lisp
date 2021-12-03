@@ -32,10 +32,9 @@
 
 
 (defclass isolation-training-state (sl.mp:fundamental-training-state)
-  ((%parameters :initarg :parameters
-                :reader sl.mp:training-parameters)
-   (%split-point :initarg :split-point
+  ((%split-point :initarg :split-point
                  :accessor sl.tp:split-point)
+   (%loss :initarg :loss) ;; this is purely for the compatibility with the tree protocol
    (%depth :initarg :depth
            :reader sl.tp:depth)
    (%c :initarg :c

@@ -21,3 +21,13 @@
           (* (sl.data:mref first first-point attribute)
              (sl.data:mref second second-point i)))
     (finally (return result))))
+
+
+(defun split-result-loss (result state
+                          &aux (data-size (~> state
+                                              sl.mp:data-points
+                                              length)))
+  (+ (* (/ (left-length result) data-size)
+        (left-score result))
+     (* (/ (right-length result) data-size)
+        (right-score result))))

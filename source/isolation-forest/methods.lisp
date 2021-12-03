@@ -1,61 +1,33 @@
 (cl:in-package #:statistical-learning.isolation-forest)
 
 
-(defmethod sl.tp:split*
-    ((training-parameters isolation)
-     training-state)
-  (bind ((split-array #1=(~> training-state sl.mp:data-points
-                             length sl.opt:make-split-array))
-         (optimal-split-array #1#)
-         (optimal-point nil)
-         (new-depth (1+ (sl.tp:depth training-state)))
-         (parallel (sl.tp:parallel training-parameters))
-         ((:flet new-state (point position size))
-          (sl.tp:split-training-state*
-           training-parameters
-           training-state
-           optimal-split-array
-           position
-           size
-           `(:depth ,new-depth)
-           point))
-         ((:flet subtree-impl (point position size))
-          (sl.tp:split (new-state point position size)))
-         ((:flet subtree (point position size &optional parallel))
-          (if (and parallel (< new-depth 10))
-              (lparallel:future (subtree-impl point position size))
-              (subtree-impl point position size))))
-    (iterate
-      (with optimal-left-length = 0)
-      (with optimal-right-length = 0)
-      (repeat (repeats training-parameters))
-      (for point = (sl.tp:pick-split training-state))
-      (setf (sl.tp:split-point training-state) point)
-      (for (values left-length right-length) =
-           (sl.tp:fill-split-vector training-state
-                                    split-array))
-      (when (or (zerop left-length) (zerop right-length))
-        (continue))
-      (for score = (abs (- left-length right-length)))
-      (minimize score into min)
-      (when (= score min)
-        (setf optimal-left-length left-length
-              optimal-right-length right-length)
-        (rotatef optimal-split-array split-array)
-        (rotatef point optimal-point))
-      (finally
-       (if optimal-point
-           (return (sl.tp:make-node
-                    'sl.tp:fundamental-tree-node
-                    :left-node (subtree optimal-point
-                                        sl.opt:left
-                                        optimal-left-length
-                                        parallel)
-                    :right-node (subtree optimal-point
-                                         sl.opt:right
-                                         optimal-right-length)
-                    :point optimal-point))
-           (return nil))))))
+(defmethod sl.tp:calculate-loss*/proxy (parameters/proxy
+                                        (parameters isolation)
+                                        state
+                                        split-array
+                                        left-length
+                                        right-length)
+  (values left-length right-length))
+
+
+(defmethod sl.tp:split-result-accepted-p/proxy (parameters/proxy
+                                                (parameters isolation)
+                                                state
+                                                result)
+  (nor (zerop (sl.tp:left-length result))
+       (zerop (sl.tp:right-length result))))
+
+
+(defmethod sl.tp:split-result-improved-p/proxy (parameters/proxy
+                                                (parameters isolation)
+                                                state
+                                                new-result
+                                                old-result)
+  (or (null old-result)
+      (flet ((diff (result)
+               (abs (- (sl.tp:left-length result)
+                       (sl.tp:right-length result)))))
+        (< (diff new-result) (diff old-result)))))
 
 
 (defmethod sl.tp:requires-split-p/proxy and
@@ -79,7 +51,7 @@
                                               attributes)
   (declare (ignore initargs))
   (make 'isolation-training-state
-        :parameters parameters
+        :training-parameters parameters
         :depth 0
         :c c
         :train-data data
@@ -102,7 +74,7 @@
 
 (defmethod cl-ds.utils:cloning-information append
     ((object isolation-training-state))
-  '((:parameters sl.mp:training-parameters)
+  '((:training-parameters sl.mp:training-parameters)
     (:split-point sl.tp:split-point)
     (:depth sl.tp:depth)
     (:c c)

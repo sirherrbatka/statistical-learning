@@ -14,7 +14,7 @@
     ;; build normal population
     (vellum:transform data
                       (vellum:bind-row (x y)
-                        (let ((re (+ 5 (sl.common:gauss-random))))
+                        (let ((re (+ 5 (sl.random:random-gauss))))
                           (setf x (+ re (random-in-range -0.1 0.1))
                                 y (+ re (random-in-range -0.1 0.1)))))
                       :end 500
@@ -30,8 +30,8 @@
 (defparameter *tree-parameters*
   (make 'sl.if:isolation
         :maximal-depth 30
-        :repeats 1
-        :minimal-size 3))
+        :minimal-size 3
+        :splitter (make-instance 'sl.tp:hyperplane-splitter)))
 
 (defparameter *isolation-forest*
   (make 'sl.ensemble:isolation-forest
