@@ -165,7 +165,6 @@
          :maximal-depth (sl.tp:maximal-depth parameters)
          :minimal-difference (sl.tp:minimal-difference parameters)
          :minimal-size (sl.tp:minimal-size parameters)
-         :trials-count (sl.tp:trials-count parameters)
          :parallel (sl.tp:parallel parameters)
          initargs))
 
@@ -178,7 +177,6 @@
          :maximal-depth (sl.tp:maximal-depth parameters)
          :minimal-difference (sl.tp:minimal-difference parameters)
          :minimal-size (sl.tp:minimal-size parameters)
-         :trials-count (sl.tp:trials-count parameters)
          :parallel (sl.tp:parallel parameters)
          initargs))
 

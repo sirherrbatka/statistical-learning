@@ -44,7 +44,6 @@
     ((object tree-training-state))
   `((:depth depth)
     (:split-point split-point)
-    (:optimal-split-point optimal-split-point)
     (:attributes attribute-indexes)
     (:data-points sl.mp:data-points)
     (:weights sl.mp:weights)

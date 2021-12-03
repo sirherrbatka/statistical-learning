@@ -33,7 +33,9 @@
         :maximal-depth 4
         :minimal-difference 0.0001d0
         :minimal-size 5
-        :trials-count 50
+        :splitter (sl.common:lift (make-instance 'sl.tp:random-attribute-splitter)
+                                  'sl.tp:random-splitter
+                                  :trials-count 50)
         :parallel t))
 
 (defparameter *forest-parameters*
@@ -97,7 +99,9 @@
                                       :maximal-depth 5
                                       :minimal-size 5
                                       :minimal-difference 0.00001d0
-                                      :trials-count 15
+                                      :splitter (sl.common:lift (make-instance 'sl.tp:random-attribute-splitter)
+                                                                'sl.tp:random-splitter
+                                                                :trials-count 15)
                                       :parallel t))
          4
          *train-data*

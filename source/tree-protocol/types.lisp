@@ -113,7 +113,6 @@
   (:default-initargs :depth 0
                      :attributes nil
                      :split-point nil
-                     :optimal-split-point nil
                      :weights nil
                      :data-points nil))
 
