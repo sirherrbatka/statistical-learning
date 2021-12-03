@@ -39,4 +39,6 @@
 (defgeneric data-points (state))
 (defgeneric (setf data-points) (new-value state))
 (defgeneric cache (state key))
+(defgeneric model-cache (state key))
 (defgeneric (setf cache) (new-value state key))
+(defgeneric (setf model-cache) (new-value state key))

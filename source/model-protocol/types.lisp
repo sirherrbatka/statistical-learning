@@ -14,7 +14,9 @@
   ((%training-parameters :initarg :training-parameters
                          :accessor training-parameters)
    (%cached :initarg :cached
-            :reader cached))
+            :reader cached)
+   (%model-cached :initarg :model-cached
+                  :reader model-cached))
   (:default-initargs :cached (make-hash-table)))
 
 

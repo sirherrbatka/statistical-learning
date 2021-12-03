@@ -34,7 +34,8 @@
 
 (defmethod cl-ds.utils:cloning-information append
     ((object fundamental-training-state))
-  `((:training-parameters training-parameters)))
+  `((:training-parameters training-parameters)
+    (:model-cached model-cached)))
 
 
 (defmethod predict :before ((model fundamental-model) data &optional parallel)
@@ -76,3 +77,14 @@
                          (state fundamental-training-state)
                          key)
   (setf (gethash key (cached state)) new-value))
+
+
+(defmethod model-cache ((state fundamental-training-state)
+                  key)
+  (gethash key (model-cached state)))
+
+
+(defmethod (setf model-cache) (new-value
+                               (state fundamental-training-state)
+                               key)
+  (setf (gethash key (model-cached state)) new-value))
