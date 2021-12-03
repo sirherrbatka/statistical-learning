@@ -47,7 +47,6 @@
             :maximal-depth 3
             :minimal-difference 0.0d0
             :minimal-size 50
-            :trials-count 15
             :parallel t)
       (sl.pt:causal 10 2) ; 10 data points for promotion + 10 data points for no promotions required, 0 designates no promotion, 1 designates promotion
       ))

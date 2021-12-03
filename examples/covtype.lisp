@@ -91,7 +91,9 @@
         :maximal-depth 30
         :minimal-difference 0.00001d0
         :minimal-size 10
-        :trials-count 80
+        :splitter (sl.common:lift (make-instance 'sl.tp:random-attribute-splitter)
+                                  'sl.tp:random-splitter
+                                  :trials-count 80)
         :parallel t))
 
 (defparameter *forest-parameters*
@@ -128,8 +130,10 @@
                                  :maximal-depth 25
                                  :minimal-size 20
                                  :minimal-difference 0.00001d0
-                                 :trials-count 50
-                                 :parallel t))
+                                 :parallel t
+                                 :splitter (sl.common:lift (make-instance 'sl.tp:random-attribute-splitter)
+                                                           'sl.tp:random-splitter
+                                                           :trials-count 50)))
     (statistical-learning.performance:cross-validation 2
                                                        *train-data*
                                                        *target-data*
