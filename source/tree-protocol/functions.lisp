@@ -64,12 +64,6 @@
                         state))
 
 
-(defun calculate-loss (state split-array)
-  (calculate-loss* (training-parameters state)
-                   state
-                   split-array))
-
-
 (defun split-training-state (state split-array
                              position
                              size

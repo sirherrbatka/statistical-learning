@@ -17,8 +17,8 @@
             :reader cached)
    (%model-cached :initarg :model-cached
                   :reader model-cached))
-  (:default-initargs :cached (make-hash-table)
-                     :model-cached (make-hash-table)))
+  (:default-initargs :cached (make-hash-table :test 'equal)
+                     :model-cached (make-hash-table :test 'equal)))
 
 
 (defclass supervised-model (fundamental-model)

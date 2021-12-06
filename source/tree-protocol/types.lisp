@@ -20,20 +20,24 @@
   ())
 
 
+(defclass data-point-oriented-splitter (fundamental-splitter)
+  ())
+
+
 (defclass random-splitter (sl.common:lifting-proxy)
   ((%trials-count :initarg :trials-count
                   :reader trials-count)))
 
 
-(defclass random-attribute-splitter (fundamental-splitter)
+(defclass random-attribute-splitter (data-point-oriented-splitter)
   ())
 
 
-(defclass hyperplane-splitter (fundamental-splitter)
+(defclass hyperplane-splitter (data-point-oriented-splitter)
   ())
 
 
-(defclass distance-splitter (fundamental-splitter)
+(defclass distance-splitter (data-point-oriented-splitter)
   ((%distance-function :initarg :distance-function
                        :reader distance-function)
    (%repeats :initarg :repeats
@@ -109,10 +113,13 @@
    (%split-point :initarg :split-point
                  :accessor split-point)
    (%train-data :initarg :train-data
-                :reader sl.mp:train-data))
+                :reader sl.mp:train-data)
+   (%spritter-state :initarg :splitter-state
+                    :accessor splitter-state))
   (:default-initargs :depth 0
                      :attributes nil
                      :split-point nil
+                     :splitter-state nil
                      :weights nil
                      :data-points nil))
 

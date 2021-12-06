@@ -96,15 +96,15 @@
          :maximal-depth 8
          :minimal-difference 0.0001d0
          :minimal-size 10
-         :parallel nil
+         :parallel t
          :splitter (sl.common:lift (make-instance 'sl.tp:random-attribute-splitter)
                                    'sl.tp:random-splitter
-                                   :trials-count 20))))
+                                   :trials-count 80))))
 
 (defparameter *forest-parameters*
   (make 'statistical-learning.ensemble:random-forest
         :trees-count 200
-        :parallel nil
+        :parallel t
         :weights-calculator (make-instance 'sl.ensemble:dynamic-weights-calculator)
         :tree-batch-size 5
         :tree-attributes-count 30
@@ -119,7 +119,7 @@
                                                      *target-data*
                                                      :parallel nil))
 
-(print (sl.perf:accuracy *confusion-matrix*)) ; 0.9948
+(print (sl.perf:accuracy *confusion-matrix*)) ; ~0.99
 
 (print (sl.perf:attributes-importance *forest-parameters*
                                       4

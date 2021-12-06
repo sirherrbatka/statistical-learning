@@ -10,5 +10,4 @@
    #:implementation
    #:target
    #:calculate-expected-value
-   #:calculate-response
-   ))
+   #:calculate-response))

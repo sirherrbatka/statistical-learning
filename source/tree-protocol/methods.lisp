@@ -1,6 +1,11 @@
 (cl:in-package #:statistical-learning.tree-protocol)
 
 
+(defmethod print-object ((object split-result) stream)
+  (print-unreadable-object (object stream)
+    (format stream "~a" (split-point object))))
+
+
 (defmethod (setf training-parameters) :before (new-value state)
   (check-type new-value fundamental-tree-training-parameters))
 
@@ -45,15 +50,17 @@
   `((:depth depth)
     (:split-point split-point)
     (:attributes attribute-indexes)
+    (:loss loss)
     (:data-points sl.mp:data-points)
     (:weights sl.mp:weights)
     (:target-data sl.mp:target-data)
+    (:splitter-state splitter-state)
     (:train-data sl.mp:train-data)))
 
 
 (defmethod split-training-state-info/proxy append
     (parameters/proxy
-     (splitter fundamental-splitter)
+     (splitter data-point-oriented-splitter)
      (parameters basic-tree-training-parameters)
      state
      split-array
@@ -87,7 +94,7 @@
      position
      size
      point)
-  (bind ((attribute-index (car point))
+  (bind ((attribute-index (first point))
          (attributes (attribute-indexes state)))
     (list
      :attributes (if (null attribute-index)
@@ -297,12 +304,11 @@
     (for left-length = (left-length split-result))
     (for right-length = (right-length split-result))
     (assert (= (+ left-length right-length) data-size))
-    (when (or (null optimal-split-result)
-              (and split-result
-                   (split-result-improved-p training-parameters
-                                            training-state
-                                            split-result
-                                            optimal-split-result)))
+    (when (and split-result
+               (split-result-improved-p training-parameters
+                                        training-state
+                                        split-result
+                                        optimal-split-result))
       (setf optimal-split-result split-result))
     (finally (return optimal-split-result))))
 
@@ -392,7 +398,7 @@
              (setf node (lparallel:force node))
              (assert (not (null node)))
              (if (treep node)
-                 (bind (((attribute-index . attribute-value) (point node)))
+                 (bind (((attribute-index attribute-value) (point node)))
                    (declare (type fixnum attribute-index)
                             (type double-float attribute-value))
                    (if (> (sl.data:mref data index attribute-index)
@@ -425,7 +431,7 @@
          (max (sl.data:mref (the sl.data:double-float-data-matrix maxs)
                             0 attribute-index))
          (threshold (if (= min max) min (sl.random:random-uniform min max))))
-    (list* attribute (if (= threshold max) min threshold))))
+    (list attribute (if (= threshold max) min threshold))))
 
 
 (defmethod fill-split-vector*/proxy
@@ -436,12 +442,12 @@
      point
      split-vector)
   (declare (type sl.data:split-vector split-vector)
-           (type cons point)
+           (type list point)
            (optimize (speed 3) (space 0)
                      (safety 0) (debug 0)
                      (compilation-speed 0)))
-  (bind ((attribute (car point))
-         (threshold (cdr point))
+  (bind ((attribute (first point))
+         (threshold (second point))
          (data (sl.mp:train-data state))
          (data-point-indexes (sl.mp:data-points state))
          (length (length split-vector)))

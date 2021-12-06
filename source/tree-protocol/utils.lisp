@@ -27,7 +27,6 @@
                           &aux (data-size (~> state
                                               sl.mp:data-points
                                               length)))
-  (+ (* (/ (left-length result) data-size)
-        (left-score result))
-     (* (/ (right-length result) data-size)
-        (right-score result))))
+  (/ (+ (* (left-score result) (left-length result))
+        (* (right-score result) (right-length result)))
+     data-size))

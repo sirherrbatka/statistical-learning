@@ -22,7 +22,10 @@
    #:extract-predictions*
    #:extract-predictions*/proxy
    #:fill-split-vector
+   #:splitter-state
+   #:data-point-oriented-splitter
    #:fill-split-vector*
+   #:split-result
    #:fill-split-vector*/proxy
    #:force-tree
    #:force-tree*

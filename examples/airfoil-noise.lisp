@@ -36,12 +36,12 @@
         :splitter (sl.common:lift (make-instance 'sl.tp:random-attribute-splitter)
                                   'sl.tp:random-splitter
                                   :trials-count 50)
-        :parallel t))
+        :parallel nil))
 
 (defparameter *forest-parameters*
   (make 'statistical-learning.ensemble:random-forest
         :trees-count 250
-        :parallel t
+        :parallel nil
         :tree-batch-size 25
         :tree-attributes-count 5
         :data-points-sampler (make-instance 'sl.ensemble:weights-based-data-points-sampler
