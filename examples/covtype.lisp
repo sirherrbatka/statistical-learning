@@ -89,32 +89,34 @@
   (make 'statistical-learning.dt:classification
         :optimized-function (sl.opt:gini-impurity *cover-types*)
         :maximal-depth 30
-        :minimal-difference 0.00001d0
-        :minimal-size 10
+        :minimal-difference 0.0001d0
+        :minimal-size 5
         :splitter (sl.common:lift (make-instance 'sl.tp:random-attribute-splitter)
                                   'sl.tp:random-splitter
-                                  :trials-count 80)
+                                  :trials-count 50)
         :parallel t))
 
 (defparameter *forest-parameters*
   (make 'statistical-learning.ensemble:random-forest
-        :trees-count 250
+        :trees-count 100
         :parallel t
         :weights-calculator (make-instance 'sl.ensemble:dynamic-weights-calculator)
-        :tree-batch-size 5
-        :tree-attributes-count 50
+        :tree-batch-size 10
+        :tree-attributes-count 45
         :data-points-sampler (make-instance 'sl.ensemble:weights-based-data-points-sampler
-                                            :sampling-rate 0.2)
+                                            :sampling-rate 0.15)
         :tree-parameters *training-parameters*))
 
-(defparameter *confusion-matrix*
-  (statistical-learning.performance:cross-validation *forest-parameters*
-                                                     2
-                                                     *train-data*
-                                                     *target-data*
-                                                     :parallel t))
+(lparallel:check-kernel)
+(time
+ (defparameter *confusion-matrix*
+   (statistical-learning.performance:cross-validation *forest-parameters*
+                                                      2
+                                                      *train-data*
+                                                      *target-data*
+                                                      :parallel t)))
 
-(format t "~3$~%" (statistical-learning.performance:accuracy *confusion-matrix*)) ; ~0.84
+(format t "~3$~%" (statistical-learning.performance:accuracy *confusion-matrix*)) ; ~0.83
 
 (~> (make 'statistical-learning.ensemble:gradient-boost-ensemble
           :trees-count 250
