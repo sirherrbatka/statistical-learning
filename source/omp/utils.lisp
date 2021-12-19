@@ -23,21 +23,20 @@
 
 
 (defun omp (results dictionaries iterations)
-  (declare (optimize (speed 3) (safety 0))
-           (type fixnum iterations)
-           (type vector dictionaries results))
-  (bind ((data-points-count (sl.data:data-points-count (first-elt results)))
-         (atoms-count (sl.data:attributes-count (first-elt dictionaries))) ; trees-count
+  (declare (type fixnum iterations)
+           (type simple-vector dictionaries results))
+  (bind ((atoms-count (sl.data:attributes-count (first-elt dictionaries))) ; trees-count
          (residuals (copy-array results))
          (selected-indexes (vect))
          ((:flet calculate-residual
-            (dictionary result
-                        &aux
-                        (basis
-                         (sl.data:sample dictionary
-                                         :attributes selected-indexes))
-                        (transposed
-                         (metabang.math:transpose-matrix basis))))
+            (dictionary
+             result
+             &aux
+             (basis
+              (sl.data:sample dictionary
+                              :attributes selected-indexes))
+             (transposed
+              (metabang.math:transpose-matrix basis))))
           (statistical-learning.data:map-data-matrix
            #'-
            (~> (matrix* transposed basis)
@@ -65,7 +64,7 @@
                                            (iterate
                                              (declare (type fixnum r)
                                                       (type double-float r-val))
-                                             (for r from 0 below data-points-count)
+                                             (for r from 0 below (sl.data:data-points-count residual))
                                              (for r-val = (sl.data:mref residual r 0))
                                              (in inner (summing (* d-val r-val)))))))))))
       (vector-push-extend max-d selected-indexes)
