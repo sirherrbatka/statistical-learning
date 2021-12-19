@@ -1,6 +1,10 @@
 (cl:in-package #:statistical-learning.model-protocol)
 
 
+(defmethod cl-ds.utils:cloning-information append ((object fundamental-model))
+  '((:parameters parameters)))
+
+
 (defmethod make-training-state/proxy
     :before (parameters/proxy
              (parameters supervised-model)

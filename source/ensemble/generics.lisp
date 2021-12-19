@@ -36,3 +36,4 @@
 (defgeneric (setf samples-view) (new-value ensemble-state))
 (defgeneric make-weights-calculator-state (weights-calculator ensemble-state))
 (defgeneric make-data-point-sampler-state (data-points-sampler ensemble-state))
+(defgeneric prune-trees (algorithm ensemble train-data target-data))

@@ -43,8 +43,8 @@
 
 
 (-> sample (data-matrix &key
-                        (:data-points (or null (simple-array fixnum (*))))
-                        (:attributes (or null (simple-array fixnum (*)))))
+                        (:data-points (or null vector))
+                        (:attributes (or null vector)))
     data-matrix)
 (defun sample (data-matrix &key data-points attributes)
   (declare (optimize (speed 3) (safety 0)))
@@ -318,3 +318,19 @@
     (cond ((< max element) (setf max element))
           ((> min element) (setf min element)))
     (finally (return (values min max)))))
+
+
+(defun data-transpose (data)
+  (declare (type statistical-learning.data:data-matrix data)
+           (optimize (speed 3) (safety 0)))
+  (bind-data-matrix-dimensions ((data-points-count attributes-count data))
+    (iterate
+      (declare (type fixnum r))
+      (with result = (make-data-matrix attributes-count data-points-count
+                                       :element-type (array-element-type data)))
+      (for r from 0 below data-points-count)
+      (iterate
+        (declare (type fixnum c))
+        (for c from 0 below attributes-count)
+        (setf (mref result c r) (mref result r c)))
+      (finally (return result)))))

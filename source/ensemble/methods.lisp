@@ -129,6 +129,21 @@
   '((:c sl.if:c)))
 
 
+(defmethod cl-ds.utils:cloning-information append
+    ((model ensemble-model))
+  '((:trees trees)))
+
+
+(defmethod cl-ds.utils:cloning-information append
+    ((model random-forest-model))
+  '((:target-attributes-count target-attributes-count)))
+
+
+(defmethod cl-ds.utils:cloning-information append
+    ((model gradient-boost-ensemble-model))
+  '((:target-attributes-count target-attributes-count)))
+
+
 (defmethod update-weights ((calculator static-weights-calculator)
                            tree-parameters
                            ensemble-state
@@ -394,7 +409,10 @@
                             tree-parameters
                             state
                             model))))
-      model)))
+      (prune-trees (pruning parameters)
+                   model
+                   train-data
+                   target-data))))
 
 
 (defmethod sl.mp:make-model*/proxy (parameters/proxy
@@ -566,7 +584,10 @@
                                                   new-contributed
                                                   target-data)
               contributed new-contributed)))
-    model))
+    (prune-trees (pruning parameters)
+                 model
+                 train-data
+                 target-data)))
 
 
 (defmethod sl.perf:performance-metric* ((parameters ensemble)
@@ -694,3 +715,10 @@
 
 (defmethod sl.mp:weights ((state gradient-boost-ensemble-state-mixin))
   nil)
+
+
+(defmethod prune-trees ((algorithm (eql nil))
+                        ensemble
+                        train-data
+                        target-data)
+  ensemble)

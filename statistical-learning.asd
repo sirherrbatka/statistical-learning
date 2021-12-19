@@ -10,7 +10,8 @@
                 :lparallel     :cl-data-structures
                 :metabang-bind :alexandria
                 :documentation-utils-extensions
-                :cl-progress-bar :vellum)
+                :cl-progress-bar :vellum
+                :cl-mathstats)
   :serial T
   :pathname "source"
   :components ((:file "aux-package")
@@ -88,6 +89,12 @@
                              (:file "types")
                              (:file "utils")
                              (:file "functions")
+                             (:file "methods")))
+               (:module "omp"
+                :components ((:file "package")
+                             (:file "generics")
+                             (:file "types")
+                             (:file "utils")
                              (:file "methods")))
                (:module "proxy-tree"
                 :components ((:file "package")

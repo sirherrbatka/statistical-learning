@@ -30,19 +30,21 @@
 (defparameter *training-parameters*
   (make 'statistical-learning.dt:regression
         :optimized-function (sl.opt:squared-error)
-        :maximal-depth 4
+        :maximal-depth 8
         :minimal-difference 0.0001d0
         :minimal-size 5
         :splitter (sl.common:lift (make-instance 'sl.tp:random-attribute-splitter)
                                   'sl.tp:random-splitter
-                                  :trials-count 50)
-        :parallel nil))
+                                  :trials-count 80)
+        :parallel t))
 
 (defparameter *forest-parameters*
   (make 'statistical-learning.ensemble:random-forest
         :trees-count 250
-        :parallel nil
+        :parallel t
         :tree-batch-size 25
+        :pruning (make-instance 'sl.omp:orthogonal-matching-pursuit
+                                :number-of-trees-selected 65)
         :tree-attributes-count 5
         :data-points-sampler (make-instance 'sl.ensemble:weights-based-data-points-sampler
                                             :sampling-rate 0.2)
@@ -53,14 +55,18 @@
                                                      4
                                                      *train-data*
                                                      *target-data*
-                                                     :parallel nil))
+                                                     :parallel t))
+
+
+(format t "~3$~%" *mean-error*) ; ~19.00 (squared error)
+
+
 (defparameter *forest*
   (sl.mp:make-supervised-model *forest-parameters*
                                *train-data*
                                *target-data*
                                :parallel nil))
 
-(format t "~3$~%" *mean-error*) ; 19.36 (squared error)
 
 (defparameter *som-model*
   (sl.mp:make-unsupervised-model
