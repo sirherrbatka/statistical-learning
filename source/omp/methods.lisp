@@ -11,10 +11,17 @@
                                            trees
                                            train-data
                                            nil))
-         (dictionary (extract-predictions-column predictions
-                                                 0))
-         (selected-trees (omp target-data
-                              dictionary
+         (result-columns (sl.data:attributes-count target-data))
+         ((:flet map-columns (function))
+          (iterate
+            (with result = (make-array result-columns))
+            (for i from 0 below result-columns)
+            (setf (aref result i) (funcall function i))
+            (finally (return result))))
+         (dictionaries (map-columns (curry #'extract-predictions-column predictions)))
+         (results (map-columns (curry #'extract-results-column target-data)))
+         (selected-trees (omp results
+                              dictionaries
                               (number-of-trees-selected omp))))
     (map 'vector (curry #'aref trees) selected-trees)))
 

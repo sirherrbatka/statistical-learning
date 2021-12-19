@@ -22,43 +22,56 @@
       (error "not allowed!")))
 
 
-(defun omp (result dictionary iterations)
+(defun omp (results dictionaries iterations)
   (declare (optimize (speed 3) (safety 0))
            (type fixnum iterations)
-           (type sl.data:double-float-data-matrix result dictionary))
-  (bind ((data-points-count (sl.data:data-points-count result))
-         (atoms-count (sl.data:attributes-count dictionary)) ; trees-count
-         (residual result)
+           (type vector dictionaries results))
+  (bind ((data-points-count (sl.data:data-points-count (first-elt results)))
+         (atoms-count (sl.data:attributes-count (first-elt dictionaries))) ; trees-count
+         (residuals (copy-array results))
          (selected-indexes (vect)))
     (declare (type fixnum atoms-count data-points-count)
              (type vector selected-indexes))
     (iterate
       (declare (type fixnum i max-d))
       (for i from 0 below iterations)
-      (for max-d = (iterate
-                     (declare (type fixnum d)
-                              (type double-float d-val))
-                     (for d from 0 below atoms-count)
-                     (when (find d selected-indexes)
-                       (next-iteration))
-                     (for d-val = (sl.data:mref dictionary 0 d))
-                     (finding d maximizing
-                              (abs (iterate
-                                     (declare (type fixnum r)
-                                              (type double-float r-val))
-                                     (for r from 0 below data-points-count)
-                                     (for r-val = (sl.data:mref residual r 0))
-                                     (summing (* d-val r-val)))))))
+      (for max-d
+           = (iterate outer
+               (for dictionary in-vector dictionaries)
+               (iterate
+                 (declare (type fixnum d)
+                          (type double-float d-val))
+                 (for d from 0 below atoms-count)
+                 (when (find d selected-indexes)
+                   (next-iteration))
+                 (for d-val = (sl.data:mref dictionary 0 d))
+                 (in outer (finding d maximizing
+                                    (abs (iterate inner
+                                           (for residual in-vector residuals)
+                                           (iterate
+                                             (declare (type fixnum r)
+                                                      (type double-float r-val))
+                                             (for r from 0 below data-points-count)
+                                             (for r-val = (sl.data:mref residual r 0))
+                                             (in inner (summing (* d-val r-val)))))))))))
       (vector-push-extend max-d selected-indexes)
-      (for basis = (sl.data:sample dictionary :attributes selected-indexes))
-      (for transposed = (metabang.math:transpose-matrix basis))
-      (setf residual (statistical-learning.data:map-data-matrix
-                      #'-
-                      result
-                      (~> (matrix* transposed basis)
-                          pseudoinversion
-                          (matrix* transposed)
-                          (matrix* result))))
+      (setf residuals
+            (map 'vector
+                 (lambda (dictionary result
+                     &aux
+                       (basis
+                        (sl.data:sample dictionary
+                                        :attributes selected-indexes))
+                       (transposed
+                        (metabang.math:transpose-matrix basis)))
+                   (statistical-learning.data:map-data-matrix
+                    #'-
+                    (~> (matrix* transposed basis)
+                        pseudoinversion
+                        (matrix* transposed)
+                        (matrix* result))))
+                 dictionaries
+                 results))
       (finally (return selected-indexes)))))
 
 
@@ -92,3 +105,7 @@
                               (sl.data:mref i column)))
         (setf (sl.data:mref result i j) prediction)))
     result))
+
+
+(defun extract-results-column (results column)
+  (sl.data:sample results :attributes (vector column)))
