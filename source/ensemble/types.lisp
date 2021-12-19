@@ -1,6 +1,10 @@
 (cl:in-package #:statistical-learning.ensemble)
 
 
+(defclass fundamental-pruning-algorithm ()
+  ())
+
+
 (defclass fundamental-weights-calculator ()
   ())
 
@@ -48,8 +52,7 @@
                      :reader tree-batch-size
                      :type positive-integer)
    (%tree-parameters :initarg :tree-parameters
-                     :reader tree-parameters))
-  (:default-initargs))
+                     :reader tree-parameters)))
 
 
 (defclass isolation-forest (ensemble)
@@ -60,9 +63,12 @@
 (defclass random-forest (ensemble)
   ((%weights-calculator :initarg :weights-calculator
                         :reader weights-calculator)
+   (%pruning :initarg :pruning
+             :reader pruning)
    (%data-points-sampler :initarg :data-points-sampler
                          :reader data-points-sampler))
   (:default-initargs
+   :pruning nil
    :weights-calculator (make 'static-weights-calculator)
    :data-points-sampler (make 'weights-based-data-points-sampler :sampling-rate 0.1d0)))
 
@@ -143,9 +149,12 @@
 (defclass gradient-boost-ensemble (ensemble)
   ((%shrinkage :initarg :shrinkage
                :reader shrinkage)
+   (%pruning :initarg :pruning
+             :reader pruning)
    (%data-points-sampler :initarg :data-points-sampler
                          :reader data-points-sampler))
   (:default-initargs
+   :pruning nil
    :shrinkage 0.01d0
    :data-points-sampler (make 'weights-based-data-points-sampler :sampling-rate 0.1d0)))
 
