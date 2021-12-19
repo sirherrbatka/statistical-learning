@@ -29,7 +29,21 @@
   (bind ((data-points-count (sl.data:data-points-count (first-elt results)))
          (atoms-count (sl.data:attributes-count (first-elt dictionaries))) ; trees-count
          (residuals (copy-array results))
-         (selected-indexes (vect)))
+         (selected-indexes (vect))
+         ((:flet calculate-residual
+            (dictionary result
+                        &aux
+                        (basis
+                         (sl.data:sample dictionary
+                                         :attributes selected-indexes))
+                        (transposed
+                         (metabang.math:transpose-matrix basis))))
+          (statistical-learning.data:map-data-matrix
+           #'-
+           (~> (matrix* transposed basis)
+               pseudoinversion
+               (matrix* transposed)
+               (matrix* result)))))
     (declare (type fixnum atoms-count data-points-count)
              (type vector selected-indexes))
     (iterate
@@ -56,22 +70,7 @@
                                              (in inner (summing (* d-val r-val)))))))))))
       (vector-push-extend max-d selected-indexes)
       (setf residuals
-            (map 'vector
-                 (lambda (dictionary result
-                     &aux
-                       (basis
-                        (sl.data:sample dictionary
-                                        :attributes selected-indexes))
-                       (transposed
-                        (metabang.math:transpose-matrix basis)))
-                   (statistical-learning.data:map-data-matrix
-                    #'-
-                    (~> (matrix* transposed basis)
-                        pseudoinversion
-                        (matrix* transposed)
-                        (matrix* result))))
-                 dictionaries
-                 results))
+            (map 'vector #'calculate-residual dictionaries results))
       (finally (return selected-indexes)))))
 
 
