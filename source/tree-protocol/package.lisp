@@ -39,6 +39,7 @@
    #:initialize-leaf
    #:initialize-leaf/proxy
    #:split-vector
+   #:weight
    #:left-length
    #:right-length
    #:left-score

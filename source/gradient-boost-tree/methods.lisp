@@ -58,6 +58,7 @@
     (when (null state)
       (setf state (contributed-predictions parameters model data-points-count)))
     (let* ((sums (sl.tp:sums state))
+           (weight (sl.tp:weight model))
            (splitter (sl.tp:splitter parameters))
            (shrinkage (shrinkage model))
            (root (sl.tp:root model)))
@@ -73,9 +74,11 @@
                    (iterate
                      (for i from 0 below (sl.data:attributes-count predictions))
                      (incf (sl.data:mref sums data-point i)
-                           (* shrinkage (sl.data:mref predictions 0 i))))))
-               (sl.tp:indexes state)))
-    (incf (sl.tp:contributions-count state))
+                           (* shrinkage
+                              (sl.data:mref predictions 0 i)
+                              weight)))))
+               (sl.tp:indexes state))
+      (incf (sl.tp:contributions-count state) weight))
     state))
 
 
@@ -93,6 +96,7 @@
     (when (null state)
       (setf state (contributed-predictions parameters model data-points-count)))
     (let* ((sums (sl.tp:sums state))
+           (weight (sl.tp:weight model))
            (splitter (sl.tp:splitter parameters))
            (number-of-classes (sl.opt:number-of-classes parameters))
            (shrinkage (shrinkage model))
@@ -110,9 +114,9 @@
                    (for j from 0 below number-of-classes)
                    (for gradient = (sl.data:mref predictions 0 j))
                    (incf (sl.data:mref sums data-point j)
-                         (* shrinkage gradient))))
-               (sl.tp:indexes state)))
-    (incf (sl.tp:contributions-count state))
+                         (* weight shrinkage gradient))))
+               (sl.tp:indexes state))
+      (incf (sl.tp:contributions-count state) weight))
     state))
 
 

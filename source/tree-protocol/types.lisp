@@ -131,8 +131,12 @@
    (%attribute-indexes :initarg :attribute-indexes
                        :reader attribute-indexes)
    (%forced :initarg :forced
-            :accessor forced))
-  (:default-initargs :forced nil))
+            :accessor forced)
+   (%weight :initarg :weight
+            :accessor weight))
+  (:default-initargs
+   :forced nil
+   :weight 1.0))
 
 
 (defclass contributed-predictions ()
@@ -147,5 +151,5 @@
    (%sums :initarg :sums
           :accessor sums))
   (:default-initargs
-   :contributions-count 0
+   :contributions-count 0.0
    :predictions-lock (bt:make-lock)))

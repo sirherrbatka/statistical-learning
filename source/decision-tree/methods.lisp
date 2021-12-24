@@ -101,6 +101,7 @@
                         :training-parameters parameters)))
     (let* ((splitter (sl.tp:splitter parameters))
            (lock (bt:make-lock))
+           (weight (sl.tp:weight model))
            (root (sl.tp:root model)))
       (funcall (if parallel #'lparallel:pmap #'map)
                nil
@@ -118,10 +119,10 @@
                    (iterate
                      (for i from 0 below attributes-count)
                      (incf (sl.data:mref sums data-point i)
-                           (sl.data:mref predictions 0 i)))))
-               (sl.tp:indexes state)))
-    (incf (sl.tp:contributions-count state))
-    state))
+                           (* weight (sl.data:mref predictions 0 i))))))
+               (sl.tp:indexes state))
+      (incf (sl.tp:contributions-count state) weight)
+      state)))
 
 
 (defmethod sl.tp:contribute-predictions*/proxy
@@ -137,7 +138,8 @@
   (sl.data:bind-data-matrix-dimensions ((data-points-count attributes-count data))
     (let ((number-of-classes (~> parameters
                                  optimized-function
-                                 sl.opt:number-of-classes)))
+                                 sl.opt:number-of-classes))
+          (weight (sl.tp:weight model)))
       (when (null state)
         (setf state (make 'sl.tp:contributed-predictions
                           :indexes (sl.data:iota-vector data-points-count)
@@ -159,9 +161,9 @@
                      (with predictions = (sl.tp:predictions leaf))
                      (for j from 0 below number-of-classes)
                      (for class-support = (sl.data:mref predictions 0 j))
-                     (incf (sl.data:mref sums data-point j) class-support)))
-                 (sl.tp:indexes state))))
-    (incf (sl.tp:contributions-count state))
+                     (incf (sl.data:mref sums data-point j) (* weight class-support))))
+                 (sl.tp:indexes state)))
+      (incf (sl.tp:contributions-count state) weight))
     state))
 
 

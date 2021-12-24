@@ -46,6 +46,14 @@
 
 
 (defmethod cl-ds.utils:cloning-information append
+    ((object tree-model))
+  '((:root root)
+    (:attribute-indexes attribute-indexes)
+    (:forced forced)
+    (:weight weight)))
+
+
+(defmethod cl-ds.utils:cloning-information append
     ((object tree-training-state))
   `((:depth depth)
     (:split-point split-point)

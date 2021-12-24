@@ -91,3 +91,4 @@
 (defgeneric split-point (tree-training-state))
 (defgeneric (setf split-point) (new-value tree-training-state))
 (defgeneric distance-function (splitter))
+(defgeneric weight (model))

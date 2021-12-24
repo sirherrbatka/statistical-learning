@@ -15,14 +15,20 @@
             (finally (return result))))
          (dictionaries (map-columns (curry #'extract-predictions-column predictions)))
          (results (map-columns (curry #'extract-results-column target-data)))
-         (selected-trees (omp results
-                              dictionaries
-                              (number-of-trees-selected omp)
-                              (threshold omp))))
-    (map 'vector (curry #'aref trees) selected-trees)))
+         ((:values selected-trees)
+          (omp results
+               dictionaries
+               (number-of-trees-selected omp)
+               (threshold omp))))
+    (map 'vector
+         (lambda (index &aux (weight 1.0) (tree (aref trees index)) )
+           (if (assign-weights omp)
+               (cl-ds.utils:quasi-clone tree :weight weight)
+               tree))
+         selected-trees)))
 
 
-(defun pseudoinversion (matrix)
+(defun inversion (matrix)
   (metabang.math::svd-matrix-inverse matrix))
 
 
@@ -51,7 +57,6 @@
                    (summing (* val val))))))
     (reduce #'+ residuals :key #'impl)))
 
-
 (defun omp (results dictionaries iterations threshold)
   (declare (type fixnum iterations)
            (type simple-vector dictionaries results))
@@ -70,12 +75,12 @@
           (statistical-learning.data:map-data-matrix
            #'-
            (~> (matrix* transposed basis)
-               pseudoinversion
+               inversion
                (matrix* transposed)
                (matrix* result)))))
     (declare (type fixnum atoms-count data-points-count)
              (type vector selected-indexes))
-    (iterate main
+    (iterate
       (declare (type fixnum i max-d))
       (for i from 0 below atoms-count)
       (while (and (or (null threshold)
@@ -93,20 +98,18 @@
                    (next-iteration))
                  (for d-val = (sl.data:mref dictionary 0 d))
                  (in outer (finding d maximizing
-                                    (iterate inner
-                                      (for residual in-vector residuals)
-                                      (iterate
-                                        (declare (type fixnum r)
-                                                 (type double-float r-val))
-                                        (for r from 0 below (sl.data:data-points-count residual))
-                                        (for r-val = (sl.data:mref residual r 0))
-                                        (in inner (summing (* d-val r-val))))))))))
-      (when (negative-real-p max-d)
-        (finish))
+                                    (abs (iterate inner
+                                           (for residual in-vector residuals)
+                                           (iterate
+                                             (declare (type fixnum r)
+                                                      (type double-float r-val))
+                                             (for r from 0 below (sl.data:data-points-count residual))
+                                             (for r-val = (sl.data:mref residual r 0))
+                                             (in inner (summing (* d-val r-val)))))))))))
       (vector-push-extend max-d selected-indexes)
       (setf residuals
             (map 'vector #'calculate-residual dictionaries results))
-      (finally (return-from main selected-indexes)))))
+      (finally (return selected-indexes)))))
 
 
 (defun extract-predictions (ensemble trees data parallel)

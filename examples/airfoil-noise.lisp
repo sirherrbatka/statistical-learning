@@ -43,8 +43,7 @@
         :trees-count 250
         :parallel t
         :tree-batch-size 25
-        :pruning (make-instance 'sl.omp:orthogonal-matching-pursuit
-                                :number-of-trees-selected 65)
+        :pruning (make-instance 'sl.omp:orthogonal-matching-pursuit :number-of-trees-selected 100)
         :tree-attributes-count 5
         :data-points-sampler (make-instance 'sl.ensemble:weights-based-data-points-sampler
                                             :sampling-rate 0.2)
@@ -55,7 +54,7 @@
                                                      4
                                                      *train-data*
                                                      *target-data*
-                                                     :parallel t))
+                                                     :parallel nil))
 
 
 (format t "~3$~%" *mean-error*) ; ~19.00 (squared error)
