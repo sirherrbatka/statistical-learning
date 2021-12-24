@@ -21,10 +21,8 @@
                (number-of-trees-selected omp)
                (threshold omp))))
     (map 'vector
-         (lambda (index &aux (weight 1.0) (tree (aref trees index)) )
-           (if (assign-weights omp)
-               (cl-ds.utils:quasi-clone tree :weight weight)
-               tree))
+         (lambda (index &aux (tree (aref trees index)) )
+           tree)
          selected-trees)))
 
 
@@ -77,7 +75,8 @@
            #'- result (~> (matrix* transposed basis)
                           inversion
                           (matrix* transposed)
-                          (matrix* result)))))
+                          (matrix* result)
+                          (matrix* basis _)))))
     (declare (type fixnum atoms-count data-points-count)
              (type vector selected-indexes))
     (iterate
