@@ -4,6 +4,7 @@
 (defclass fundamental-decision-tree-parameters
     (sl.tp:standard-tree-training-parameters)
   ((%optimized-function :initarg :optimized-function
+                        :reader sl.opt:optimized-function
                         :reader optimized-function)))
 
 

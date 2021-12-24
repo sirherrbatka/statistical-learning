@@ -1,30 +1,38 @@
 (cl:in-package #:statistical-learning.omp)
 
 
+(defmethod prune-trees ((parameters sl.perf:classification)
+                        omp
+                        ensemble
+                        trees
+                        train-data
+                        target-data)
+  (bind ((optimized-function (sl.opt:optimized-function parameters))
+         (number-of-classes (sl.opt:number-of-classes optimized-function))
+         (data-points-count (sl.data:data-points-count target-data)))
+    (check-type train-data sl.data:double-float-data-matrix)
+    (if (= number-of-classes 2)
+        (prune-trees-implementation omp ensemble trees train-data target-data)
+        (let ((result (sl.data:make-data-matrix data-points-count
+                                                number-of-classes)))
+          (check-type result sl.data:double-float-data-matrix)
+          (iterate
+            (declare (optimize (speed 3) (safety 0))
+                     (type fixnum i))
+            (for i from 0 below data-points-count)
+            (setf (sl.data:mref result i
+                                (the fixnum (truncate (sl.data:mref target-data i 0))))
+                  1.0d0))
+          (prune-trees-implementation omp ensemble trees train-data result)))))
+
+
 (defmethod prune-trees ((parameters sl.perf:regression)
                         omp
                         ensemble
                         trees
                         train-data
                         target-data)
-  (bind ((predictions (extract-predictions ensemble
-                                           trees
-                                           train-data
-                                           nil))
-         (result-columns (sl.data:attributes-count target-data))
-         ((:flet map-columns (function))
-          (iterate
-            (with result = (make-array result-columns))
-            (for i from 0 below result-columns)
-            (setf (aref result i) (funcall function i))
-            (finally (return result))))
-         (dictionaries (map-columns (curry #'extract-predictions-column predictions)))
-         (results (map-columns (curry #'extract-results-column target-data)))
-         (selected-trees (omp results
-                              dictionaries
-                              (number-of-trees-selected omp)
-                              (threshold omp))))
-    (map 'vector (curry #'aref trees) selected-trees)))
+  (prune-trees-implementation omp ensemble trees train-data target-data))
 
 
 (defmethod sl.ensemble:prune-trees ((algorithm orthogonal-matching-pursuit)

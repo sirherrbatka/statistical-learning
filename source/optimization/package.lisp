@@ -23,4 +23,4 @@
    #:squared-error
    #:squared-error-function
    #:weights-data-matrix
-   ))
+   #:optimized-function))

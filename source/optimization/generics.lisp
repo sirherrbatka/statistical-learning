@@ -5,3 +5,4 @@
 (defgeneric loss (function target-data weights data-points
                   &optional split-array))
 (defgeneric number-of-classes (function))
+(defgeneric optimized-function (parameters))
