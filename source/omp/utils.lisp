@@ -22,7 +22,16 @@
       (error "not allowed!")))
 
 
-(defun omp (results dictionaries iterations)
+(defun norm2 (residuals)
+  (flet ((impl (input)
+           (sqrt (iterate
+                   (for i from 0 below (array-total-size input))
+                   (for val = (row-major-aref input i))
+                   (summing (* val val))))))
+    (reduce #'+ residuals :key #'impl)))
+
+
+(defun omp (results dictionaries iterations threshold)
   (declare (type fixnum iterations)
            (type simple-vector dictionaries results))
   (bind ((atoms-count (sl.data:attributes-count (first-elt dictionaries))) ; trees-count
@@ -47,7 +56,11 @@
              (type vector selected-indexes))
     (iterate
       (declare (type fixnum i max-d))
-      (for i from 0 below iterations)
+      (for i from 0 below atoms-count)
+      (while (and (or (null threshold)
+                      (> (norm2 residuals) threshold))
+                  (or (null iterations)
+                      (< i iterations))))
       (for max-d
            = (iterate outer
                (for dictionary in-vector dictionaries)

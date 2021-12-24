@@ -22,7 +22,8 @@
          (results (map-columns (curry #'extract-results-column target-data)))
          (selected-trees (omp results
                               dictionaries
-                              (number-of-trees-selected omp))))
+                              (number-of-trees-selected omp)
+                              (threshold omp))))
     (map 'vector (curry #'aref trees) selected-trees)))
 
 
