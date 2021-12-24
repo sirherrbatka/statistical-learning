@@ -57,6 +57,7 @@
                    (summing (* val val))))))
     (reduce #'+ residuals :key #'impl)))
 
+
 (defun omp (results dictionaries iterations threshold)
   (declare (type fixnum iterations)
            (type simple-vector dictionaries results))
@@ -73,11 +74,10 @@
              (transposed
               (metabang.math:transpose-matrix basis))))
           (statistical-learning.data:map-data-matrix
-           #'-
-           (~> (matrix* transposed basis)
-               inversion
-               (matrix* transposed)
-               (matrix* result)))))
+           #'- result (~> (matrix* transposed basis)
+                          inversion
+                          (matrix* transposed)
+                          (matrix* result)))))
     (declare (type fixnum atoms-count data-points-count)
              (type vector selected-indexes))
     (iterate
