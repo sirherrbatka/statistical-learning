@@ -90,22 +90,25 @@
               ("e" 0.0d0))))))
 
 (defparameter *training-parameters*
-  (sl.pt:honest
-   (make 'statistical-learning.dt:classification
-         :optimized-function (sl.opt:gini-impurity 2)
-         :maximal-depth 8
-         :minimal-difference 0.0001d0
-         :minimal-size 10
-         :parallel t
-         :splitter (sl.common:lift (make-instance 'sl.tp:random-attribute-splitter)
-                                   'sl.tp:random-splitter
-                                   :trials-count 80))))
+  (make 'statistical-learning.dt:classification
+        :optimized-function (sl.opt:gini-impurity 2)
+        :maximal-depth 8
+        :minimal-difference 0.0001d0
+        :minimal-size 10
+        :parallel t
+        :splitter (sl.common:lift (make-instance 'sl.tp:random-attribute-splitter)
+                                  'sl.tp:random-splitter
+                                  :trials-count 80)))
 
 (defparameter *forest-parameters*
   (make 'statistical-learning.ensemble:random-forest
-        :trees-count 200
+        :trees-count 1000
         :parallel t
         :weights-calculator (make-instance 'sl.ensemble:dynamic-weights-calculator)
+        :pruning (make-instance 'sl.club-drf:club-drf
+                                :number-of-trees-selected 25
+                                :parallel t
+                                :max-neighbor 10)
         :tree-batch-size 5
         :tree-attributes-count 30
         :data-points-sampler (make-instance 'sl.ensemble:weights-based-data-points-sampler

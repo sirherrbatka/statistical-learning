@@ -53,14 +53,6 @@
     (finally (return state))))
 
 
-(defun trees-predict (ensemble tree-parameters trees data parallel
-                      &optional state)
-  (let ((state (contribute-trees ensemble tree-parameters trees
-                                 data parallel state)))
-    (values (statistical-learning.tp:extract-predictions state)
-            state)))
-
-
 (defun treep (tree)
   (and (not (null tree))
        (~> tree sl.tp:root sl.tp:treep)))

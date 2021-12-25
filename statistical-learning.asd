@@ -11,7 +11,7 @@
                 :metabang-bind :alexandria
                 :documentation-utils-extensions
                 :cl-progress-bar :vellum
-                :cl-mathstats)
+                :cl-mathstats    :clusters)
   :serial T
   :pathname "source"
   :components ((:file "aux-package")
@@ -104,13 +104,19 @@
                              (:file "utils")
                              (:file "honest-tree")
                              (:file "causal-tree")
-                             ;; (:file "triplet-tree")
                              ))
                (:module "self-organizing-map"
                 :components ((:file "package")
                              (:file "generics")
                              (:file "types")
                              (:file "variables")
+                             (:file "utils")
+                             (:file "functions")
+                             (:file "methods")))
+               (:module "club-drf"
+                :components ((:file "package")
+                             (:file "generics")
+                             (:file "types")
                              (:file "utils")
                              (:file "functions")
                              (:file "methods")))))

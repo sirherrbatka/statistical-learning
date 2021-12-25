@@ -33,6 +33,7 @@
    #:tree-batch-size
    #:trees
    #:trees-view
+   #:trees-predict
    #:update-weights
    #:data-points-sample
    #:prune-trees

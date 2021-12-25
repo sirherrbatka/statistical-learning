@@ -41,11 +41,10 @@
                                     target-data)
   (bind ((ensemble (sl.mp:parameters ensemble-model))
          (parameters (sl.ensemble:tree-parameters ensemble)))
-    (cl-ds.utils:quasi-clone
-     ensemble-model
-     :trees (prune-trees parameters
-                         algorithm
-                         ensemble
-                         (sl.ensemble:trees ensemble-model)
-                         train-data
-                         target-data))))
+    (cl-ds.utils:quasi-clone ensemble-model
+                             :trees (prune-trees parameters
+                                                 algorithm
+                                                 ensemble
+                                                 (sl.ensemble:trees ensemble-model)
+                                                 train-data
+                                                 target-data))))

@@ -85,9 +85,7 @@
                                             &optional parallel)
   (check-type data statistical-learning.data:data-matrix)
   (let* ((trees (trees model))
-         (parameters (statistical-learning.mp:parameters model))
-         (tree-parameters (tree-parameters parameters))
-         (result (trees-predict model tree-parameters trees data parallel)))
+         (result (trees-predict model trees data parallel)))
     result))
 
 
