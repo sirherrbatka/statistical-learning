@@ -2,7 +2,6 @@
 
 
 (defun diversity-measure (tree/labels-a tree/labels-b)
-  (declare (optimize (debug 3)))
   (bind (((tree-a . labels-a) tree/labels-a)
          ((tree-b . labels-b) tree/labels-b))
     (declare (ignore tree-a tree-b))
@@ -13,14 +12,19 @@
     (assert (= (sl.data:attributes-count labels-a)
                (sl.data:attributes-count labels-b)))
     (iterate
+      (declare (optimize (speed 3) (safety 0))
+               (type fixnum data-points-count attributes-count
+                     different max-a max-b))
       (with data-points-count = (sl.data:data-points-count labels-a))
       (with attributes-count = (sl.data:attributes-count labels-a))
       (for data-point from 0 below data-points-count)
       (for max-a = (iterate
+                     (declare (type fixnum attribute))
                      (for attribute from 0 below attributes-count)
                      (finding attribute maximizing
                               (sl.data:mref labels-a data-point attribute))))
       (for max-b = (iterate
+                     (declare (type fixnum attribute))
                      (for attribute from 0 below attributes-count)
                      (finding attribute maximizing
                               (sl.data:mref labels-b data-point attribute))))
