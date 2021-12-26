@@ -98,7 +98,7 @@
 
 (defparameter *forest-parameters*
   (make 'statistical-learning.ensemble:random-forest
-        :trees-count 250
+        :trees-count 50
         :parallel t
         :weights-calculator (make-instance 'sl.ensemble:dynamic-weights-calculator)
         :tree-batch-size 5
@@ -115,7 +115,7 @@
                                                      *target-data*
                                                      :parallel t))
 
-(format t "~3$~%" (statistical-learning.performance:accuracy *confusion-matrix*)) ; ~0.82
+(format t "~3$~%" (statistical-learning.performance:accuracy *confusion-matrix*)) ; ~0.81
 
 (~> (make 'statistical-learning.ensemble:gradient-boost-ensemble
           :trees-count 250
