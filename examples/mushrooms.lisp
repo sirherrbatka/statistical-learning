@@ -92,7 +92,7 @@
 (defparameter *training-parameters*
   (make 'statistical-learning.dt:classification
         :optimized-function (sl.opt:gini-impurity 2)
-        :maximal-depth 8
+        :maximal-depth 5
         :minimal-difference 0.0001d0
         :minimal-size 10
         :parallel t
@@ -102,13 +102,9 @@
 
 (defparameter *forest-parameters*
   (make 'statistical-learning.ensemble:random-forest
-        :trees-count 1000
+        :trees-count 100
         :parallel t
         :weights-calculator (make-instance 'sl.ensemble:dynamic-weights-calculator)
-        :pruning (make-instance 'sl.club-drf:club-drf
-                                :number-of-trees-selected 25
-                                :parallel t
-                                :max-neighbor 10)
         :tree-batch-size 5
         :tree-attributes-count 30
         :data-points-sampler (make-instance 'sl.ensemble:weights-based-data-points-sampler

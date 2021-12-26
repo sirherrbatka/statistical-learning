@@ -15,6 +15,7 @@
       (declare (optimize (speed 3) (safety 0))
                (type fixnum data-points-count attributes-count
                      different max-a max-b))
+      (with different = 0)
       (with data-points-count = (sl.data:data-points-count labels-a))
       (with attributes-count = (sl.data:attributes-count labels-a))
       (for data-point from 0 below data-points-count)
@@ -28,9 +29,8 @@
                      (for attribute from 0 below attributes-count)
                      (finding attribute maximizing
                               (sl.data:mref labels-b data-point attribute))))
-      (counting (not (= max-a max-b)) into different)
-      (finally (return (~> (/ different data-points-count)
-                           (coerce 'single-float)))))))
+      (unless (= max-a max-b) (incf different))
+      (finally (return (coerce different 'single-float))))))
 
 
 (defun obtain-labels (algorithm ensemble train-data)
