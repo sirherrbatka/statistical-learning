@@ -78,6 +78,18 @@
         (finally (return result))))))
 
 
+(defun draw-random-data-points-subset (sample-size data-matrix &rest rest)
+  (if (null sample-size)
+      (cons data-matrix rest)
+      (bind ((data-points-count (data-points-count data-matrix))
+             (effective-sample-size (min sample-size data-points-count))
+             (selected (map-into (make-array effective-sample-size :element-type 'fixnum)
+                                 (cl-ds.utils:lazy-shuffle 0 data-points-count)))
+             ((:flet impl (data-matrix))
+              (sample data-matrix :data-points selected)))
+        (mapcar #'impl (cons data-matrix rest)))))
+
+
 (declaim (inline map-data-matrix))
 (defun map-data-matrix (function data-matrix &optional in-place)
   (declare (optimize (speed 3) (safety 0)))

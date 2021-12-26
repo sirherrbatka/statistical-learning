@@ -8,4 +8,7 @@
    (%number-of-trees-selected :initarg :number-of-trees-selected
                               :reader number-of-trees-selected)
    (%max-neighbor :initarg :max-neighbor
-                  :reader max-neighbor)))
+                  :reader max-neighbor)
+   (%sample-size :initarg :sample-size
+                 :initform nil
+                 :reader sample-size)))

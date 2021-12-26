@@ -28,6 +28,7 @@
    #:reshuffle
    #:select-random-indexes
    #:selecting-random-attributes
+   #:draw-random-data-points-subset
    #:data-transpose
    #:selecting-random-indexes
    #:cross-validation-folds

@@ -40,6 +40,10 @@
                                     train-data
                                     target-data)
   (bind ((ensemble (sl.mp:parameters ensemble-model))
+         ((train-data target-data)
+          (sl.data:draw-random-data-points-subset (sample-size algorithm)
+                                                  train-data
+                                                  target-data))
          (parameters (sl.ensemble:tree-parameters ensemble)))
     (cl-ds.utils:quasi-clone ensemble-model
                              :trees (prune-trees parameters

@@ -6,7 +6,11 @@
                                     train-data
                                     target-data)
   (declare (ignore target-data))
-  (let* ((tree-labels (obtain-labels algorithm ensemble train-data))
+  (let* ((sample-size (sample-size algorithm))
+         (tree-labels (~>> (sl.data:draw-random-data-points-subset sample-size
+                                                                   train-data)
+                           first
+                           (obtain-labels algorithm ensemble)))
          (parallel (parallel algorithm))
          (trees-count (number-of-trees-selected algorithm))
          (max-neighbor (max-neighbor algorithm))

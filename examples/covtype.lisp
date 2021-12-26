@@ -90,7 +90,7 @@
         :optimized-function (sl.opt:gini-impurity *cover-types*)
         :maximal-depth 30
         :minimal-difference 0.0001d0
-        :minimal-size 5
+        :minimal-size 10
         :splitter (sl.common:lift (make-instance 'sl.tp:random-attribute-splitter)
                                   'sl.tp:random-splitter
                                   :trials-count 50)
@@ -98,8 +98,13 @@
 
 (defparameter *forest-parameters*
   (make 'statistical-learning.ensemble:random-forest
-        :trees-count 100
+        :trees-count 1000
         :parallel t
+        :pruning (make-instance 'sl.club-drf:club-drf
+                                :number-of-trees-selected 200
+                                :sample-size 200
+                                :parallel t
+                                :max-neighbor 20)
         :weights-calculator (make-instance 'sl.ensemble:dynamic-weights-calculator)
         :tree-batch-size 10
         :tree-attributes-count 45
@@ -108,13 +113,12 @@
         :tree-parameters *training-parameters*))
 
 (lparallel:check-kernel)
-(time
- (defparameter *confusion-matrix*
-   (statistical-learning.performance:cross-validation *forest-parameters*
-                                                      2
-                                                      *train-data*
-                                                      *target-data*
-                                                      :parallel t)))
+(defparameter *confusion-matrix*
+  (statistical-learning.performance:cross-validation *forest-parameters*
+                                                     2
+                                                     *train-data*
+                                                     *target-data*
+                                                     :parallel t))
 
 (format t "~3$~%" (statistical-learning.performance:accuracy *confusion-matrix*)) ; ~0.83
 
