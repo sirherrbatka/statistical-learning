@@ -35,7 +35,7 @@
   (prune-trees-implementation omp ensemble trees train-data target-data))
 
 
-(defmethod sl.ensemble:prune-trees ((algorithm orthogonal-matching-pursuit)
+(defmethod sl.ensemble:prune-trees ((algorithm parameters)
                                     (ensemble-model sl.ensemble:ensemble-model)
                                     train-data
                                     target-data)

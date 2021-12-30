@@ -43,7 +43,7 @@
         :trees-count 250
         :parallel t
         :tree-batch-size 25
-        :pruning (make-instance 'sl.omp:orthogonal-matching-pursuit :number-of-trees-selected 50)
+        :pruning (make-instance 'sl.omp:parameters :number-of-trees-selected 50)
         :tree-attributes-count 5
         :data-points-sampler (make-instance 'sl.ensemble:weights-based-data-points-sampler
                                             :sampling-rate 0.2)

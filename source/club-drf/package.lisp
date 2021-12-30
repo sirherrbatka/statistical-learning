@@ -2,4 +2,4 @@
   (:use #:cl #:statistical-learning.aux-package)
   (:nicknames #:sl.club-drf)
   (:export
-   #:club-drf))
+   #:parameters))

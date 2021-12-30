@@ -1,7 +1,7 @@
 (cl:in-package #:statistical-learning.club-drf)
 
 
-(defclass club-drf (sl.ensemble:fundamental-pruning-algorithm)
+(defclass parameters (sl.ensemble:fundamental-pruning-algorithm)
   ((%parallel :initarg :parallel
               :initform nil
               :reader parallel)

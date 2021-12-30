@@ -1,7 +1,7 @@
 (cl:in-package #:statistical-learning.club-drf)
 
 
-(defmethod sl.ensemble:prune-trees ((algorithm club-drf)
+(defmethod sl.ensemble:prune-trees ((algorithm parameters)
                                     ensemble
                                     train-data
                                     target-data)

@@ -2,4 +2,4 @@
   (:use #:cl #:statistical-learning.aux-package)
   (:nicknames #:sl.omp)
   (:export
-   #:orthogonal-matching-pursuit))
+   #:parameters))
