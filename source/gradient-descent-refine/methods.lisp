@@ -14,7 +14,8 @@
                                    train-data
                                    parallel))
          (indexes (sl.data:iota-vector data-points-count))
-         (shrinkage (shrinkage algorithm))
+         (initial-shrinkage (shrinkage algorithm))
+         (shrinkage initial-shrinkage)
          (sample-size (sample-size algorithm))
          ((:flet adjust-predictions (data-point column difference))
           (iterate
@@ -44,10 +45,15 @@
             (finally (return (cl-ds.utils:transform (rcurry #'/ total-weight)
                                                     sums))))))
     (iterate
-      (repeat epochs)
+      (for epoch from epochs downto 1)
+      (setf shrinkage (* initial-shrinkage (/ epoch epochs)))
+      (sl.data:reshuffle indexes)
       (iterate
-        (for data-point in-vector (sl.data:reshuffle indexes))
-        (repeat sample-size)
+        (for i from 0 below (if sample-size
+                                (min sample-size
+                                     (length indexes))
+                                (length indexes)))
+        (for data-point = (aref indexes i))
         (iterate
           (with prediction = (prediction data-point))
           (for column from 0 below (sl.data:attributes-count target-data))

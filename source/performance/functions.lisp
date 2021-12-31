@@ -5,6 +5,7 @@
                          train-data target-data
                          &key weights parallel performance-function average-performance-function
                            (performance-type :default)
+                           (after #'identity)
                          &allow-other-keys)
   (statistical-learning.data:check-data-points train-data target-data)
   (~> train-data
@@ -19,13 +20,18 @@
                      (map '(vector double-float)
                           (lambda (i) (aref weights i))
                           sample)))
-                (model (statistical-learning.mp:make-supervised-model
-                        model-parameters
-                        (statistical-learning.data:sample train-data
-                                                          :data-points train)
-                        (statistical-learning.data:sample target-data
-                                                          :data-points train)
-                        :weights (sampled-weights train)))
+                (fold-train-data (statistical-learning.data:sample
+                                  train-data
+                                  :data-points train))
+                (fold-target-data (statistical-learning.data:sample
+                                   target-data
+                                   :data-points train))
+                (model (~>> (statistical-learning.mp:make-supervised-model
+                             model-parameters
+                             fold-train-data
+                             fold-target-data
+                             :weights (sampled-weights train))
+                            (funcall after _ fold-train-data fold-target-data)))
                 (test-target-data (statistical-learning.data:sample target-data
                                                                     :data-points test))
                 (test-train-data (statistical-learning.data:sample train-data

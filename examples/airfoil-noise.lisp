@@ -30,7 +30,7 @@
 (defparameter *training-parameters*
   (make 'statistical-learning.dt:regression
         :optimized-function (sl.opt:squared-error)
-        :maximal-depth 8
+        :maximal-depth 7
         :minimal-difference 0.0001d0
         :minimal-size 5
         :splitter (sl.common:lift (make-instance 'sl.tp:random-attribute-splitter)
@@ -44,27 +44,49 @@
         :parallel t
         :tree-batch-size 25
         :tree-attributes-count 5
-        :refinement (make-instance 'statistical-learning.gradient-descent-refine:parameters :epochs 150 :sample-size 500 :shrinkage 0.5)
         :data-points-sampler (make-instance 'sl.ensemble:weights-based-data-points-sampler
                                             :sampling-rate 0.2)
         :tree-parameters *training-parameters*))
 
+(defun prune-and-refine (model train-data target-data)
+  (~> (sl.ensemble:prune-trees
+       (make-instance 'sl.omp:parameters
+                      :sample-size 750
+                      :number-of-trees-selected 50)
+       model
+       train-data
+       target-data)
+      (sl.ensemble:refine-trees
+       (make-instance 'statistical-learning.gradient-descent-refine:parameters
+                      :epochs 20
+                      :sample-size 750
+                      :shrinkage 1.0)
+       _
+       train-data
+       target-data)))
+
+
 (defparameter *mean-error*
-  (statistical-learning.performance:cross-validation *forest-parameters*
-                                                     4
-                                                     *train-data*
-                                                     *target-data*
-                                                     :parallel nil))
+  (statistical-learning.performance:cross-validation
+   *forest-parameters*
+   4
+   *train-data*
+   *target-data*
+   :after #'prune-and-refine
+   :parallel nil))
 
 
-(format t "~3$~%" *mean-error*) ; ~8.518 (squared error)
+(format t "~3$~%" *mean-error*) ; ~10.0 (squared error)
 
 
 (defparameter *forest*
-  (sl.mp:make-supervised-model *forest-parameters*
-                               *train-data*
-                               *target-data*
-                               :parallel nil))
+  (prune-and-refine
+   (sl.mp:make-supervised-model *forest-parameters*
+                                *train-data*
+                                *target-data*
+                                :parallel nil)
+   *train-data*
+   *target-data*))
 
 
 (defparameter *som-model*

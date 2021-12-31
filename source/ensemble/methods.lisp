@@ -726,7 +726,7 @@
   ensemble)
 
 
-(defmethod refine-forest ((algorithm (eql nil))
+(defmethod refine-trees ((algorithm (eql nil))
                           ensemble
                           train-data
                           target-data)

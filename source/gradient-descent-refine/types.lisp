@@ -12,6 +12,6 @@
             :reader epochs))
   (:default-initargs
    :epochs 5
-   :sample-size 1000
+   :sample-size nil
    :shrinkage 0.1
    :parallel nil))
