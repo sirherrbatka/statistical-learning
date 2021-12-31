@@ -40,7 +40,7 @@
 
 (defparameter *forest-parameters*
   (make 'statistical-learning.ensemble:random-forest
-        :trees-count 250
+        :trees-count 300
         :parallel t
         :tree-batch-size 25
         :tree-attributes-count 5
