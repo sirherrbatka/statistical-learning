@@ -70,7 +70,7 @@
    :parallel nil))
 
 
-(format t "~3$~%" *mean-error*) ; ~8.2 (squared error)
+(format t "~3$~%" *mean-error*) ; ~8.0 (squared error)
 
 
 (defparameter *forest*
