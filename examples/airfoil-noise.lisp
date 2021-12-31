@@ -48,17 +48,11 @@
                                             :sampling-rate 0.2)
         :tree-parameters *training-parameters*))
 
-(defun prune-and-refine (model train-data target-data)
-  (~> (sl.ensemble:prune-trees
-       (make-instance 'sl.omp:parameters
-                      :sample-size 750
-                      :number-of-trees-selected 50)
-       model
-       train-data
-       target-data)
+(defun refine (model train-data target-data)
+  (~> model
       (sl.ensemble:refine-trees
        (make-instance 'statistical-learning.gradient-descent-refine:parameters
-                      :epochs 20
+                      :epochs 30
                       :sample-size 750
                       :shrinkage 1.0)
        _
@@ -72,15 +66,15 @@
    4
    *train-data*
    *target-data*
-   :after #'prune-and-refine
+   :after #'refine
    :parallel nil))
 
 
-(format t "~3$~%" *mean-error*) ; ~11.0 (squared error)
+(format t "~3$~%" *mean-error*) ; ~8.2 (squared error)
 
 
 (defparameter *forest*
-  (prune-and-refine
+  (refine
    (sl.mp:make-supervised-model *forest-parameters*
                                 *train-data*
                                 *target-data*
