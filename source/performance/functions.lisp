@@ -1,11 +1,16 @@
 (cl:in-package #:statistical-learning.performance)
 
 
+(defun no-after (model train target)
+  (declare (ignore train target))
+  model)
+
+
 (defun cross-validation (model-parameters number-of-folds
                          train-data target-data
                          &key weights parallel performance-function average-performance-function
                            (performance-type :default)
-                           (after #'identity)
+                           (after #'no-after)
                          &allow-other-keys)
   (statistical-learning.data:check-data-points train-data target-data)
   (~> train-data
