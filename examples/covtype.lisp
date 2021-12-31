@@ -104,8 +104,8 @@
         :tree-batch-size 5
         :refinement (make-instance 'statistical-learning.gradient-descent-refine:parameters
                               :epochs 500
-                              :sample-size 2500
-                              :shrinkage 1.0)
+                              :sample-size 1000
+                              :shrinkage 0.1)
         :tree-attributes-count 45
         :data-points-sampler (make-instance 'sl.ensemble:weights-based-data-points-sampler
                                             :sampling-rate 0.1)
@@ -119,7 +119,9 @@
                                                      *target-data*
                                                      :parallel t))
 
+
 (format t "~3$~%" (statistical-learning.performance:accuracy *confusion-matrix*)) ; ~0.81
+
 
 (~> (make 'statistical-learning.ensemble:gradient-boost-ensemble
           :trees-count 250
