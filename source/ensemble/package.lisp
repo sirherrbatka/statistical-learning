@@ -11,6 +11,8 @@
    #:assign-leafs
    #:assigned-leafs
    #:data-points-samples
+   #:refine-trees
+   #:fundamental-refinement-algorithm
    #:dynamic-weights-calculator
    #:ensemble-model
    #:fundamental-data-points-sampler

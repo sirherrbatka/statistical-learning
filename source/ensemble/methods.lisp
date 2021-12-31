@@ -407,10 +407,14 @@
                             tree-parameters
                             state
                             model))))
-      (prune-trees (pruning parameters)
-                   model
-                   train-data
-                   target-data))))
+      (~> (prune-trees (pruning parameters)
+                       model
+                       train-data
+                       target-data)
+          (refine-trees (refinement parameters)
+                        _
+                        train-data
+                        target-data)))))
 
 
 (defmethod sl.mp:make-model*/proxy (parameters/proxy
@@ -719,4 +723,11 @@
                         ensemble
                         train-data
                         target-data)
+  ensemble)
+
+
+(defmethod refine-forest ((algorithm (eql nil))
+                          ensemble
+                          train-data
+                          target-data)
   ensemble)

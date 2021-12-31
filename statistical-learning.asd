@@ -103,8 +103,7 @@
                              (:file "methods")
                              (:file "utils")
                              (:file "honest-tree")
-                             (:file "causal-tree")
-                             ))
+                             (:file "causal-tree")))
                (:module "self-organizing-map"
                 :components ((:file "package")
                              (:file "generics")
@@ -119,4 +118,9 @@
                              (:file "types")
                              (:file "utils")
                              (:file "functions")
+                             (:file "methods")))
+               (:module "gradient-descent-refine"
+                :components ((:file "package")
+                             (:file "generics")
+                             (:file "types")
                              (:file "methods")))))

@@ -26,8 +26,18 @@
          selected-trees)))
 
 
-(defun inversion (matrix)
-  (metabang.math::svd-matrix-inverse matrix))
+(defun inversion (u &optional (singularity-threshold 1.0d-10))
+  (let* ((type (array-element-type u))
+	       (m    (array-dimension u 0))
+	       (n    (array-dimension u 1))
+	       (w    (make-array n :element-type type))
+	       (rv   (make-array n :element-type type))
+	       (v    (make-array (list n n) :element-type type))
+	       (a-1  (make-array (array-dimensions u) :element-type type)))
+    (metabang.math::svdcmp-df u m n w v rv)
+		(metabang.math::svzero-df w n singularity-threshold)
+		(metabang.math::svd-inverse-fast-df u w v a-1 rv)
+    a-1))
 
 
 (defun matrix* (mat1 mat2)
@@ -56,6 +66,17 @@
     (reduce #'+ residuals :key #'impl)))
 
 
+(defun matrix-difference (a b)
+  (iterate
+    (with result = (make-array (array-dimensions a)
+                               :element-type 'double-float))
+    (for i from 0 below (array-total-size a))
+    (setf (row-major-aref result i)
+          (- (row-major-aref a i)
+             (row-major-aref b i)))
+    (finally (return result))))
+
+
 (defun omp (results dictionaries iterations threshold)
   (declare (type fixnum iterations)
            (type simple-vector dictionaries results))
@@ -71,12 +92,12 @@
                               :attributes selected-indexes))
              (transposed
               (metabang.math:transpose-matrix basis))))
-          (statistical-learning.data:map-data-matrix
-           #'- result (~> (matrix* transposed basis)
-                          inversion
-                          (matrix* transposed)
-                          (matrix* result)
-                          (matrix* basis _)))))
+          (matrix-difference
+           result (~> (matrix* transposed basis)
+                      inversion
+                      (matrix* transposed)
+                      (matrix* result)
+                      (matrix* basis _)))))
     (declare (type fixnum atoms-count data-points-count)
              (type vector selected-indexes))
     (iterate

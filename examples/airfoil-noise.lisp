@@ -43,8 +43,8 @@
         :trees-count 250
         :parallel t
         :tree-batch-size 25
-        :pruning (make-instance 'sl.omp:parameters :number-of-trees-selected 50)
         :tree-attributes-count 5
+        :refinement (make-instance 'statistical-learning.gradient-descent-refine:parameters :epochs 150 :sample-size 500 :shrinkage 0.5)
         :data-points-sampler (make-instance 'sl.ensemble:weights-based-data-points-sampler
                                             :sampling-rate 0.2)
         :tree-parameters *training-parameters*))
@@ -57,7 +57,7 @@
                                                      :parallel nil))
 
 
-(format t "~3$~%" *mean-error*) ; ~19.00 (squared error)
+(format t "~3$~%" *mean-error*) ; ~8.518 (squared error)
 
 
 (defparameter *forest*

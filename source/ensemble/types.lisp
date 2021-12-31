@@ -5,6 +5,10 @@
   ())
 
 
+(defclass fundamental-refinement-algorithm ()
+  ())
+
+
 (defclass fundamental-weights-calculator ()
   ())
 
@@ -65,10 +69,13 @@
                         :reader weights-calculator)
    (%pruning :initarg :pruning
              :reader pruning)
+   (%refinement :initarg :refinement
+                :reader refinement)
    (%data-points-sampler :initarg :data-points-sampler
                          :reader data-points-sampler))
   (:default-initargs
    :pruning nil
+   :refinement nil
    :weights-calculator (make 'static-weights-calculator)
    :data-points-sampler (make 'weights-based-data-points-sampler :sampling-rate 0.1d0)))
 
