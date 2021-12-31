@@ -102,6 +102,10 @@
         :parallel t
         :weights-calculator (make-instance 'sl.ensemble:dynamic-weights-calculator)
         :tree-batch-size 5
+        :refinement (make-instance 'statistical-learning.gradient-descent-refine:parameters
+                              :epochs 500
+                              :sample-size 2500
+                              :shrinkage 1.0)
         :tree-attributes-count 45
         :data-points-sampler (make-instance 'sl.ensemble:weights-based-data-points-sampler
                                             :sampling-rate 0.1)
