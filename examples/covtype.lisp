@@ -98,29 +98,31 @@
 
 (defparameter *forest-parameters*
   (make 'statistical-learning.ensemble:random-forest
-        :trees-count 50
+        :trees-count 75
         :parallel t
         :weights-calculator (make-instance 'sl.ensemble:dynamic-weights-calculator)
         :tree-batch-size 5
         :refinement (make-instance 'statistical-learning.gradient-descent-refine:parameters
                               :epochs 500
-                              :sample-size 1000
-                              :shrinkage 0.1)
+                              :sample-size 2000
+                              :parallel t
+                              :shrinkage 1.0)
         :tree-attributes-count 45
         :data-points-sampler (make-instance 'sl.ensemble:weights-based-data-points-sampler
-                                            :sampling-rate 0.1)
+                                            :sampling-rate 0.20)
         :tree-parameters *training-parameters*))
 
 (lparallel:check-kernel)
-(defparameter *confusion-matrix*
-  (statistical-learning.performance:cross-validation *forest-parameters*
-                                                     2
-                                                     *train-data*
-                                                     *target-data*
-                                                     :parallel t))
+(time
+ (defparameter *confusion-matrix*
+   (statistical-learning.performance:cross-validation *forest-parameters*
+                                                      2
+                                                      *train-data*
+                                                      *target-data*
+                                                      :parallel t)))
 
 
-(format t "~3$~%" (statistical-learning.performance:accuracy *confusion-matrix*)) ; ~0.81
+(format t "~3$~%" (statistical-learning.performance:accuracy *confusion-matrix*)) ; ~0.90
 
 
 (~> (make 'statistical-learning.ensemble:gradient-boost-ensemble
