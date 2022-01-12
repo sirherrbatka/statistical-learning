@@ -23,6 +23,7 @@
    #:isolation-forest
    #:tree-parameters
    #:leafs
+   #:trees-count
    #:leafs-assigned-p
    #:make-tree-training-state
    #:make-tree-training-state
