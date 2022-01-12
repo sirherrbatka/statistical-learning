@@ -648,12 +648,13 @@
                (iterate
                  (with result = (~> trees length make-array))
                  (for i from 0)
+                 (for tree in-vector trees)
                  (for root in-vector roots)
                  (for leaf = (sl.tp:leaf-for splitter
                                              root
                                              data
                                              index
-                                             ensemble))
+                                             tree))
                  (setf (aref result i) leaf)
                  (finally (return result))))
              unfolded)

@@ -92,3 +92,4 @@
 (defgeneric (setf split-point) (new-value tree-training-state))
 (defgeneric distance-function (splitter))
 (defgeneric weight (model))
+(defgeneric tree-parameters (parent-parameters))

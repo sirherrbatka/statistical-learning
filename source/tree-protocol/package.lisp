@@ -39,6 +39,7 @@
    #:initialize-leaf
    #:initialize-leaf/proxy
    #:split-vector
+   #:tree-parameters
    #:weight
    #:left-length
    #:right-length

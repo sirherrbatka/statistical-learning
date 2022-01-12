@@ -56,6 +56,7 @@
                      :reader tree-batch-size
                      :type positive-integer)
    (%tree-parameters :initarg :tree-parameters
+                     :reader sl.tp:tree-parameters
                      :reader tree-parameters)))
 
 
