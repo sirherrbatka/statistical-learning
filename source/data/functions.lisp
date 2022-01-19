@@ -157,7 +157,7 @@
 (-> maxs (double-float-data-matrix
            &key
            (:attributes (or null (simple-array fixnum (*))))
-           (:data-points (or null (simple-array fixnum (*)))))
+           (:data-points vector))
     double-float-data-matrix)
 (declaim (inline maxs))
 (defun maxs (data &key data-points attributes)
@@ -198,7 +198,7 @@
 (-> mins/maxs (double-float-data-matrix
                &key
                (:attributes (or null (simple-array fixnum (*))))
-               (:data-points (or null (simple-array fixnum (*)))))
+               (:data-points vector))
     cons)
 (declaim (inline mins/maxs))
 (defun mins/maxs (data &key data-points attributes)
@@ -243,11 +243,11 @@
 (-> mins (double-float-data-matrix
            &key
            (:attributes (or null (simple-array fixnum (*))))
-           (:data-points (or null (simple-array fixnum (*)))))
+           (:data-points vector))
     double-float-data-matrix)
 (declaim (inline mins))
 (defun mins (data &key data-points attributes)
-  (declare (optimize (speed 3) (safety 0)))
+  (declare (optimize (speed 3) (debug 0) (safety 0)))
   (let* ((attributes-count (if (null attributes)
                                (attributes-count data)
                                (length attributes)))
