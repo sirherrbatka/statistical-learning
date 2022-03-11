@@ -10,6 +10,7 @@
    #:causal-tree
    #:causal
    #:tree-proxy
-   ;; #:triplet-tree
+   #:capture-input
+   #:captured-input
    #:triplet
    #:inner))

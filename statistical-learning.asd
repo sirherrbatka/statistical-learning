@@ -103,6 +103,7 @@
                              (:file "methods")
                              (:file "utils")
                              (:file "honest-tree")
+                             (:file "capture-input")
                              (:file "causal-tree")))
                (:module "self-organizing-map"
                 :components ((:file "package")
