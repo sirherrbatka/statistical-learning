@@ -49,3 +49,7 @@
   (~> leaf
       inner-leaf
       sl.tp:predictions))
+
+
+(defmethod (setf sl.tp:predictions) (new-value (leaf capture-input-leaf))
+  (setf (sl.tp:predictions (inner-leaf leaf)) new-value))
