@@ -626,6 +626,7 @@
                (declare (optimize (speed 3) (safety 0)
                                   (debug 0) (space 0)
                                   (compilation-speed 0)))
+               (setf node (lparallel:force node))
                (if (treep node)
                    (bind (((left-pivot . right-pivot) (point node))
                           (left-distance (funcall distance-function
