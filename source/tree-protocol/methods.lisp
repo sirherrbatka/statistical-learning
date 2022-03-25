@@ -786,7 +786,7 @@
          ((index attribute value) point)
          (left-count 0)
          (right-count 0))
-    (iter
+    (iterate
       (for i from 0)
       (for point in-vector data-points)
       (for set = (sl.data:mref train-data point index))
