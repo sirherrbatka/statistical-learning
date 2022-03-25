@@ -47,6 +47,11 @@
   (:default-initargs :iterations 2))
 
 
+(defclass set-splitter (data-point-oriented-splitter)
+  ()
+  (:documentation "Splitter which can be used for unordered sets of tuples."))
+
+
 (defclass fundamental-node ()
   ())
 
