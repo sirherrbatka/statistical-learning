@@ -763,29 +763,33 @@
                               state)
   (let* ((data-points (sl.mp:data-points state))
          (data-points-count (length data-points))
-         (first-random (random data-points-count))
          (train-data (sl.mp:train-data state))
-         (set (sl.data:mref train-data (aref data-points first-random) 0))
-         (second-random (random (length set))))
+         (attributes-count (sl.data:attributes-count train-data))
+         (second-random (random attributes-count))
+         (first-random (random data-points-count))
+         (set (sl.data:mref train-data (aref data-points first-random)
+                            second-random))
+         (third-random (random (length set))))
     (list second-random
-          (aref set second-random))))
+          third-random
+          (aref set third-random))))
 
 
-(defmethod sl.tp:fill-split-vector*/proxy (splitter/proxy
-                                           (splitter set-splitter)
-                                           parameters
-                                           state
-                                           point
-                                           split-vector)
+(defmethod fill-split-vector*/proxy (splitter/proxy
+                                     (splitter set-splitter)
+                                     parameters
+                                     state
+                                     point
+                                     split-vector)
   (bind ((data-points (sl.mp:data-points state))
          (train-data (sl.mp:train-data state))
-         ((attribute value) point)
+         ((index attribute value) point)
          (left-count 0)
          (right-count 0))
     (iter
       (for i from 0)
       (for point in-vector data-points)
-      (for set = (sl.data:mref train-data point 0))
+      (for set = (sl.data:mref train-data point index))
       (setf (aref split-vector i) (some (lambda (player)
                                           (>= (aref player attribute) value))
                                         set))
@@ -795,21 +799,20 @@
       (finally (return (values left-count right-count))))))
 
 
-(defmethod sl.tp:leaf-for/proxy (splitter/proxy
-                                 (splitter set-splitter)
-                                 node
-                                 data
-                                 index
-                                 context)
-  (let ((set (sl.data:mref data index 0)))
-    (labels ((impl (node depth &aux (new-depth (the fixnum (1+ depth))))
-               (setf node (lparallel:force node))
-               (if (treep node)
-                   (bind (((attribute value) (sl.tp:point node)))
-                     (if (some (lambda (player)
-                                 (>= (aref player attribute) value))
-                               set)
-                         (~> node right-node (impl new-depth))
-                         (~> node left-node (impl new-depth))))
-                   (values node depth))))
-      (impl node 0))))
+(defmethod leaf-for/proxy (splitter/proxy
+                           (splitter set-splitter)
+                           node
+                           data
+                           index
+                           context)
+  (labels ((impl (node depth &aux (new-depth (the fixnum (1+ depth))))
+             (setf node (lparallel:force node))
+             (if (treep node)
+                 (bind (((matrix-index attribute value) (sl.tp:point node)))
+                   (if (some (lambda (player)
+                               (>= (aref player attribute) value))
+                             (sl.data:mref data index matrix-index))
+                       (~> node right-node (impl new-depth))
+                       (~> node left-node (impl new-depth))))
+                 (values node depth))))
+    (impl node 0)))
