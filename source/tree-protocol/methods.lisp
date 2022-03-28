@@ -63,7 +63,8 @@
     (:weights sl.mp:weights)
     (:target-data sl.mp:target-data)
     (:splitter-state splitter-state)
-    (:train-data sl.mp:train-data)))
+    (:train-data sl.mp:train-data)
+    (:parent-state parent-state)))
 
 
 (defmethod split-training-state-info/proxy append

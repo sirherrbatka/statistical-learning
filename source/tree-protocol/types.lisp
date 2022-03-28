@@ -120,12 +120,15 @@
    (%train-data :initarg :train-data
                 :reader sl.mp:train-data)
    (%spritter-state :initarg :splitter-state
-                    :accessor splitter-state))
+                    :accessor splitter-state)
+   (%parent-state :initarg :parent-state
+                  :reader partent-state))
   (:default-initargs :depth 0
                      :attributes nil
                      :split-point nil
                      :splitter-state nil
                      :weights nil
+                     :parent-state nil
                      :data-points nil))
 
 

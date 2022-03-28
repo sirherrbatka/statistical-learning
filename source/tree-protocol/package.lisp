@@ -41,6 +41,7 @@
    #:split-vector
    #:tree-parameters
    #:set-splitter
+   #:parent-state
    #:weight
    #:left-length
    #:right-length

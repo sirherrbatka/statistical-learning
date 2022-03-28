@@ -93,3 +93,4 @@
 (defgeneric distance-function (splitter))
 (defgeneric weight (model))
 (defgeneric tree-parameters (parent-parameters))
+(defgeneric parent-state (tree-training-state))
