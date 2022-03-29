@@ -1,5 +1,11 @@
 (cl:in-package #:statistical-learning.tree-protocol)
 
+(defstruct set-splitter-split-point
+  (matrix-index 0 :type fixnum)
+  (attribute 0 :type fixnum)
+  (value 0.0d0 :type double-float)
+  (sides #() :type simple-vector))
+
 
 (-> wdot (sl.data:double-float-data-matrix
           sl.data:double-float-data-matrix
@@ -30,3 +36,38 @@
   (/ (+ (* (left-score result) (left-length result))
         (* (right-score result) (right-length result)))
      data-size))
+
+
+(declaim (inline set-splitter-split-point-compare))
+(defun set-splitter-split-point-compare (tuple point matrix-index &optional (side nil side-bound-p))
+  (if side-bound-p
+      (and (= (set-splitter-split-point-matrix-index point) matrix-index)
+           (eql side
+                (>= (aref tuple (set-splitter-split-point-matrix-index point))
+                    (set-splitter-split-point-value point))))
+      (and (= (set-splitter-split-point-matrix-index point) matrix-index)
+           (>= (aref tuple (set-splitter-split-point-matrix-index point))
+               (set-splitter-split-point-value point)))))
+
+
+(defun set-splitter-split-point-side (attribute-index tuple split-point)
+  (iterate
+    (with desired-sides = (set-splitter-split-point-sides (first split-point)))
+    (for point in split-point)
+    (for side in-vector desired-sides)
+    (always (set-splitter-split-point-compare tuple point attribute-index side))))
+
+
+(defun set-splitter-split-point (tuple matrix-index attribute previous-points)
+  (cons (make-set-splitter-split-point
+         :matrix-index matrix-index
+         :attribute attribute
+         :value (aref tuple attribute)
+         :sides (lret ((result (make-array (1+ (length previous-points))
+                                           :initial-element t)))
+                  (iterate
+                    (for i from 1)
+                    (for point in previous-points)
+                    (setf (aref result i)
+                          (set-splitter-split-point-compare tuple point matrix-index)))))
+        previous-points))

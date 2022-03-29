@@ -290,6 +290,7 @@
                         :right-score right-score
                         :left-length left-length
                         :right-length right-length)))
+      (setf (split-point training-state) point)
       (if (split-result-accepted-p training-parameters training-state result)
           result
           nil))))
@@ -308,8 +309,6 @@
     (for attempt from 0 below (min data-size trials-count))
     (for split-result = (call-next-method))
     (when (null split-result) (next-iteration))
-    (for point = (split-point split-result))
-    (setf (split-point training-state) point)
     (for left-length = (left-length split-result))
     (for right-length = (right-length split-result))
     (assert (= (+ left-length right-length) data-size))
@@ -319,7 +318,10 @@
                                         split-result
                                         optimal-split-result))
       (setf optimal-split-result split-result))
-    (finally (return optimal-split-result))))
+    (finally
+     (when optimal-split-result
+       (setf (split-point training-state) (split-point optimal-split-result)))
+     (return optimal-split-result))))
 
 
 (defmethod split*
@@ -368,6 +370,7 @@
      point)
   (bind ((cloning-list (cl-ds.utils:cloning-list state)))
     (apply #'make (class-of state)
+           :parent-state state
            (append initargs
                    (split-training-state-info/proxy
                     parameters/proxy
@@ -762,38 +765,50 @@
                               (splitter set-splitter)
                               parameters
                               state)
-  (let* ((data-points (sl.mp:data-points state))
+  (bind ((parent-state (parent-state state))
+         (previous-points (if (null parent-state)
+                              '()
+                              (split-point parent-state)))
+         (data-points (sl.mp:data-points state))
          (data-points-count (length data-points))
          (train-data (sl.mp:train-data state))
          (attributes-count (sl.data:attributes-count train-data))
          (second-random (random attributes-count))
          (first-random (random data-points-count))
-         (set (sl.data:mref train-data (aref data-points first-random)
+         (set (sl.data:mref train-data
+                            (aref data-points first-random)
                             second-random))
          (third-random (random (length set))))
-    (list second-random
-          third-random
-          (aref set third-random))))
+    (set-splitter-split-point (aref set third-random)
+                              second-random
+                              (random (length (aref set third-random)))
+                              previous-points)))
 
 
 (defmethod fill-split-vector*/proxy (splitter/proxy
                                      (splitter set-splitter)
                                      parameters
                                      state
-                                     point
+                                     split-point
                                      split-vector)
   (bind ((data-points (sl.mp:data-points state))
          (train-data (sl.mp:train-data state))
-         ((index attribute value) point)
          (left-count 0)
-         (right-count 0))
+         (right-count 0)
+         (attributes-count (sl.data:attributes-count train-data)))
     (iterate
       (for i from 0)
       (for point in-vector data-points)
-      (for set = (sl.data:mref train-data point index))
-      (setf (aref split-vector i) (some (lambda (player)
-                                          (>= (aref player attribute) value))
-                                        set))
+      (setf (aref split-vector i)
+            (iterate outer
+              (for index from 0 below attributes-count)
+              (for set = (sl.data:mref train-data point index))
+              (iterate
+                (for tuple in-vector set)
+                (when (set-splitter-split-point-side index
+                                                     tuple
+                                                     split-point)
+                  (in outer (leave t))))))
       (if (aref split-vector i)
           (incf right-count)
           (incf left-count))
@@ -806,14 +821,21 @@
                            data
                            index
                            context)
-  (labels ((impl (node depth &aux (new-depth (the fixnum (1+ depth))))
-             (setf node (lparallel:force node))
-             (if (treep node)
-                 (bind (((matrix-index attribute value) (sl.tp:point node)))
-                   (if (some (lambda (player)
-                               (>= (aref player attribute) value))
-                             (sl.data:mref data index matrix-index))
-                       (~> node right-node (impl new-depth))
-                       (~> node left-node (impl new-depth))))
-                 (values node depth))))
-    (impl node 0)))
+  (let ((attributes-count (sl.data:attributes-count data)))
+    (labels ((impl (node depth &aux (new-depth (the fixnum (1+ depth))))
+               (setf node (lparallel:force node))
+               (if (treep node)
+                   (bind ((split-point (sl.tp:point node)))
+                     (if (iterate outer
+                           (for attribute from 0 below attributes-count)
+                           (for set = (sl.data:mref data index attribute))
+                           (iterate
+                             (for tuple in-vector set)
+                             (when (set-splitter-split-point-side attribute
+                                                                  tuple
+                                                                  split-point)
+                               (in outer (leave t)))))
+                         (~> node right-node (impl new-depth))
+                         (~> node left-node (impl new-depth))))
+                   (values node depth))))
+      (impl node 0))))

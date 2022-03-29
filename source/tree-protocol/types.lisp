@@ -122,7 +122,7 @@
    (%spritter-state :initarg :splitter-state
                     :accessor splitter-state)
    (%parent-state :initarg :parent-state
-                  :reader partent-state))
+                  :reader parent-state))
   (:default-initargs :depth 0
                      :attributes nil
                      :split-point nil
