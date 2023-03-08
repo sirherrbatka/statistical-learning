@@ -98,7 +98,7 @@
                       (matrix* transposed)
                       (matrix* result)
                       (matrix* basis _)))))
-    (declare (type fixnum atoms-count data-points-count)
+    (declare (type fixnum atoms-count)
              (type vector selected-indexes))
     (iterate
       (declare (type fixnum i max-d))
