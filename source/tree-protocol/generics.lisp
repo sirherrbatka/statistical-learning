@@ -94,3 +94,6 @@
 (defgeneric weight (model))
 (defgeneric tree-parameters (parent-parameters))
 (defgeneric parent-state (tree-training-state))
+(defgeneric tree-node-class (parameters))
+(defgeneric leaf-node-class (parameters))
+(defgeneric make-tree (training-state))

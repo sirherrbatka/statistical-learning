@@ -117,10 +117,6 @@
         (make-leaf training-state))))
 
 
-(defun make-tree (training-state)
-  (split training-state))
-
-
 (defun gather-split-points (state)
   (iterate
     (for s initially state then (parent-state s))

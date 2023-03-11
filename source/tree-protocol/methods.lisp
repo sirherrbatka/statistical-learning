@@ -351,7 +351,7 @@
               (subtree-impl position size loss))))
     (if (null split-result)
         nil
-        (make-node 'fundamental-tree-node
+        (make-node (tree-node-class training-parameters)
                    :left-node (subtree sl.opt:left
                                        (left-length split-result)
                                        (left-score split-result)
@@ -839,3 +839,7 @@
                          (~> node left-node (impl new-depth))))
                    (values node depth))))
       (impl node 0))))
+
+
+(defmethod make-tree (training-state)
+  (split training-state))

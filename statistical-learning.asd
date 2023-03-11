@@ -76,6 +76,11 @@
                              (:file "utils")
                              (:file "functions")
                              (:file "methods")))
+               (:module "struct-forest"
+                :components ((:file "package")
+                             (:file "generics")
+                             (:file "methods")
+                             (:file "types")))
                (:module "gradient-boost-tree"
                 :components ((:file "package")
                              (:file "generics")

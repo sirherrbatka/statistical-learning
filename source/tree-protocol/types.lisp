@@ -82,7 +82,13 @@
 
 (defclass basic-tree-training-parameters
     (fundamental-tree-training-parameters)
-  ())
+  ((%tree-node-class :initarg :tree-node-class
+                     :reader tree-node-class)
+   (%leaf-node-class :initarg :leaf-node-class
+                     :reader leaf-node-class))
+  (:default-initargs
+   :tree-node-class 'fundamental-tree-node
+   :leaf-node-class 'fundamental-leaf-node))
 
 
 (defclass standard-tree-training-parameters (basic-tree-training-parameters)
