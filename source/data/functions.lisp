@@ -1,31 +1,76 @@
 (cl:in-package #:statistical-learning.data)
 
 
+(declaim (inline data))
+(defun data (data-matrix)
+  (declare (type data-matrix data-matrix)
+           (optimize (speed 3) (safety 0)))
+  (if (typep data-matrix 'universal-data-matrix)
+      (universal-data-matrix-data data-matrix)
+      (double-float-data-matrix-data data-matrix)))
+
+
+(declaim (inline index))
+(defun index (data-matrix)
+  (declare (type data-matrix data-matrix)
+           (optimize (speed 3) (safety 0)))
+  (if (typep data-matrix 'universal-data-matrix)
+      (universal-data-matrix-index data-matrix)
+      (double-float-data-matrix-index data-matrix)))
+
+
+(declaim (inline data-matrix-type))
+(defun data-matrix-element-type (data-matrix)
+  (~> data-matrix data array-element-type))
+
+
 (declaim (inline attributes-count))
 (defun attributes-count (data-matrix)
   (check-data-points data-matrix)
-  (array-dimension data-matrix 1))
+  (array-dimension (data data-matrix) 1))
 
 
 (declaim (inline data-points-count))
 (defun data-points-count (data-matrix)
   (check-data-points data-matrix)
-  (array-dimension data-matrix 0))
+  (array-dimension (index data-matrix) 0))
 
 
 (defun data-matrix-dimensions (data-matrix)
   (check-data-points data-matrix)
-  (array-dimensions data-matrix))
+  (list (array-dimension (index data-matrix) 0)
+        (array-dimension (data data-matrix) 1)))
 
 
 (declaim (inline mref))
 (defun mref (data-matrix data-point attribute)
-  (aref data-matrix data-point attribute))
+  (aref (data data-matrix)
+        (aref (index data-matrix) data-point)
+        attribute))
 
 
 (declaim (inline (setf mref)))
 (defun (setf mref) (new-value data-matrix data-point attribute)
-  (setf (aref data-matrix data-point attribute) new-value))
+  (setf (aref (data data-matrix)
+              (aref (index data-matrix) data-point)
+              attribute)
+        new-value))
+
+
+(defun make-iota-vector (length)
+  (iterate
+    (with result = (make-array length :element-type 'fixnum))
+    (for i from 0 below length)
+    (setf (aref result i) i)
+    (finally (return result))))
+
+
+(declaim (inline data-matrix-constructor))
+(defun data-matrix-constructor (data-matrix)
+  (check-type data-matrix data-matrix)
+  (let ((element-type (data-matrix-element-type data-matrix)))
+    (econd ((eq element-type 'double-float) #'make-double-float-data-matrix)
+           ((eq element-type t) #'make-universal-data-matrix))))
 
 
 (-> make-data-matrix (fixnum fixnum &optional t t) data-matrix)
@@ -37,9 +82,18 @@
   (check-type attributes-count fixnum)
   (assert (> attributes-count 0))
   (assert (> data-points-count 0))
-  (make-array `(,data-points-count ,attributes-count)
-              :initial-element initial-element
-              :element-type element-type))
+  (econd ((eq element-type 'double-float)
+          (make-double-float-data-matrix
+           :data (make-array `(,data-points-count ,attributes-count)
+                             :initial-element initial-element
+                             :element-type 'double-float)
+           :index (make-iota-vector data-points-count)))
+         ((eq element-type t)
+          (make-universal-data-matrix
+           :data (make-array `(,data-points-count ,attributes-count)
+                             :initial-element initial-element
+                             :element-type t)
+           :index (make-iota-vector data-points-count)))))
 
 
 (-> sample (data-matrix &key
@@ -66,7 +120,7 @@
         (with result = (make-data-matrix data-points-count
                                          attributes-count
                                          0.0d0
-                                         (array-element-type data-matrix)))
+                                         (data-matrix-type data-matrix)))
         (for i from 0 below data-points-count)
         (iterate
           (declare (type fixnum j))
@@ -90,31 +144,14 @@
         (mapcar #'impl (cons data-matrix rest)))))
 
 
-(declaim (inline map-data-matrix))
-(defun map-data-matrix (function data-matrix &optional in-place)
-  (declare (optimize (speed 3) (safety 0)))
-  (check-type data-matrix double-float-data-matrix)
-  (dispatch-data-matrix (data-matrix)
-    (lret ((result (if in-place
-                       data-matrix
-                       (make-data-matrix
-                        (data-points-count data-matrix)
-                        (attributes-count data-matrix)))))
-      (iterate
-        (declare (type fixnum i))
-        (for i from 0 below (array-total-size data-matrix))
-        (setf (row-major-aref result i)
-              (funcall function (row-major-aref data-matrix i)))))))
-
-
 (defun make-data-matrix-like (data-matrix &optional (initial-element 0.0d0))
   (check-type data-matrix data-matrix)
-  (make-array (array-dimensions data-matrix)
-              :element-type (array-element-type data-matrix)
-              :initial-element initial-element))
+  (make-data-matrix (data-points-count data-matrix)
+                    (attributes-count data-matrix)
+                    initial-element
+                    (data-matrix-element-type data-matrix)))
 
 
-(declaim (inline reduce-data-points))
 (-> reduce-data-points (t double-float-data-matrix
                           &key
                           (:attributes (or null (simple-array fixnum (*))))
@@ -159,7 +196,6 @@
            (:attributes (or null (simple-array fixnum (*))))
            (:data-points vector))
     double-float-data-matrix)
-(declaim (inline maxs))
 (defun maxs (data &key data-points attributes)
   (declare (optimize (speed 3) (safety 0)))
   (let* ((attributes-count (if (null attributes)
@@ -200,7 +236,6 @@
                (:attributes (or null (simple-array fixnum (*))))
                (:data-points vector))
     cons)
-(declaim (inline mins/maxs))
 (defun mins/maxs (data &key data-points attributes)
   (declare (optimize (speed 3) (safety 0)))
   (let* ((attributes-count (if (null attributes)
@@ -245,7 +280,6 @@
            (:attributes (or null (simple-array fixnum (*))))
            (:data-points vector))
     double-float-data-matrix)
-(declaim (inline mins))
 (defun mins (data &key data-points attributes)
   (declare (optimize (speed 3) (debug 0) (safety 0)))
   (let* ((attributes-count (if (null attributes)
@@ -281,34 +315,19 @@
       (finally (return result-min)))))
 
 
-(-> split (data-matrix fixnum split-vector t (or null fixnum)) data-matrix)
-(defun split (data-matrix length split-array position skipped-column)
-  (declare (optimize (speed 3) (debug 0) (safety 0)))
-  (dispatch-data-matrix (data-matrix)
-    (cl-ds.utils:cases ((null skipped-column))
-      (bind-data-matrix-dimensions
-          ((data-points-count attributes-count data-matrix))
-        (lret ((result (make-array `(,length ,(if (null skipped-column)
-                                                  attributes-count
-                                                  (1- attributes-count)))
-                                   :element-type (array-element-type data-matrix))))
-          (iterate
-            (declare (type fixnum j i))
-            (with j = 0)
-            (for i from 0 below data-points-count)
-            (when (eql position (aref split-array i))
-              (iterate
-                (declare (type fixnum k p))
-                (with p = 0)
-                (for k from 0 below attributes-count)
-                (when (eql skipped-column k)
-                  (next-iteration))
-                (setf (mref result j p)
-                      (mref data-matrix i k)
-                      p (1+ p))
-                (finally (assert (= p (array-dimension result 1)))))
-              (incf j))
-            (finally (assert (= j length)))))))))
+(-> split (data-matrix fixnum split-vector t) data-matrix)
+(defun split (data-matrix length split-array position)
+  (funcall (data-matrix-constructor data-matrix)
+           :data (data data-matrix)
+           :index (iterate
+                    (with old-index = (index data-matrix))
+                    (with result = (make-array length :element-type 'fixnum))
+                    (with j = 0)
+                    (for i from 0 below (length split-array))
+                    (when (eq (aref split-array i) position)
+                      (setf (aref result j) (aref old-index i))
+                      (incf j))
+                    (finally (return result)))))
 
 
 (-> data-min/max (sl.data:double-float-data-matrix
@@ -333,13 +352,13 @@
 
 
 (defun data-transpose (data)
-  (declare (type statistical-learning.data:data-matrix data)
+  (declare (type data-matrix data)
            (optimize (speed 3) (safety 0)))
   (bind-data-matrix-dimensions ((data-points-count attributes-count data))
     (iterate
       (declare (type fixnum r))
       (with result = (make-data-matrix attributes-count data-points-count
-                                       :element-type (array-element-type data)))
+                                       :element-type (data-matrix-element-type data)))
       (for r from 0 below data-points-count)
       (iterate
         (declare (type fixnum c))
