@@ -66,5 +66,18 @@
          initargs))
 
 
+(defmethod relabel-iterations ((parameters struct-training-implementation))
+  (~> parameters original relabel-iterations))
+
+
+(defmethod relabel-repeats ((parameters struct-training-implementation))
+  (~> parameters original relabel-repeats))
+
+
 (defmethod relable ((parameters struct) state)
-  cl-ds.utils:todo)
+  (bind ((target-data (sl.mp:target-data state))
+         ((:values first second) (select-pivots parameters state)))
+    (declare (type (simple-array fixnum (*)) data-points)
+             (type sl.data:double-float-data-matrix target-data)
+             (type fixnum first second))
+    (relabel-with-pivots state first second)))

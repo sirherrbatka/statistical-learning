@@ -16,7 +16,13 @@
 (defclass struct (sl.perf:regression
                   sl.tp:standard-tree-training-parameters)
   ((%optimized-function :initarg :optimized-function
-                        :reader sl.opt:optimized-function))
+                        :reader sl.opt:optimized-function)
+   (%relabel-iterations :initarg :relabel-iterations
+                        :reader relabel-iterations)
+   (%relabel-repeats :initarg :relabel-repeats
+                     :reader relabel-repeats))
   (:default-initargs
+   :relabel-iterations 4
+   :relabel-repeats 4
    :splitter (make 'sl.tp:random-attribute-splitter)
    :optimized-function (sl.opt:squared-error)))
