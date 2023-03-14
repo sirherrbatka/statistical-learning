@@ -107,7 +107,7 @@
       (cl-ds.utils:transform (rcurry #'/ count) vector)))
 
 
-(defun map-array (matrix function &optional in-place)
+(defun map-array (function matrix &optional in-place)
   (iterate
     (with result = (if in-place
                        matrix

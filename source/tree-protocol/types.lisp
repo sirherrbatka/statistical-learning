@@ -126,8 +126,7 @@
                      :split-point nil
                      :splitter-state nil
                      :weights nil
-                     :parent-state nil
-                     :data-points nil))
+                     :parent-state nil))
 
 
 (defclass tree-model (statistical-learning.mp:supervised-model)

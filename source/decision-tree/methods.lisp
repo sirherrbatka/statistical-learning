@@ -18,14 +18,13 @@
     (parameters/proxy
      (parameters fundamental-decision-tree-parameters)
      &rest initargs
-     &key train-data data-points
+     &key train-data
        target-data weights attributes &allow-other-keys)
   (declare (ignore initargs))
   (let ((optimized-function (optimized-function parameters)))
     (make 'sl.tp:tree-training-state
           :training-parameters parameters
-          :data-points data-points
-          :loss (sl.opt:loss optimized-function target-data weights data-points)
+          :loss (sl.opt:loss optimized-function target-data weights)
           :weights weights
           :attributes attributes
           :target-data target-data

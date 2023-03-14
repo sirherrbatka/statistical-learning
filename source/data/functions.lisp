@@ -17,7 +17,7 @@
       (double-float-data-matrix-index data-matrix)))
 
 
-(declaim (inline data-matrix-type))
+(declaim (inline data-matrix-element-type))
 (defun data-matrix-element-type (data-matrix)
   (~> data-matrix data array-element-type))
 
@@ -94,6 +94,21 @@
            :index (make-iota-vector data-points-count)))))
 
 
+(defun wrap (input)
+  (check-type input (or (simple-array double-float (* *))
+                        (simple-array t (* *))))
+  (let ((element-type (array-element-type input))
+        (data-points-count (array-dimension input 0)))
+    (econd ((eq element-type 'double-float)
+            (make-double-float-data-matrix
+             :data input
+             :index (make-iota-vector data-points-count)))
+           ((eq element-type t)
+            (make-universal-data-matrix
+             :data input
+             :index (make-iota-vector data-points-count))))))
+
+
 (-> sample (data-matrix &key
                         (:data-points (or null vector))
                         (:attributes (or null vector)))
@@ -118,7 +133,7 @@
         (with result = (make-data-matrix data-points-count
                                          attributes-count
                                          0.0d0
-                                         (data-matrix-type data-matrix)))
+                                         (data-matrix-element-type data-matrix)))
         (for i from 0 below data-points-count)
         (iterate
           (declare (type fixnum j))

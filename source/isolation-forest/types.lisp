@@ -52,8 +52,6 @@
                  :accessor trees-count)
    (%trees-sum :initarg :trees-sum
                :accessor trees-sum)
-   (%indexes :initarg :indexes
-             :reader sl.tp:indexes)
    (%c :initarg :c
        :reader c))
   (:default-initargs

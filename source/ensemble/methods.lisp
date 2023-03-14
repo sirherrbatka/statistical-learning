@@ -161,7 +161,7 @@
          (assigned-leafs (assigned-leafs ensemble-state))
          (weights (sl.mp:weights ensemble-state)))
     (declare (type (simple-array fixnum (* *)) counts)
-             (type sl.data:double-float-data-matrix target-data weights))
+             (type sl.data:double-float-data-matrix target-data))
     (assign-leafs ensemble-state ensemble-model)
     (funcall (if parallel #'lparallel:pmap #'map)
              nil
@@ -199,8 +199,7 @@
                (declare (type fixnum index)
                         (type fixnum total))
                (unless (zerop total)
-                 (setf (sl.data:mref (the sl.data:double-float-data-matrix weights)
-                                     index 0)
+                 (setf (aref weights index 0)
                        (+ (- 1.0d0 (/ (the fixnum (aref counts index 1))
                                       total))
                           double-float-epsilon))))
@@ -695,23 +694,21 @@
          (splitter (sl.tp:splitter tree-parameters))
          (assigned-leafs (assigned-leafs state))
          (train-data (sl.mp:train-data state))
-         (trees (trees-view state))
-         (indexes (indexes state)))
+         (trees (trees-view state)))
     (map nil #'sl.tp:force-tree trees)
-    (funcall (if parallel #'lparallel:pmap #'map)
-             nil
-             (lambda (index)
-               (declare (type fixnum index))
-               (iterate
-                 (with leafs = (aref assigned-leafs index))
-                 (for tree in-vector trees)
-                 (for leaf = (sl.tp:leaf-for splitter
-                                             (sl.tp:root tree)
-                                             train-data
-                                             index
-                                             model))
-                 (vector-push-extend leaf leafs)))
-             indexes)
+    (sl.data:data-matrix-map (lambda (index train-data)
+                               (declare (type fixnum index))
+                               (iterate
+                                 (with leafs = (aref assigned-leafs index))
+                                 (for tree in-vector trees)
+                                 (for leaf = (sl.tp:leaf-for splitter
+                                                             (sl.tp:root tree)
+                                                             train-data
+                                                             index
+                                                             model))
+                                 (vector-push-extend leaf leafs)))
+                             train-data
+                             parallel)
     (setf (leafs-assigned-p state) t)
     nil))
 

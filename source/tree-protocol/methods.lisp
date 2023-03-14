@@ -103,7 +103,10 @@
      position
      size
      point)
-  (data-matrix-split-list :train-data (sl.mp:train-data state)
+  (data-matrix-split-list size
+                          split-array
+                          position
+                          :train-data (sl.mp:train-data state)
                           :target-data (sl.mp:target-data state)))
 
 

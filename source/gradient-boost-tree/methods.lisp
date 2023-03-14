@@ -63,21 +63,20 @@
            (shrinkage (shrinkage model))
            (root (sl.tp:root model)))
       (declare (type sl.data:double-float-data-matrix sums))
-      (funcall (if parallel #'lparallel:pmap #'map)
-               nil
-               (lambda (data-point)
-                 (let* ((leaf (~>> (sl.tp:leaf-for splitter root
-                                                   data data-point
-                                                   model)
-                                   (funcall leaf-key)))
-                        (predictions (sl.tp:predictions leaf)))
-                   (iterate
-                     (for i from 0 below (sl.data:attributes-count predictions))
-                     (incf (sl.data:mref sums data-point i)
-                           (* shrinkage
-                              (aref predictions 0 i)
-                              weight)))))
-               (sl.tp:indexes state))
+      (sl.data:data-matrix-map (lambda (data-point data)
+                                 (let* ((leaf (~>> (sl.tp:leaf-for splitter root
+                                                                   data data-point
+                                                                   model)
+                                                   (funcall leaf-key)))
+                                        (predictions (sl.tp:predictions leaf)))
+                                   (iterate
+                                     (for i from 0 below (sl.data:attributes-count predictions))
+                                     (incf (sl.data:mref sums data-point i)
+                                           (* shrinkage
+                                              (aref predictions 0 i)
+                                              weight)))))
+                               sums
+                               parallel)
       (incf (sl.tp:contributions-count state) weight))
     state))
 
@@ -101,21 +100,20 @@
            (number-of-classes (sl.opt:number-of-classes parameters))
            (shrinkage (shrinkage model))
            (root (sl.tp:root model)))
-      (funcall (if parallel #'lparallel:pmap #'map)
-               nil
-               (lambda (data-point)
-                 (iterate
-                   (declare (type fixnum j))
-                   (with leaf = (~>> (sl.tp:leaf-for splitter root
-                                                     data data-point
-                                                     model)
-                                     (funcall leaf-key)))
-                   (with predictions = (sl.tp:predictions leaf))
-                   (for j from 0 below number-of-classes)
-                   (for gradient = (aref predictions 0 j))
-                   (incf (sl.data:mref sums data-point j)
-                         (* weight shrinkage gradient))))
-               (sl.tp:indexes state))
+      (sl.data:data-matrix-map (lambda (data-point data)
+                                 (iterate
+                                   (declare (type fixnum j))
+                                   (with leaf = (~>> (sl.tp:leaf-for splitter root
+                                                                     data data-point
+                                                                     model)
+                                                     (funcall leaf-key)))
+                                   (with predictions = (sl.tp:predictions leaf))
+                                   (for j from 0 below number-of-classes)
+                                   (for gradient = (aref predictions 0 j))
+                                   (incf (sl.data:mref sums data-point j)
+                                         (* weight shrinkage gradient))))
+                               sums
+                               parallel)
       (incf (sl.tp:contributions-count state) weight))
     state))
 
@@ -322,7 +320,6 @@
                                     model
                                     data-points-count)
   (make 'sl.tp:contributed-predictions
-        :indexes (sl.data:iota-vector data-points-count)
         :training-parameters parameters
         :sums (iterate
                 (with expected-value = (expected-value model))
@@ -342,7 +339,6 @@
                                     model
                                     data-points-count)
   (make 'sl.tp:contributed-predictions
-        :indexes (sl.data:iota-vector data-points-count)
         :training-parameters parameters
         :sums (iterate
                 (declare (type sl.data:double-float-data-matrix result))

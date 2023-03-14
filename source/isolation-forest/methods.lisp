@@ -47,7 +47,6 @@
                                             &key
                                               data
                                               c
-                                              data-points
                                               attributes)
   (declare (ignore initargs))
   (make 'isolation-training-state
@@ -55,7 +54,6 @@
         :depth 0
         :c c
         :train-data data
-        :data-points data-points
         :attributes attributes))
 
 
@@ -113,7 +111,6 @@
           (data-points-count (sl.data:data-points-count data)))
       (check-type c double-float)
       (setf state (make 'isolation-prediction
-                        :indexes (sl.data:iota-vector data-points-count)
                         :trees-sum (sl.data:make-data-matrix
                                     data-points-count
                                     1)
@@ -122,18 +119,17 @@
   (let* ((splitter (sl.tp:splitter parameters))
          (sums (trees-sum state))
          (root (sl.tp:root tree-model)))
-    (funcall (if parallel #'lparallel:pmap #'map)
-             nil
-             (lambda (data-point)
-               (bind (((:values leaf depth)
-                       (sl.tp:leaf-for splitter root
-                                       data data-point
-                                       tree-model)))
-                 (assert depth)
-                 (assert leaf)
-                 (incf (sl.data:mref sums data-point 0)
-                       depth)))
-             (sl.tp:indexes state))
+    (sl.data:data-matrix-map (lambda (data-point data)
+                               (bind (((:values leaf depth)
+                                       (sl.tp:leaf-for splitter root
+                                                       data data-point
+                                                       tree-model)))
+                                 (assert depth)
+                                 (assert leaf)
+                                 (incf (sl.data:mref sums data-point 0)
+                                       depth)))
+                             data
+                             parallel)
     (incf (trees-count state))
     state))
 

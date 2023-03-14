@@ -95,7 +95,7 @@
         :maximal-depth 5
         :minimal-difference 0.0001d0
         :minimal-size 10
-        :parallel t
+        :parallel nil
         :splitter (sl.common:lift (make-instance 'sl.tp:random-attribute-splitter)
                                   'sl.tp:random-splitter
                                   :trials-count 80)))
@@ -103,7 +103,7 @@
 (defparameter *forest-parameters*
   (make 'statistical-learning.ensemble:random-forest
         :trees-count 100
-        :parallel t
+        :parallel nil
         :weights-calculator (make-instance 'sl.ensemble:dynamic-weights-calculator)
         :tree-batch-size 5
         :tree-attributes-count 30

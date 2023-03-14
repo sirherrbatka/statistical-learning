@@ -11,6 +11,7 @@
    #:array-avg
    #:index
    #:data
+   #:wrap
    #:data-matrix-map
    #:attributes-count
    #:universal-data-matrix
