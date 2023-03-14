@@ -42,9 +42,7 @@
   (declare (optimize (debug 3)))
   (bind ((inner-state (inner state))
          (training-data (sl.mp:train-data inner-state))
-         (data-points-count (~> inner-state
-                                sl.mp:data-points
-                                length))
+         (data-points-count (sl.data:data-points-count training-data))
          (indexes (sl.data:reshuffle (sl.data:iota-vector data-points-count)))
          (division-indexes (take (truncate data-points-count 2)
                                  indexes))

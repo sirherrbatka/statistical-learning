@@ -107,9 +107,20 @@
       (cl-ds.utils:transform (rcurry #'/ count) vector)))
 
 
+(defun map-array (matrix function &optional in-place)
+  (iterate
+    (with result = (if in-place
+                       matrix
+                       (make-array (array-dimensions matrix)
+                                   :element-type (array-element-type matrix))))
+    (for i from 0 below (array-total-size matrix))
+    (setf (row-major-aref result i) (funcall function (row-major-aref matrix i)))
+    (finally (return result))))
+
+
 (-> data-matrix-avg (double-float-data-matrix fixnum)
     double-float-data-matrix)
-(defun data-matrix-avg (matrix count)
+(defun array-avg (matrix count)
   (if (zerop count)
       matrix
-      (map-data-matrix (rcurry #'/ count) matrix t)))
+      (map-array (rcurry #'/ count) matrix t)))

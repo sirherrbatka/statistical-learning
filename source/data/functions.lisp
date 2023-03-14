@@ -3,8 +3,7 @@
 
 (declaim (inline data))
 (defun data (data-matrix)
-  (declare (type data-matrix data-matrix)
-           (optimize (speed 3) (safety 0)))
+  (declare (type data-matrix data-matrix))
   (if (typep data-matrix 'universal-data-matrix)
       (universal-data-matrix-data data-matrix)
       (double-float-data-matrix-data data-matrix)))
@@ -12,8 +11,7 @@
 
 (declaim (inline index))
 (defun index (data-matrix)
-  (declare (type data-matrix data-matrix)
-           (optimize (speed 3) (safety 0)))
+  (declare (type data-matrix data-matrix))
   (if (typep data-matrix 'universal-data-matrix)
       (universal-data-matrix-index data-matrix)
       (double-float-data-matrix-index data-matrix)))
@@ -315,19 +313,24 @@
       (finally (return result-min)))))
 
 
-(-> split (data-matrix fixnum split-vector t) data-matrix)
-(defun split (data-matrix length split-array position)
-  (funcall (data-matrix-constructor data-matrix)
-           :data (data data-matrix)
-           :index (iterate
-                    (with old-index = (index data-matrix))
-                    (with result = (make-array length :element-type 'fixnum))
-                    (with j = 0)
-                    (for i from 0 below (length split-array))
-                    (when (eq (aref split-array i) position)
-                      (setf (aref result j) (aref old-index i))
-                      (incf j))
-                    (finally (return result)))))
+(-> split (list fixnum split-vector t) list)
+(defun split (data-matrixes length split-array position)
+  (if (endp data-matrixes)
+      nil
+      (let ((old-index (~> data-matrixes first index))
+            (new-index (make-array length :element-type 'fixnum)))
+        (iterate
+          (with j = 0)
+          (for i from 0 below (length split-array))
+          (when (eq (aref split-array i) position)
+            (setf (aref new-index j) (aref old-index i))
+            (incf j))
+          (finally (assert (= j length) (j length))))
+        (mapcar (lambda (data-matrix)
+                  (funcall (data-matrix-constructor data-matrix)
+                           :data (data data-matrix)
+                           :index new-index))
+                data-matrixes))))
 
 
 (-> data-min/max (sl.data:double-float-data-matrix
@@ -365,3 +368,10 @@
         (for c from 0 below attributes-count)
         (setf (mref result c r) (mref result r c)))
       (finally (return result)))))
+
+
+(defun data-matrix-map (function data-matrix parallel &aux (data (data data-matrix)))
+  (funcall (if parallel #'lparallel:pmap #'map) nil
+           (lambda (data-point) (funcall function data-point data))
+           (index data-matrix))
+  data-matrix)

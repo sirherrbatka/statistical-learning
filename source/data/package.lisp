@@ -8,7 +8,10 @@
    #:split-vector
    #:split
    #:vector-avg
-   #:data-matrix-avg
+   #:array-avg
+   #:index
+   #:data
+   #:data-matrix-map
    #:attributes-count
    #:universal-data-matrix
    #:double-float-data-matrix
@@ -22,6 +25,7 @@
    #:mins
    #:mins/maxs
    #:make-data-matrix-like
+   #:map-array
    #:reduce-data-points
    #:iota-vector
    #:reshuffle

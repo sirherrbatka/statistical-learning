@@ -105,8 +105,6 @@
 (defclass tree-training-state (sl.mp:fundamental-training-state)
   ((%attribute-indexes :initarg :attributes
                        :accessor attribute-indexes)
-   (%data-points :initarg :data-points
-                 :accessor sl.mp:data-points)
    (%depth :initarg :depth
            :reader depth)
    (%loss :initarg :loss
@@ -154,8 +152,6 @@
                       :reader predictions-lock)
    (%contributions-count :initarg :contributions-count
                          :accessor contributions-count)
-   (%indexes :initarg :indexes
-             :reader indexes)
    (%sums :initarg :sums
           :accessor sums))
   (:default-initargs

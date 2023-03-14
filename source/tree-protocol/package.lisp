@@ -35,7 +35,6 @@
    #:fundamental-tree-node
    #:random-splitter
    #:fundamental-tree-training-parameters
-   #:indexes
    #:initialize-leaf
    #:initialize-leaf/proxy
    #:split-vector
@@ -56,6 +55,7 @@
    #:leafp
    #:leafs-for
    #:left-node
+   #:data-matrix-split-list
    #:loss
    #:make-leaf
    #:split-using-splitter/proxy

@@ -35,7 +35,7 @@
      splitter
      (isolation isolation)
      training-state)
-  (and (> (~> training-state sl.mp:data-points length)
+  (and (> (~> training-state sl.mp:train-data sl.data:data-points-count)
           (sl.tp:minimal-size isolation))
        (< (sl.tp:depth training-state)
           (sl.tp:maximal-depth isolation))))
@@ -79,8 +79,7 @@
     (:depth sl.tp:depth)
     (:c c)
     (:train-data sl.mp:train-data)
-    (:attributes sl.tp:attribute-indexes)
-    (:data-points sl.mp:data-points)))
+    (:attributes sl.tp:attribute-indexes)))
 
 
 (defmethod sl.tp:extract-predictions*/proxy (parameters/proxy

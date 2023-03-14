@@ -13,7 +13,6 @@
     ((parameters)
      state
      &key
-     data-points
      train-attributes
      target-attributes
      initargs
@@ -23,7 +22,7 @@
     sample-training-state-info
     ((parameters)
      state
-     &key data-points
+     &key
      train-attributes
      target-attributes
      &allow-other-keys)
@@ -36,8 +35,6 @@
 (defgeneric target-data (state))
 (defgeneric train-data (state))
 (defgeneric weights-data (state))
-(defgeneric data-points (state))
-(defgeneric (setf data-points) (new-value state))
 (defgeneric cache (state key))
 (defgeneric model-cache (state key))
 (defgeneric (setf cache) (new-value state key))

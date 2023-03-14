@@ -5,7 +5,6 @@
   (:use #:cl #:statistical-learning.aux-package)
   (:nicknames #:statistical-learning.mp #:sl.mp)
   (:export
-   #:data-points
    #:fundamental-model
    #:fundamental-model-parameters
    #:fundamental-training-state

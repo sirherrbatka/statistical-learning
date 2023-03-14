@@ -63,7 +63,7 @@
                          1.0d0
                          (weight-at weights i)))
       (with result1 = 0.0d0)
-      (with size = (array-dimension target-data 1))
+      (with size = (sl.data:data-points-count target-data))
       (for ii1 from 0 below size by 1)
       (op result1 ii1)
       (finally (return result1 )))))

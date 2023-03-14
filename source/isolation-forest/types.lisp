@@ -42,9 +42,7 @@
    (%train-data :initarg :train-data
           :reader sl.mp:train-data)
    (%attributes :initarg :attributes
-                :reader sl.tp:attribute-indexes)
-   (%data-points :initarg :data-points
-                 :reader sl.mp:data-points)))
+                :reader sl.tp:attribute-indexes)))
 
 
 (defclass isolation-prediction ()

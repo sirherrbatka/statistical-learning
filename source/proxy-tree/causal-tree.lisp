@@ -99,11 +99,10 @@
          training-parameters
          training-state)
   (let* ((treatment (treatment training-state))
-         (data-points (sl.mp:data-points training-state))
          (minimal-treatment-size (minimal-treatment-size proxy))
          (treatment-frequency (make-hash-table)))
     (iterate
-      (for i in-vector data-points)
+      (for i from 0 below (sl.data:data-points-count treatment))
       (incf (gethash (svref treatment i) treatment-frequency 0)))
     (iterate
       (for (key count) in-hashtable treatment-frequency)
@@ -119,14 +118,14 @@
      leaf)
   (bind ((inner (inner training-state))
          (treatment (treatment training-state))
-         (data-points (sl.mp:data-points inner))
          (treatment-types-count (treatment-types-count proxy))
          (leafs (make-array treatment-types-count))
          (sizes (make-array treatment-types-count))
          (next-proxy (sl.common:next-proxy proxy))
-         (treatment-vector (map 'vector
-                                (curry #'aref treatment)
-                                data-points))
+         (inner-data (sl.data:data treatment))
+         (treatment-vector (~> treatment sl.data:data-points-count make-array
+                               (map-into (lambda (index) (aref inner-data index 0))
+                                         (sl.data:index treatment))))
          ((:flet treatment-size (i))
           (count i treatment-vector)))
     (iterate
