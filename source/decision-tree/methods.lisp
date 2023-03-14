@@ -135,7 +135,6 @@
           (weight (sl.tp:weight model)))
       (when (null state)
         (setf state (make 'sl.tp:contributed-predictions
-                          :indexes (sl.data:iota-vector data-points-count)
                           :training-parameters parameters
                           :sums (sl.data:make-data-matrix data-points-count
                                                           number-of-classes))))
@@ -152,7 +151,7 @@
                                        (funcall leaf-key)))
                      (with predictions = (sl.tp:predictions leaf))
                      (for j from 0 below number-of-classes)
-                     (for class-support = (sl.data:mref predictions 0 j))
+                     (for class-support = (aref predictions 0 j))
                      (incf (sl.data:mref sums data-point j) (* weight class-support))))
                  data
                  parallel))

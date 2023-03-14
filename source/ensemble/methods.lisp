@@ -153,6 +153,7 @@
                            (tree-parameters sl.perf:classification)
                            ensemble-state
                            ensemble-model)
+  (declare (optimize (safety 3) (debug 3)))
   (let* ((parallel (~> ensemble-state sl.mp:parameters parallel))
          (indexes (indexes ensemble-state))
          (target-data (sl.mp:target-data ensemble-state))
@@ -163,43 +164,39 @@
     (declare (type (simple-array fixnum (* *)) counts)
              (type sl.data:double-float-data-matrix target-data))
     (assign-leafs ensemble-state ensemble-model)
-    (funcall (if parallel #'lparallel:pmap #'map)
-             nil
-             (lambda (index)
-               (declare (type fixnum index)
-                        (optimize (speed 3)))
-               (iterate
-                 (declare (type double-float expected)
-                          (type vector leafs)
-                          (type vector assigned-leafs)
-                          (type fixnum index)
-                          (ignorable tree))
-                 (with expected = (sl.data:mref (the sl.data:double-float-data-matrix target-data)
-                                                index
-                                                0))
-                 (with leafs = (aref assigned-leafs index))
-                 (for i from (~> leafs length 1-) downto 0)
-                 (for tree in-vector prev-trees)
-                 (for leaf = (aref leafs i))
-                 (incf (aref counts index 0))
-                 (for predictions = (sl.tp:predictions leaf))
-                 (for prediction =
-                      (iterate
-                        (declare (type fixnum i))
-                        (for i from 0
-                             below (sl.data:attributes-count predictions))
-                        (finding i maximizing
-                                 (sl.data:mref predictions 0 i))))
-                 (when (= prediction expected)
-                   (incf (aref counts index 1)))))
-             indexes)
+    (sl.data:data-matrix-map (lambda (index data)
+                               (declare (type fixnum index))
+                               (iterate
+                                 (declare (type double-float expected)
+                                          (type vector leafs)
+                                          (type vector assigned-leafs)
+                                          (type fixnum index)
+                                          (ignorable tree))
+                                 (with expected = (aref data index 0))
+                                 (with leafs = (aref assigned-leafs index))
+                                 (for i from (~> leafs length 1-) downto 0)
+                                 (for tree in-vector prev-trees)
+                                 (for leaf = (aref leafs i))
+                                 (incf (aref counts index 0))
+                                 (for predictions = (sl.tp:predictions leaf))
+                                 (for prediction =
+                                      (iterate
+                                        (declare (type fixnum i))
+                                        (for i from 0
+                                             below (array-dimension predictions 1))
+                                        (finding i maximizing
+                                                 (aref predictions 0 i))))
+                                 (when (= prediction expected)
+                                   (incf (aref counts index 1)))))
+                             target-data
+                             parallel)
     (funcall (if parallel #'lparallel:pmap #'map)
              nil
              (lambda (index &aux (total (aref counts index 0)))
                (declare (type fixnum index)
                         (type fixnum total))
                (unless (zerop total)
-                 (setf (aref weights index 0)
+                 (setf (sl.data:mref weights index 0)
                        (+ (- 1.0d0 (/ (the fixnum (aref counts index 1))
                                       total))
                           double-float-epsilon))))

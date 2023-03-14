@@ -114,8 +114,8 @@
 (defparameter *confusion-matrix*
   (statistical-learning.performance:cross-validation *forest-parameters*
                                                      4
-                                                     *train-data*
-                                                     *target-data*
+                                                     (sl.data:wrap *train-data*)
+                                                     (sl.data:wrap *target-data*)
                                                      :parallel nil))
 
 (print (sl.perf:accuracy *confusion-matrix*)) ; ~0.99

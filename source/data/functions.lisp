@@ -95,18 +95,21 @@
 
 
 (defun wrap (input)
-  (check-type input (or (simple-array double-float (* *))
-                        (simple-array t (* *))))
-  (let ((element-type (array-element-type input))
-        (data-points-count (array-dimension input 0)))
-    (econd ((eq element-type 'double-float)
-            (make-double-float-data-matrix
-             :data input
-             :index (make-iota-vector data-points-count)))
-           ((eq element-type t)
-            (make-universal-data-matrix
-             :data input
-             :index (make-iota-vector data-points-count))))))
+  (if (typep input 'data-matrix)
+      input
+      (progn
+        (check-type input (or (simple-array double-float (* *))
+                              (simple-array t (* *))))
+        (let ((element-type (array-element-type input))
+              (data-points-count (array-dimension input 0)))
+          (econd ((eq element-type 'double-float)
+                  (make-double-float-data-matrix
+                   :data input
+                   :index (make-iota-vector data-points-count)))
+                 ((eq element-type t)
+                  (make-universal-data-matrix
+                   :data input
+                   :index (make-iota-vector data-points-count))))))))
 
 
 (-> sample (data-matrix &key
@@ -386,6 +389,7 @@
 
 
 (defun data-matrix-map (function data-matrix parallel &aux (data (data data-matrix)))
+  (check-type data-matrix data-matrix)
   (funcall (if parallel #'lparallel:pmap #'map) nil
            (lambda (data-point) (funcall function data-point data))
            (index data-matrix))

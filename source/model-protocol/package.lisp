@@ -16,11 +16,6 @@
    #:make-unsupervised-model
    #:parameters
    #:predict
-   #:sample-training-state
-   #:sample-training-state*
-   #:sample-training-state*/proxy
-   #:sample-training-state-info
-   #:sample-training-state-info/proxy
    #:supervised-model
    #:target-data
    #:train-data
