@@ -33,9 +33,9 @@
                                    :data-points train))
                 (model (~>> (statistical-learning.mp:make-supervised-model
                              model-parameters
-                             (sl.data:wrap fold-train-data)
-                             (sl.data:wrap fold-target-data)
-                             :weights (sl.data:wrap (sampled-weights train)))
+                             fold-train-data
+                             fold-target-data
+                             :weights (sampled-weights train))
                             (funcall after _ fold-train-data fold-target-data)))
                 (test-target-data (statistical-learning.data:sample (sl.data:wrap target-data)
                                                                     :data-points test))

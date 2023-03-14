@@ -105,8 +105,7 @@
     (:attributes-view attributes-view)
     (:samples-view samples-view)
     (:sampler-state sampler-state)
-    (:train-data sl.mp:train-data)
-    (:indexes indexes)))
+    (:train-data sl.mp:train-data)))
 
 
 (defmethod cl-ds.utils:cloning-information append
@@ -155,7 +154,6 @@
                            ensemble-model)
   (declare (optimize (safety 3) (debug 3)))
   (let* ((parallel (~> ensemble-state sl.mp:parameters parallel))
-         (indexes (indexes ensemble-state))
          (target-data (sl.mp:target-data ensemble-state))
          (prev-trees (trees-view ensemble-state))
          (counts (~> ensemble-state weights-calculator-state counts))
@@ -200,7 +198,7 @@
                        (+ (- 1.0d0 (/ (the fixnum (aref counts index 1))
                                       total))
                           double-float-epsilon))))
-             indexes)))
+             (sl.data:index target-data))))
 
 
 (defmethod sl.mp:make-training-state/proxy (parameters/proxy
@@ -213,11 +211,9 @@
          (data-points-count (sl.data:data-points-count train-data))
          (assigned-leafs (map-into (make-array data-points-count)
                                    #'vect))
-         (indexes (sl.data:iota-vector data-points-count))
          (samples (make-array trees-count)))
     (make 'random-forest-state
           :train-data train-data
-          :indexes indexes
           :assigned-leafs assigned-leafs
           :parameters parameters
           :trees trees
@@ -471,7 +467,6 @@
          (tree-sample-rate (tree-sample-rate parameters))
          (data-points-count (sl.data:data-points-count data))
          (tree-sample-size (* data-points-count tree-sample-rate))
-         (indexes (sl.data:iota-vector data-points-count))
          (attributes (make-array trees-count))
          (trees (make-array trees-count))
          (samples (make-array trees-count))
@@ -480,7 +475,6 @@
           :all-args `(,@initargs :c ,c)
           :parameters parameters
           :train-data data
-          :indexes indexes
           :trees trees
           :attributes attributes
           :samples samples
@@ -497,7 +491,6 @@
                           target-data))
          (trees-count (trees-count parameters))
          (data-points-count (sl.data:data-points-count train-data))
-         (indexes (sl.data:iota-vector data-points-count))
          (assigned-leafs (map-into (make-array data-points-count)
                                    #'vect))
          (attributes (make-array trees-count))
@@ -507,7 +500,6 @@
           :all-args `(,@initargs :expected-value ,expected-value)
           :parameters parameters
           :train-data train-data
-          :indexes indexes
           :trees trees
           :assigned-leafs assigned-leafs
           :attributes attributes
