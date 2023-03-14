@@ -117,7 +117,7 @@
                         (:attributes (or null vector)))
     data-matrix)
 (defun sample (data-matrix &key data-points attributes)
-  (declare (optimize (speed 3) (safety 0)))
+  (declare (optimize (speed 3) (debug 0) (safety 0)))
   (check-data-points data-matrix)
   (dispatch-data-matrix (data-matrix)
     (cl-ds.utils:cases ((null attributes)
