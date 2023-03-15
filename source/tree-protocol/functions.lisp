@@ -127,7 +127,6 @@
 (defun data-matrix-split-list (length split-array position &rest args)
   (let* ((batches (batches args 2))
          (data (mapcar #'second batches)))
-    (assert (cl-ds.utils:homogenousp data :test #'vector= :key #'sl.data:index))
     (iterate
       (for symbol in (mapcar #'first batches))
       (for datum in (sl.data:split data length split-array position))

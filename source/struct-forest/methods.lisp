@@ -95,20 +95,11 @@
      state split-array
      position size initargs
      point)
-  (bind ((cloning-list (cl-ds.utils:cloning-list state)))
-    (apply #'make (class-of state)
-           :parent-state state
-           (append initargs
-                   (split-training-state-info/proxy
-                    parameters/proxy
-                    (splitter parameters)
-                    parameters
-                    state
-                    split-array
-                    position
-                    size
-                    point)
-                   cloning-list))))
+  (bind ((result (call-next-method)))
+    (setf (sl.mp:target-data result)
+          (sl.data:data-matrix-quasi-clone (struct-target-data state)
+                                           :index (~> result sl.mp:train-data sl.data:index)))
+    result))
 
 
 (defmethod relabel-iterations ((parameters struct-training-implementation))

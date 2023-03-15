@@ -337,7 +337,6 @@
 
 (-> split (list fixnum split-vector t) list)
 (defun split (data-matrixes length split-array position)
-  (assert (cl-ds.utils:homogenousp data-matrixes :test #'vector= :key #'index))
   (if (endp data-matrixes)
       nil
       (let ((old-index (~> data-matrixes first index))
