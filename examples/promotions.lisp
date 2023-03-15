@@ -74,8 +74,8 @@
     (with result = (sl.data:make-data-matrix-like (aref *predictions* 0)))
     (for i from 0 below (~> (aref *predictions* 0) sl.data:data array-total-size))
     (setf (row-major-aref (sl.data:data result) i)
-          (- (row-major-aref (aref (sl.data:data *predictions*) 1) i)
-             (row-major-aref (aref (sl.data:data *predictions*) 0) i)))
+          (- (row-major-aref (sl.data:data (aref *predictions* 1)) i)
+             (row-major-aref (sl.data:data (aref *predictions* 0)) i)))
     (finally (return result))))
 
 (defparameter *purchase-profit* 10.0d0)
