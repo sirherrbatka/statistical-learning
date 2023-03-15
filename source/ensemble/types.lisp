@@ -100,8 +100,6 @@
                   :accessor samples-view)
    (%train-data :initarg :train-data
                 :reader sl.mp:train-data)
-   (%indexes :initarg :indexes
-             :reader indexes)
    (%sampler-state :initarg :sampler-state
                    :accessor sampler-state))
   (:default-initargs

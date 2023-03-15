@@ -42,9 +42,7 @@
    (%train-data :initarg :train-data
           :reader sl.mp:train-data)
    (%attributes :initarg :attributes
-                :reader sl.tp:attribute-indexes)
-   (%data-points :initarg :data-points
-                 :reader sl.mp:data-points)))
+                :reader sl.tp:attribute-indexes)))
 
 
 (defclass isolation-prediction ()
@@ -54,8 +52,6 @@
                  :accessor trees-count)
    (%trees-sum :initarg :trees-sum
                :accessor trees-sum)
-   (%indexes :initarg :indexes
-             :reader sl.tp:indexes)
    (%c :initarg :c
        :reader c))
   (:default-initargs

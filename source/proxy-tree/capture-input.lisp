@@ -34,12 +34,10 @@
                     parameters
                     training-state
                     (inner-leaf leaf))
-  (let* ((data-points (sl.mp:data-points training-state))
-         (data (sl.mp:train-data training-state))
-         (sums (sl.data:reduce-data-points
-                    #'+ data :data-points data-points)))
+  (let* ((data (sl.mp:train-data training-state))
+         (data-points-count (sl.data:data-points-count data))
+         (sums (sl.data:reduce-data-points #'+ data)))
     (iterate
-      (with data-points-count = (length data-points))
       (for i from 0 below (sl.data:attributes-count sums))
       (setf #1=(sl.data:mref sums 0 i) (/ #1# data-points-count)))
     (setf (captured-input leaf) sums)))

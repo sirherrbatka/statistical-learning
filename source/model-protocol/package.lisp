@@ -5,7 +5,6 @@
   (:use #:cl #:statistical-learning.aux-package)
   (:nicknames #:statistical-learning.mp #:sl.mp)
   (:export
-   #:data-points
    #:fundamental-model
    #:fundamental-model-parameters
    #:fundamental-training-state
@@ -17,11 +16,6 @@
    #:make-unsupervised-model
    #:parameters
    #:predict
-   #:sample-training-state
-   #:sample-training-state*
-   #:sample-training-state*/proxy
-   #:sample-training-state-info
-   #:sample-training-state-info/proxy
    #:supervised-model
    #:target-data
    #:train-data

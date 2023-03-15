@@ -42,11 +42,6 @@
     (:model-cached model-cached)))
 
 
-(defmethod predict :before ((model fundamental-model) data &optional parallel)
-  (declare (ignore parallel))
-  (statistical-learning.data:check-data-points data))
-
-
 (defmethod make-training-state/proxy
     (parameters/proxy
      (parameters fundamental-model-parameters)

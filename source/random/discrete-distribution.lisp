@@ -3,9 +3,12 @@
 
 (defun discrete-distribution (weights)
   (declare (type sl.data:double-float-data-matrix weights))
-  (let* ((data-points-count (~>> weights
-                                 cl-ds.utils:unfold-table
-                                 (count-if-not #'zerop)))
+  (let* ((data-points-count (iterate outer
+                              (for i from 0 below (sl.data:data-points-count weights))
+                              (iterate
+                                (for j from 0 below (sl.data:attributes-count weights))
+                                (unless (zerop (sl.data:mref weights i j))
+                                  (in outer (sum 1))))))
          (probs (make-array data-points-count)))
     (iterate
       (declare (type fixnum i j))

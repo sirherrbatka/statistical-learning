@@ -25,14 +25,6 @@
   (sl.tp:loss (inner state)))
 
 
-(defmethod sl.mp:data-points ((state proxy-state))
-  (~> state inner sl.mp:data-points))
-
-
-(defmethod (setf sl.mp:data-points) (new-value (state proxy-state))
-  (setf (sl.mp:data-points (inner state)) new-value))
-
-
 (defmethod sl.tp:split-point ((state proxy-state))
   (~> state inner sl.tp:split-point))
 

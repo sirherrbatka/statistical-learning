@@ -85,7 +85,7 @@
                                             &optional parallel)
   (check-type data statistical-learning.data:data-matrix)
   (let* ((trees (trees model))
-         (result (trees-predict model trees data parallel)))
+         (result (trees-predict model trees (sl.data:wrap data) parallel)))
     result))
 
 
@@ -105,8 +105,7 @@
     (:attributes-view attributes-view)
     (:samples-view samples-view)
     (:sampler-state sampler-state)
-    (:train-data sl.mp:train-data)
-    (:indexes indexes)))
+    (:train-data sl.mp:train-data)))
 
 
 (defmethod cl-ds.utils:cloning-information append
@@ -153,58 +152,53 @@
                            (tree-parameters sl.perf:classification)
                            ensemble-state
                            ensemble-model)
+  (declare (optimize (safety 3) (debug 3)))
   (let* ((parallel (~> ensemble-state sl.mp:parameters parallel))
-         (indexes (indexes ensemble-state))
          (target-data (sl.mp:target-data ensemble-state))
          (prev-trees (trees-view ensemble-state))
          (counts (~> ensemble-state weights-calculator-state counts))
          (assigned-leafs (assigned-leafs ensemble-state))
          (weights (sl.mp:weights ensemble-state)))
     (declare (type (simple-array fixnum (* *)) counts)
-             (type sl.data:double-float-data-matrix target-data weights))
+             (type sl.data:double-float-data-matrix target-data))
     (assign-leafs ensemble-state ensemble-model)
-    (funcall (if parallel #'lparallel:pmap #'map)
-             nil
-             (lambda (index)
-               (declare (type fixnum index)
-                        (optimize (speed 3)))
-               (iterate
-                 (declare (type double-float expected)
-                          (type vector leafs)
-                          (type vector assigned-leafs)
-                          (type fixnum index)
-                          (ignorable tree))
-                 (with expected = (sl.data:mref (the sl.data:double-float-data-matrix target-data)
-                                                index
-                                                0))
-                 (with leafs = (aref assigned-leafs index))
-                 (for i from (~> leafs length 1-) downto 0)
-                 (for tree in-vector prev-trees)
-                 (for leaf = (aref leafs i))
-                 (incf (aref counts index 0))
-                 (for predictions = (sl.tp:predictions leaf))
-                 (for prediction =
-                      (iterate
-                        (declare (type fixnum i))
-                        (for i from 0
-                             below (sl.data:attributes-count predictions))
-                        (finding i maximizing
-                                 (sl.data:mref predictions 0 i))))
-                 (when (= prediction expected)
-                   (incf (aref counts index 1)))))
-             indexes)
+    (sl.data:data-matrix-map (lambda (index data)
+                               (declare (type fixnum index))
+                               (iterate
+                                 (declare (type double-float expected)
+                                          (type vector leafs)
+                                          (type vector assigned-leafs)
+                                          (type fixnum index)
+                                          (ignorable tree))
+                                 (with expected = (aref data index 0))
+                                 (with leafs = (aref assigned-leafs index))
+                                 (for i from (~> leafs length 1-) downto 0)
+                                 (for tree in-vector prev-trees)
+                                 (for leaf = (aref leafs i))
+                                 (incf (aref counts index 0))
+                                 (for predictions = (sl.tp:predictions leaf))
+                                 (for prediction =
+                                      (iterate
+                                        (declare (type fixnum i))
+                                        (for i from 0
+                                             below (array-dimension predictions 1))
+                                        (finding i maximizing
+                                                 (aref predictions 0 i))))
+                                 (when (= prediction expected)
+                                   (incf (aref counts index 1)))))
+                             target-data
+                             parallel)
     (funcall (if parallel #'lparallel:pmap #'map)
              nil
              (lambda (index &aux (total (aref counts index 0)))
                (declare (type fixnum index)
                         (type fixnum total))
                (unless (zerop total)
-                 (setf (sl.data:mref (the sl.data:double-float-data-matrix weights)
-                                     index 0)
+                 (setf (sl.data:mref weights index 0)
                        (+ (- 1.0d0 (/ (the fixnum (aref counts index 1))
                                       total))
                           double-float-epsilon))))
-             indexes)))
+             (sl.data:index target-data))))
 
 
 (defmethod sl.mp:make-training-state/proxy (parameters/proxy
@@ -217,11 +211,9 @@
          (data-points-count (sl.data:data-points-count train-data))
          (assigned-leafs (map-into (make-array data-points-count)
                                    #'vect))
-         (indexes (sl.data:iota-vector data-points-count))
          (samples (make-array trees-count)))
     (make 'random-forest-state
           :train-data train-data
-          :indexes indexes
           :assigned-leafs assigned-leafs
           :parameters parameters
           :trees trees
@@ -475,7 +467,6 @@
          (tree-sample-rate (tree-sample-rate parameters))
          (data-points-count (sl.data:data-points-count data))
          (tree-sample-size (* data-points-count tree-sample-rate))
-         (indexes (sl.data:iota-vector data-points-count))
          (attributes (make-array trees-count))
          (trees (make-array trees-count))
          (samples (make-array trees-count))
@@ -484,7 +475,6 @@
           :all-args `(,@initargs :c ,c)
           :parameters parameters
           :train-data data
-          :indexes indexes
           :trees trees
           :attributes attributes
           :samples samples
@@ -501,7 +491,6 @@
                           target-data))
          (trees-count (trees-count parameters))
          (data-points-count (sl.data:data-points-count train-data))
-         (indexes (sl.data:iota-vector data-points-count))
          (assigned-leafs (map-into (make-array data-points-count)
                                    #'vect))
          (attributes (make-array trees-count))
@@ -511,7 +500,6 @@
           :all-args `(,@initargs :expected-value ,expected-value)
           :parameters parameters
           :train-data train-data
-          :indexes indexes
           :trees trees
           :assigned-leafs assigned-leafs
           :attributes attributes
@@ -695,23 +683,21 @@
          (splitter (sl.tp:splitter tree-parameters))
          (assigned-leafs (assigned-leafs state))
          (train-data (sl.mp:train-data state))
-         (trees (trees-view state))
-         (indexes (indexes state)))
+         (trees (trees-view state)))
     (map nil #'sl.tp:force-tree trees)
-    (funcall (if parallel #'lparallel:pmap #'map)
-             nil
-             (lambda (index)
-               (declare (type fixnum index))
-               (iterate
-                 (with leafs = (aref assigned-leafs index))
-                 (for tree in-vector trees)
-                 (for leaf = (sl.tp:leaf-for splitter
-                                             (sl.tp:root tree)
-                                             train-data
-                                             index
-                                             model))
-                 (vector-push-extend leaf leafs)))
-             indexes)
+    (sl.data:data-matrix-map (lambda (index train-data)
+                               (declare (type fixnum index))
+                               (iterate
+                                 (with leafs = (aref assigned-leafs index))
+                                 (for tree in-vector trees)
+                                 (for leaf = (sl.tp:leaf-for splitter
+                                                             (sl.tp:root tree)
+                                                             train-data
+                                                             index
+                                                             model))
+                                 (vector-push-extend leaf leafs)))
+                             train-data
+                             parallel)
     (setf (leafs-assigned-p state) t)
     nil))
 

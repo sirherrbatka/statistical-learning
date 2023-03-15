@@ -122,3 +122,12 @@
     (for s initially state then (parent-state s))
     (while s)
     (collecting (split-point s))))
+
+
+(defun data-matrix-split-list (length split-array position &rest args)
+  (iterate
+    (with batches = (batches args 2))
+    (for symbol in (mapcar #'first batches))
+    (for datum in (sl.data:split (mapcar #'second batches) length split-array position))
+    (collecting symbol)
+    (collecting datum)))

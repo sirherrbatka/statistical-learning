@@ -63,21 +63,20 @@
            (shrinkage (shrinkage model))
            (root (sl.tp:root model)))
       (declare (type sl.data:double-float-data-matrix sums))
-      (funcall (if parallel #'lparallel:pmap #'map)
-               nil
-               (lambda (data-point)
-                 (let* ((leaf (~>> (sl.tp:leaf-for splitter root
-                                                   data data-point
-                                                   model)
-                                   (funcall leaf-key)))
-                        (predictions (sl.tp:predictions leaf)))
-                   (iterate
-                     (for i from 0 below (sl.data:attributes-count predictions))
-                     (incf (sl.data:mref sums data-point i)
-                           (* shrinkage
-                              (sl.data:mref predictions 0 i)
-                              weight)))))
-               (sl.tp:indexes state))
+      (sl.data:data-matrix-map (lambda (data-point data)
+                                 (let* ((leaf (~>> (sl.tp:leaf-for splitter root
+                                                                   data data-point
+                                                                   model)
+                                                   (funcall leaf-key)))
+                                        (predictions (sl.tp:predictions leaf)))
+                                   (iterate
+                                     (for i from 0 below (sl.data:attributes-count predictions))
+                                     (incf (sl.data:mref sums data-point i)
+                                           (* shrinkage
+                                              (aref predictions 0 i)
+                                              weight)))))
+                               sums
+                               parallel)
       (incf (sl.tp:contributions-count state) weight))
     state))
 
@@ -101,21 +100,20 @@
            (number-of-classes (sl.opt:number-of-classes parameters))
            (shrinkage (shrinkage model))
            (root (sl.tp:root model)))
-      (funcall (if parallel #'lparallel:pmap #'map)
-               nil
-               (lambda (data-point)
-                 (iterate
-                   (declare (type fixnum j))
-                   (with leaf = (~>> (sl.tp:leaf-for splitter root
-                                                     data data-point
-                                                     model)
-                                     (funcall leaf-key)))
-                   (with predictions = (sl.tp:predictions leaf))
-                   (for j from 0 below number-of-classes)
-                   (for gradient = (sl.data:mref predictions 0 j))
-                   (incf (sl.data:mref sums data-point j)
-                         (* weight shrinkage gradient))))
-               (sl.tp:indexes state))
+      (sl.data:data-matrix-map (lambda (data-point data)
+                                 (iterate
+                                   (declare (type fixnum j))
+                                   (with leaf = (~>> (sl.tp:leaf-for splitter root
+                                                                     data data-point
+                                                                     model)
+                                                     (funcall leaf-key)))
+                                   (with predictions = (sl.tp:predictions leaf))
+                                   (for j from 0 below number-of-classes)
+                                   (for gradient = (aref predictions 0 j))
+                                   (incf (sl.data:mref sums data-point j)
+                                         (* weight shrinkage gradient))))
+                               sums
+                               parallel)
       (incf (sl.tp:contributions-count state) weight))
     state))
 
@@ -235,22 +233,20 @@
      training-state
      leaf)
   (iterate
-    (declare (type (simple-array fixnum (*)) data-points)
-             (type fixnum i j length number-of-classes)
-             (type sl.data:double-float-data-matrix result target-data))
+    (declare (type fixnum length number-of-classes)
+             (type sl.data:double-float-data-matrix target-data)
+             (type (simple-array double-float (1 *)) result))
     (with target-data = (sl.mp:target-data training-state))
-    (with data-points = (sl.mp:data-points training-state))
-    (with length = (length data-points))
+    (with length = (sl.data:data-points-count target-data))
     (with number-of-classes = (sl.data:attributes-count target-data))
-    (with result = (sl.data:make-data-matrix 1 number-of-classes))
-    (for i from 0 below length)
-    (for j = (aref data-points i))
+    (with result = (make-array `(1 ,number-of-classes) :element-type 'double-float))
+    (for j from 0 below length)
     (iterate
       (declare (type fixnum j))
       (for k from 0 below number-of-classes)
-      (incf (sl.data:mref result 0 k)
+      (incf (aref result 0 k)
             (sl.data:mref target-data j k)))
-    (finally (setf (sl.tp:predictions leaf) (sl.data:map-data-matrix
+    (finally (setf (sl.tp:predictions leaf) (sl.data:map-array
                                              (lambda (x) (/ x length))
                                              result)))))
 
@@ -261,19 +257,19 @@
            (optimize (speed 3)))
   (iterate
     (declare (type fixnum i)
-             (type sl.data:double-float-data-matrix result))
+             (type (simple-array double-float (* *)) result))
     (with number-of-classes = (~>> parameters
                                    optimized-function
                                    sl.opt:number-of-classes))
-    (with result = (sl.data:make-data-matrix 1 number-of-classes))
+    (with result = (make-array `(1 ,number-of-classes) :element-type 'double-float))
     (for i from 0 below (sl.data:data-points-count data))
-    (incf (sl.data:mref result 0
-                        (truncate (sl.data:mref data i 0))))
+    (incf (aref result 0
+                (truncate (sl.data:mref data i 0))))
     (finally
      (iterate
        (declare (type fixnum j))
        (for j from 0 below number-of-classes)
-       (for avg = (/ #1=(sl.data:mref result 0 j)
+       (for avg = (/ #1=(aref result 0 j)
                      (sl.data:data-points-count data)))
        (setf #1# avg))
      (return result))))
@@ -324,7 +320,6 @@
                                     model
                                     data-points-count)
   (make 'sl.tp:contributed-predictions
-        :indexes (sl.data:iota-vector data-points-count)
         :training-parameters parameters
         :sums (iterate
                 (with expected-value = (expected-value model))
@@ -344,7 +339,6 @@
                                     model
                                     data-points-count)
   (make 'sl.tp:contributed-predictions
-        :indexes (sl.data:iota-vector data-points-count)
         :training-parameters parameters
         :sums (iterate
                 (declare (type sl.data:double-float-data-matrix result))

@@ -54,37 +54,22 @@
      (state causal-state)
      split-array
      position size initargs point)
-  (cl-ds.utils:quasi-clone
-   state
-   :inner (sl.tp:split-training-state*/proxy
-           (sl.common:next-proxy proxy)
-           parameters
-           (inner state)
-           split-array
-           position
-           size
-           initargs
-           point)))
-
-
-(defmethod sl.mp:sample-training-state*/proxy
-    ((proxy causal-tree)
-     parameters
+  (let ((inner (sl.tp:split-training-state*/proxy
+                 (sl.common:next-proxy proxy)
+                 parameters
+                 (inner state)
+                 split-array
+                 position
+                 size
+                 initargs
+                 point)))
+    (cl-ds.utils:quasi-clone*
      state
-     &key
-       data-points
-       train-attributes
-       initargs
-       target-attributes)
-  (cl-ds.utils:quasi-clone* state
-    :inner (sl.mp:sample-training-state*/proxy
-            (sl.common:next-proxy proxy)
-            parameters
-            (inner state)
-            :initargs initargs
-            :data-points data-points
-            :train-attributes train-attributes
-            :target-attributes target-attributes)))
+     :inner inner
+     :treatment (sl.data:data-matrix-quasi-clone (treatment state)
+                                                 :index (~> inner
+                                                            sl.mp:train-data
+                                                            sl.data:index)))))
 
 
 (defmethod sl.tp:make-leaf*/proxy ((proxy causal-tree)
@@ -99,12 +84,11 @@
          training-parameters
          training-state)
   (let* ((treatment (treatment training-state))
-         (data-points (sl.mp:data-points training-state))
          (minimal-treatment-size (minimal-treatment-size proxy))
          (treatment-frequency (make-hash-table)))
     (iterate
-      (for i in-vector data-points)
-      (incf (gethash (svref treatment i) treatment-frequency 0)))
+      (for i from 0 below (sl.data:data-points-count treatment))
+      (incf (gethash (sl.data:mref treatment i 0) treatment-frequency 0)))
     (iterate
       (for (key count) in-hashtable treatment-frequency)
       (when (< count (* 2 minimal-treatment-size))
@@ -119,14 +103,14 @@
      leaf)
   (bind ((inner (inner training-state))
          (treatment (treatment training-state))
-         (data-points (sl.mp:data-points inner))
          (treatment-types-count (treatment-types-count proxy))
          (leafs (make-array treatment-types-count))
          (sizes (make-array treatment-types-count))
          (next-proxy (sl.common:next-proxy proxy))
-         (treatment-vector (map 'vector
-                                (curry #'aref treatment)
-                                data-points))
+         (inner-data (sl.data:data treatment))
+         (treatment-vector (~> treatment sl.data:data-points-count make-array
+                               (map-into (lambda (index) (truncate (aref inner-data index 0)))
+                                         (sl.data:index treatment))))
          ((:flet treatment-size (i))
           (count i treatment-vector)))
     (iterate
@@ -169,9 +153,7 @@
                                (sl.common:next-proxy proxy)
                                parameters
                                initargs)
-                 :treatment (map 'vector
-                                 #'round
-                                 (cl-ds.utils:unfold-table treatment))))
+                 :treatment treatment))
 
 
 (defun causal (parameters

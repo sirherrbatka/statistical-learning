@@ -7,8 +7,8 @@
   (sides #() :type simple-vector))
 
 
-(-> wdot (sl.data:double-float-data-matrix
-          sl.data:double-float-data-matrix
+(-> wdot ((simple-array double-float (* *))
+          (simple-array double-float (* *))
           fixnum
           fixnum
           (simple-array fixnum (*)))
@@ -24,15 +24,15 @@
     (for i from 0 below (length attributes))
     (for attribute = (aref attributes i))
     (incf result
-          (* (sl.data:mref first first-point attribute)
-             (sl.data:mref second second-point i)))
+          (* (aref first first-point attribute)
+             (aref second second-point i)))
     (finally (return result))))
 
 
 (defun split-result-loss (result state
                           &aux (data-size (~> state
-                                              sl.mp:data-points
-                                              length)))
+                                              sl.mp:train-data
+                                              sl.data:data-points-count)))
   (/ (+ (* (left-score result) (left-length result))
         (* (right-score result) (right-length result)))
      data-size))
