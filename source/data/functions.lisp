@@ -394,3 +394,10 @@
            (lambda (data-point) (funcall function data-point data))
            (index data-matrix))
   data-matrix)
+
+
+(defun data-matrix-quasi-clone (data-matrix &rest args)
+  (apply (data-matrix-constructor data-matrix)
+         (append args
+                 (list :data (data data-matrix)
+                       :index (index data-matrix)))))

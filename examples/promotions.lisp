@@ -2,7 +2,7 @@
 
 (ql:quickload '(:vellum :vellum-csv :statistical-learning))
 
-(defpackage #:promotions-example
+(cl:defpackage #:promotions-example
   (:use #:cl #:statistical-learning.aux-package))
 
 (cl:in-package #:promotions-example)
@@ -47,14 +47,14 @@
             :maximal-depth 3
             :minimal-difference 0.0d0
             :minimal-size 50
-            :parallel t)
+            :parallel nil)
       (sl.pt:causal 10 2) ; 10 data points for promotion + 10 data points for no promotions required, 0 designates no promotion, 1 designates promotion
       ))
 
 (defparameter *forest-parameters*
   (make 'statistical-learning.ensemble:random-forest
         :trees-count 500
-        :parallel t
+        :parallel nil
         :tree-batch-size 100
         :tree-attributes-count 3
         :data-points-sampler (make-instance 'sl.ensemble:weights-based-data-points-sampler
@@ -65,17 +65,17 @@
   (sl.mp:make-supervised-model *forest-parameters*
                                *train-data*
                                *target-data*
-                               :treatment *treatment-data*))
+                               :treatment (sl.data:wrap *treatment-data*)))
 
-(defparameter *predictions* (sl.mp:predict *model* *train-data* t))
+(defparameter *predictions* (sl.mp:predict *model* *train-data* nil))
 
 (defparameter *gains*
   (iterate
     (with result = (sl.data:make-data-matrix-like (aref *predictions* 0)))
-    (for i from 0 below (~> (aref *predictions* 0) array-total-size))
-    (setf (row-major-aref result i)
-          (- (row-major-aref (aref *predictions* 1) i)
-             (row-major-aref (aref *predictions* 0) i)))
+    (for i from 0 below (~> (aref *predictions* 0) sl.data:data array-total-size))
+    (setf (row-major-aref (sl.data:data result) i)
+          (- (row-major-aref (aref (sl.data:data *predictions*) 1) i)
+             (row-major-aref (aref (sl.data:data *predictions*) 0) i)))
     (finally (return result))))
 
 (defparameter *purchase-profit* 10.0d0)

@@ -137,7 +137,7 @@
 (defmethod statistical-learning.mp:predict ((model tree-model)
                                             data
                                             &optional parallel)
-  (~> (contribute-predictions model data nil parallel)
+  (~> (contribute-predictions model (sl.data:wrap data) nil parallel)
       extract-predictions))
 
 
