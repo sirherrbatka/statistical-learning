@@ -51,22 +51,6 @@
          initargs))
 
 
-(defmethod sample-training-state*/proxy
-    (parameters/proxy
-     (parameters fundamental-model-parameters)
-     state
-     &key data-points train-attributes target-attributes initargs
-     &allow-other-keys)
-  (apply #'make (class-of state)
-         (append (sample-training-state-info
-                  parameters state
-                  :target-attributes target-attributes
-                  :train-attributes train-attributes
-                  :data-points data-points)
-                 initargs
-                 (cl-ds.utils:cloning-list state))))
-
-
 (defmethod cache ((state fundamental-training-state)
                   key)
   (gethash key (cached state)))

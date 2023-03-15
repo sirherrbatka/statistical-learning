@@ -99,7 +99,7 @@
    (%samples-view :initarg :samples-view
                   :accessor samples-view)
    (%train-data :initarg :train-data
-                :reader sl.mp:train-data)
+                :accessor sl.mp:train-data)
    (%sampler-state :initarg :sampler-state
                    :accessor sampler-state))
   (:default-initargs

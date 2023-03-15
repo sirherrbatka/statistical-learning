@@ -3,17 +3,26 @@
 
 (defmethod sl.mp:target-data ((state struct-state))
   (ensure (relabaled state)
-    (relable (~> state sl.mp:parameters relabeler)
-             (~> state sl.mp:parameters original)
+    (relable (~> state sl.mp:training-parameters original relabeler)
+             (~> state sl.mp:training-parameters original)
              state)))
 
 
 (defmethod sl.mp:make-training-state/proxy (parameters/proxy
-                                            (parameters struct-training-implementation)
-                                            &rest initargs)
-  (declare (ignore initargs))
-  (lret ((result (call-next-method)))
-    (change-class result 'struct-state)))
+                                            (parameters struct)
+                                            &rest initargs
+                                            &key weights)
+  (lret ((result
+          (apply #'make 'struct-state
+                 :training-parameters (training-implementation parameters)
+                 :loss 0.0d0
+                 initargs)))
+    (setf (relabaled result) (relable (relabeler parameters)
+                                      parameters
+                                      result))
+    (setf (sl.tp:loss result) (sl.opt:loss (sl.opt:optimized-function (sl.mp:training-parameters result))
+                                           (relabaled result)
+                                           weights))))
 
 
 (defmethod sl.tp:initialize-leaf/proxy (parameters/proxy
@@ -37,14 +46,14 @@
 
 
 (defmethod sl.tp:contribute-predictions*/proxy
-  (parameters/proxy
-   (parameters struct)
-   model
-   data
-   state
-   context
-   parallel
-   &optional (leaf-key #'identity))
+    (parameters/proxy
+     (parameters struct)
+     model
+     data
+     state
+     context
+     parallel
+     &optional (leaf-key #'identity))
   (sl.tp:contribute-predictions*/proxy parameters/proxy
                                        (prediction-implementation parameters)
                                        model
@@ -78,6 +87,28 @@
          :proxy (sl.common:proxy parameters)
          :splitter (sl.tp:splitter parameters)
          initargs))
+
+
+(defmethod sl.tp:split-training-state*/proxy
+    (parameters/proxy
+     (parameters struct-training-implementation)
+     state split-array
+     position size initargs
+     point)
+  (bind ((cloning-list (cl-ds.utils:cloning-list state)))
+    (apply #'make (class-of state)
+           :parent-state state
+           (append initargs
+                   (split-training-state-info/proxy
+                    parameters/proxy
+                    (splitter parameters)
+                    parameters
+                    state
+                    split-array
+                    position
+                    size
+                    point)
+                   cloning-list))))
 
 
 (defmethod relabel-iterations ((parameters struct-training-implementation))

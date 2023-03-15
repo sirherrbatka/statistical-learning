@@ -6,7 +6,8 @@
                :accessor relabaled)))
 
 
-(defclass struct-training-implementation (sl.dt:classification)
+(defclass struct-training-implementation (sl.dt:classification
+                                          sl.tp:basic-tree-training-parameters)
   ((%original :initarg :original
               :reader original))
   (:default-initargs

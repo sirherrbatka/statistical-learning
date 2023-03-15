@@ -78,6 +78,7 @@
 (defgeneric attribute-indexes (training-state))
 (defgeneric (setf attribute-indexes) (new-value training-state))
 (defgeneric loss (state))
+(defgeneric (setf loss) (new-value state))
 (defgeneric weights (state))
 (defgeneric support (node))
 (defgeneric (setf support) (new-value node))

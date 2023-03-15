@@ -34,6 +34,8 @@
 (defgeneric (setf training-parameters) (new-value state))
 (defgeneric target-data (state))
 (defgeneric train-data (state))
+(defgeneric (setf train-data) (new-value state))
+(defgeneric (setf target-data) (new-value state))
 (defgeneric weights-data (state))
 (defgeneric cache (state key))
 (defgeneric model-cache (state key))

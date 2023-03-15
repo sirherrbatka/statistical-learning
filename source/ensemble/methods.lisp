@@ -659,7 +659,6 @@
      initargs)
   (apply #'sl.mp:make-training-state
          tree-parameters
-         :data-points data-points
          :attributes attributes
          initargs))
 

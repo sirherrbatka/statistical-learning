@@ -123,7 +123,6 @@
     data-matrix)
 (defun sample (data-matrix &key data-points attributes)
   (declare (optimize (speed 3) (debug 0) (safety 0)))
-  (check-data-points data-matrix)
   (dispatch-data-matrix (data-matrix)
     (cl-ds.utils:cases ((null attributes)
                         (null data-points))
@@ -338,6 +337,7 @@
 
 (-> split (list fixnum split-vector t) list)
 (defun split (data-matrixes length split-array position)
+  (assert (cl-ds.utils:homogenousp data-matrixes :test #'vector= :key #'index))
   (if (endp data-matrixes)
       nil
       (let ((old-index (~> data-matrixes first index))

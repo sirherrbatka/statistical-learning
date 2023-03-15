@@ -7,6 +7,7 @@
 
 
 (defun fit-tree-batch (initargs state)
+  (declare (optimize (debug 3)))
   (cl-ds.utils:with-rebind (cl-progress-bar:*progress-bar*)
     (bind ((parameters (sl.mp:parameters state))
            (parallel (parallel parameters))

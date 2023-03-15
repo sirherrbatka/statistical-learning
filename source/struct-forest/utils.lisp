@@ -1,7 +1,6 @@
 (cl:in-package #:statistical-learning.struct-forest)
 
 
-(declaim (inline euclid-distance))
 (-> euclid-distance (sl.data:double-float-data-matrix fixnum fixnum) double-float)
 (defun euclid-distance (data ai bi)
   (declare (type sl.data:double-float-data-matrix data)
@@ -19,7 +18,7 @@
 
 
 (defun select-pivots (parameters state)
-  (let* ((target-data (sl.mp:target-data state))
+  (let* ((target-data (struct-target-data state))
          (length (sl.data:data-points-count target-data))
          (first-index (random length))
          (second-index (iterate
@@ -29,8 +28,8 @@
     (declare (type sl.data:double-float-data-matrix target-data))
     (iterate
       (declare (type fixnum iterations))
-      (with iterations = (relabel-iterations parameters))
-      (with repeats = (relabel-repeats parameters))
+      (with iterations = (relabel-iterations (relabeler parameters)))
+      (with repeats = (relabel-repeats (relabeler parameters)))
       (repeat iterations)
       (for first-data-point = first-index)
       (for result =
@@ -47,7 +46,7 @@
 
 
 (defun relabel-with-pivots (state first-pivot second-pivot)
-  (let* ((target-data (sl.mp:target-data state))
+  (let* ((target-data (struct-target-data state))
          (data-points-count (sl.data:data-points-count target-data))
          (result (sl.data:make-data-matrix data-points-count 1)))
     (declare (type sl.data:double-float-data-matrix target-data result))

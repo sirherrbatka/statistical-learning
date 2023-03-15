@@ -114,15 +114,15 @@
    (%depth :initarg :depth
            :reader depth)
    (%loss :initarg :loss
-          :reader loss)
+          :accessor loss)
    (%target-data :initarg :target-data
-                 :reader sl.mp:target-data)
+                 :accessor sl.mp:target-data)
    (%weights :initarg :weights
              :reader sl.mp:weights)
    (%split-point :initarg :split-point
                  :accessor split-point)
    (%train-data :initarg :train-data
-                :reader sl.mp:train-data)
+                :accessor sl.mp:train-data)
    (%spritter-state :initarg :splitter-state
                     :accessor splitter-state)
    (%parent-state :initarg :parent-state
