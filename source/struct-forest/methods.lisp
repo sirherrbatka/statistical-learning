@@ -19,7 +19,20 @@
                                         (training-parameters struct-training-implementation)
                                         training-state
                                         leaf)
-  cl-ds.utils:todo)
+  (let* ((target-data (struct-target-data training-state))
+         (attributes-count (sl.data:attributes-count target-data))
+         (result (make-array `(1 ,attributes-count) :element-type 'double-float :initial-element 0.0d0))
+         (data-points-count (sl.data:data-points-count target-data)))
+    (declare (type fixnum data-points-count))
+    (iterate
+      (declare (type fixnum i))
+      (for i from 0 below data-points-count)
+      (iterate
+        (declare (type fixnum ii))
+        (for ii from 0 below attributes-count)
+        (incf (aref result 0 ii) (sl.data:mref target-data i ii))))
+    (setf (sl.tp:predictions leaf)
+          (sl.data:array-avg result data-points-count))))
 
 
 (defmethod sl.tp:contribute-predictions*/proxy
@@ -75,8 +88,7 @@
 
 
 (defmethod relable ((parameters struct) state)
-  (bind ((target-data (sl.mp:target-data state))
-         ((:values first second) (select-pivots parameters state)))
+  (bind (((:values first second) (select-pivots parameters state)))
     (declare (type (simple-array fixnum (*)) data-points)
              (type sl.data:double-float-data-matrix target-data)
              (type fixnum first second))

@@ -83,7 +83,6 @@
 (defmethod statistical-learning.mp:predict ((model ensemble-model)
                                             data
                                             &optional parallel)
-  (check-type data statistical-learning.data:data-matrix)
   (let* ((trees (trees model))
          (result (trees-predict model trees (sl.data:wrap data) parallel)))
     result))

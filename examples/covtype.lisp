@@ -1,11 +1,9 @@
 (ql:quickload '(:statistical-learning :vellum :vellum-csv))
 
-(cl:in-package #:cl-user)
-
-(defpackage #:covtype-example
+(cl:defpackage #:covtype-example
   (:use #:cl #:statistical-learning.aux-package))
 
-(in-package #:covtype-example)
+(cl:in-package #:covtype-example)
 
 (defvar *data*
   (vellum:copy-from :csv (~>> (asdf:system-source-directory :statistical-learning)
