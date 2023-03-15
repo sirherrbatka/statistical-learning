@@ -2,6 +2,7 @@
 
 
 (declaim (inline euclid-distance))
+(-> euclid-distance (sl.data:double-float-data-matrix fixnum fixnum) double-float)
 (defun euclid-distance (data ai bi)
   (declare (type sl.data:double-float-data-matrix data)
            (optimize (speed 3))

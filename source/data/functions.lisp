@@ -3,7 +3,8 @@
 
 (declaim (inline data))
 (defun data (data-matrix)
-  (declare (type data-matrix data-matrix))
+  (declare (type data-matrix data-matrix)
+           (optimize (speed 3)))
   (if (typep data-matrix 'universal-data-matrix)
       (universal-data-matrix-data data-matrix)
       (double-float-data-matrix-data data-matrix)))
@@ -11,7 +12,8 @@
 
 (declaim (inline index))
 (defun index (data-matrix)
-  (declare (type data-matrix data-matrix))
+  (declare (type data-matrix data-matrix)
+           (optimize (speed 3)))
   (if (typep data-matrix 'universal-data-matrix)
       (universal-data-matrix-index data-matrix)
       (double-float-data-matrix-index data-matrix)))
@@ -19,29 +21,31 @@
 
 (declaim (inline data-matrix-element-type))
 (defun data-matrix-element-type (data-matrix)
+  (declare (type data-matrix data-matrix) (optimize (speed 3)))
   (~> data-matrix data array-element-type))
 
 
 (declaim (inline attributes-count))
 (defun attributes-count (data-matrix)
-  (check-data-points data-matrix)
+  (declare (type data-matrix data-matrix) (optimize (speed 3)))
   (array-dimension (data data-matrix) 1))
 
 
 (declaim (inline data-points-count))
 (defun data-points-count (data-matrix)
-  (check-data-points data-matrix)
+  (declare (type data-matrix data-matrix) (optimize (speed 3)))
   (array-dimension (index data-matrix) 0))
 
 
 (defun data-matrix-dimensions (data-matrix)
-  (check-data-points data-matrix)
+  (declare (type data-matrix data-matrix) (optimize (speed 3)))
   (list (array-dimension (index data-matrix) 0)
         (array-dimension (data data-matrix) 1)))
 
 
 (declaim (inline mref))
 (defun mref (data-matrix data-point attribute)
+  (declare (type data-matrix data-matrix) (optimize (speed 3)))
   (aref (data data-matrix)
         (aref (index data-matrix) data-point)
         attribute))
@@ -49,6 +53,7 @@
 
 (declaim (inline (setf mref)))
 (defun (setf mref) (new-value data-matrix data-point attribute)
+  (declare (type data-matrix data-matrix) (optimize (speed 3)))
   (setf (aref (data data-matrix)
               (aref (index data-matrix) data-point)
               attribute)
