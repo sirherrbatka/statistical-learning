@@ -8,6 +8,9 @@
    #:fundamental-model
    #:fundamental-model-parameters
    #:fundamental-training-state
+   #:sample-training-state-info/proxy
+   #:sample-training-state
+   #:sample-training-state*/proxy
    #:make-model*
    #:make-model*/proxy
    #:make-supervised-model

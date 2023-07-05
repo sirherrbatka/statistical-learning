@@ -6,7 +6,7 @@
     (ensure indexes (statistical-learning.data:iota-vector data-points))
     (statistical-learning.data:reshuffle indexes)
     (iterate
-      (with result = (copy-array data))
+      (with result = (sl.data:copy data))
       (for i from 0 below data-points)
       (setf (statistical-learning.data:mref result i attribute)
             (statistical-learning.data:mref data (aref indexes i) attribute))

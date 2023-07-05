@@ -429,7 +429,6 @@
          (data (sl.mp:train-data state))
          (length (length split-vector)))
     (declare (type sl.data:double-float-data-matrix data)
-             (type (simple-array fixnum (*)) data-point-indexes)
              (type double-float threshold)
              (type fixnum length attribute))
     (assert (< attribute (sl.data:attributes-count data)))

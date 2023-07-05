@@ -115,8 +115,8 @@
  (defparameter *confusion-matrix*
    (statistical-learning.performance:cross-validation *forest-parameters*
                                                       2
-                                                      *train-data*
-                                                      *target-data*
+                                                      (sl.data:wrap *train-data*)
+                                                      (sl.data:wrap *target-data*)
                                                       :parallel t)))
 
 
@@ -142,8 +142,8 @@
                                                            'sl.tp:random-splitter
                                                            :trials-count 50)))
     (statistical-learning.performance:cross-validation 2
-                                                       *train-data*
-                                                       *target-data*
+                                                       (sl.data:wrap *train-data*)
+                                                       (sl.data:wrap *target-data*)
                                                        :parallel t)
     statistical-learning.performance:accuracy
     (format t "~3$~%" _)) ; ~0.90

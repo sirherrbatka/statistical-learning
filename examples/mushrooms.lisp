@@ -122,6 +122,6 @@
 
 (print (sl.perf:attributes-importance *forest-parameters*
                                       4
-                                      *train-data*
-                                      *target-data*
+                                      (sl.data:wrap *train-data*)
+                                      (sl.data:wrap *target-data*)
                                       :parallel t))

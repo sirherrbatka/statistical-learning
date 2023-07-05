@@ -112,7 +112,5 @@
 
 (defmethod relable ((relabler euclid-distance-relabaler) parameters state)
   (bind (((:values first second) (select-pivots parameters state)))
-    (declare (type (simple-array fixnum (*)) data-points)
-             (type sl.data:double-float-data-matrix target-data)
-             (type fixnum first second))
+    (declare (type fixnum first second))
     (relabel-with-pivots state first second)))

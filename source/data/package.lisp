@@ -12,6 +12,7 @@
    #:index
    #:data
    #:wrap
+   #:copy
    #:data-matrix-quasi-clone
    #:data-matrix-map
    #:attributes-count

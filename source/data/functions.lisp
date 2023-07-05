@@ -5,9 +5,21 @@
 (defun data (data-matrix)
   (declare (type data-matrix data-matrix)
            (optimize (speed 3)))
+  (check-type data-matrix data-matrix)
   (if (typep data-matrix 'universal-data-matrix)
       (universal-data-matrix-data data-matrix)
       (double-float-data-matrix-data data-matrix)))
+
+
+(defun copy (data-matrix)
+  (check-type data-matrix data-matrix)
+  (if (typep data-matrix 'universal-data-matrix)
+      (make-universal-data-matrix
+       :data (~> data-matrix data copy-array)
+       :index (~> data-matrix index))
+      (make-double-float-data-matrix
+       :data (~> data-matrix data copy-array)
+       :index (~> data-matrix index))))
 
 
 (declaim (inline index))
