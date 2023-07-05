@@ -42,7 +42,7 @@
     ((splitter) parameters state))
 
 (sl.common:defgeneric/proxy calculate-loss*
-    ((parameters) state split-array left-length right-length))
+    ((parameters) state split-array left-length right-length middle-length))
 
 (sl.common:defgeneric/proxy split-result-accepted-p
     ((parameters)

@@ -242,25 +242,28 @@
   (bind ((data-size (~> training-state sl.mp:train-data sl.data:data-points-count))
          (split-array (sl.opt:make-split-array data-size))
          (point (pick-split training-state))
-         ((:values left-length right-length)
+         ((:values left-length right-length middle-length)
           (progn
             (setf (split-point training-state) point)
             (fill-split-vector training-state
                                split-array)))
-         ((:values left-score right-score)
+         ((:values left-score right-score middle-score)
           (calculate-loss* training-parameters
                            training-state
                            split-array
                            left-length
-                           right-length)))
+                           right-length
+                           middle-length)))
     (assert (= (+ left-length right-length) data-size))
     (let ((result (make 'split-result
                         :split-point point
                         :split-vector split-array
                         :left-score left-score
                         :right-score right-score
+                        :middle-score (or middle-score 0.0)
                         :left-length left-length
-                        :right-length right-length)))
+                        :right-length right-length
+                        :middle-length (or middle-length 0))))
       (setf (split-point training-state) point)
       (if (split-result-accepted-p training-parameters training-state result)
           result
@@ -272,7 +275,8 @@
                                        (training-parameters fundamental-tree-training-parameters)
                                        training-state)
   (iterate
-    (declare (type fixnum attempt left-length right-length data-size
+    (declare (type fixnum attempt left-length right-length middle-length
+                   data-size
                    trials-count))
     (with trials-count = (trials-count splitter/proxy))
     (with data-size = (~> training-state sl.mp:train-data sl.data:data-points-count))
@@ -282,7 +286,8 @@
     (when (null split-result) (next-iteration))
     (for left-length = (left-length split-result))
     (for right-length = (right-length split-result))
-    (assert (= (+ left-length right-length) data-size))
+    (for middle-length = (middle-length split-result))
+    (assert (= (+ left-length right-length middle-length) data-size))
     (when (and split-result
                (split-result-improved-p training-parameters
                                         training-state

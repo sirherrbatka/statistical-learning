@@ -40,8 +40,11 @@
                                                  :initial-element 0.0d0))
          (right-sum (make-array target-data-width :element-type 'double-float
                                                   :initial-element 0.0d0))
+         (middle-sum (make-array target-data-width :element-type 'double-float
+                                                   :initial-element 0.0d0))
          (length (sl.data:data-points-count target-data))
          (left-count 0)
+         (middle-count 0)
          (right-count 0))
     (declare (type (simple-array double-float (*)) left-sum right-sum)
              (type fixnum left-count right-count))
@@ -51,49 +54,67 @@
         (iterate
           (declare (type fixnum i))
           (for i from 0 below length)
-          (for rightp = (and split-array (eql right (aref split-array i))))
-          (if rightp
-              (progn (incf right-count)
-                     (iterate
-                       (declare (type fixnum ii)
-                                (type double-float value))
-                       (for ii from 0 below target-data-width)
-                       (for value = (sl.data:mref target-data i ii))
-                       (incf (aref right-sum ii) value)))
-              (progn (incf left-count)
-                     (iterate
-                       (declare (type fixnum ii)
-                                (type double-float value))
-                       (for ii from 0 below target-data-width)
-                       (for value = (sl.data:mref target-data i ii))
-                       (incf (aref left-sum ii) value)))))
+          (cond ((or (null split-array) (eq left (aref split-array i)))
+                 (incf left-count)
+                 (iterate
+                   (declare (type fixnum ii)
+                            (type double-float value))
+                   (for ii from 0 below target-data-width)
+                   (for value = (sl.data:mref target-data i ii))
+                   (incf (aref left-sum ii) value)))
+                ((eq right (aref split-array i))
+                 (incf right-count)
+                 (iterate
+                   (declare (type fixnum ii)
+                            (type double-float value))
+                   (for ii from 0 below target-data-width)
+                   (for value = (sl.data:mref target-data i ii))
+                   (incf (aref right-sum ii) value)))
+                ((eq middle (aref split-array i))
+                 (incf middle-count)
+                 (iterate
+                   (declare (type fixnum ii)
+                            (type double-float value))
+                   (for ii from 0 below target-data-width)
+                   (for value = (sl.data:mref target-data i ii))
+                   (incf (aref middle-sum ii) value)))))
         (iterate
           (declare (type double-float
-                         left-error right-error)
+                         left-error right-error middle-error)
                    (type (simple-array double-float (*))
-                         left-avg right-avg)
+                         left-avg right-avg middle-avg)
                    (type fixnum i))
           (with left-error = 0.0d0)
           (with right-error = 0.0d0)
+          (with middle-error = 0.0d0)
           (with right-avg = (sl.data:vector-avg right-sum right-count))
           (with left-avg = (sl.data:vector-avg left-sum left-count))
+          (with middle-avg = (sl.data:vector-avg middle-sum middle-count))
           (for i from 0 below length)
-          (for rightp = (and split-array (eql right (aref split-array i))))
-          (if rightp
-              (incf right-error (data-point-squared-error right-avg
-                                                          target-data
-                                                          weights
-                                                          i))
-              (incf left-error (data-point-squared-error left-avg
-                                                         target-data
-                                                         weights
-                                                         i)))
+          (cond ((or (null split-array) (eq left (aref split-array i)))
+                 (incf left-error (data-point-squared-error left-avg
+                                                            target-data
+                                                            weights
+                                                            i)))
+                ((eq right (aref split-array i))
+                 (incf right-error (data-point-squared-error right-avg
+                                                             target-data
+                                                             weights
+                                                             i)))
+                ((eq middle (aref split-array i))
+                 (incf middle-error (data-point-squared-error middle-avg
+                                                              target-data
+                                                              weights
+                                                              i))))
           (finally (return (values (if (zerop left-count)
                                        0.0d0
                                        (/ left-error left-count))
                                    (if (zerop right-count)
                                        0.0d0
-                                       (/ right-error right-count))))))))))
+                                       (/ right-error right-count))
+                                   (if (zerop middle-count)
+                                       0.0d0
+                                       (/ middle-error middle-count))))))))))
 
 
 (defmethod response ((function k-logistic-function)

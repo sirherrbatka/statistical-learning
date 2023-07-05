@@ -34,6 +34,7 @@
                                               sl.mp:train-data
                                               sl.data:data-points-count)))
   (/ (+ (* (left-score result) (left-length result))
+        (* (middle-score result) (middle-length result))
         (* (right-score result) (right-length result)))
      data-size))
 

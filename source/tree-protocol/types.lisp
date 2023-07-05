@@ -10,10 +10,14 @@
                  :reader left-length)
    (%right-length :initarg :right-length
                   :reader right-length)
+   (%middle-length :initarg :middle-length
+                   :reader middle-length)
    (%left-score :initarg :left-score
                 :reader left-score)
    (%right-score :initarg :right-score
-                 :reader right-score)))
+                 :reader right-score)
+   (%middle-score :initarg :middle-score
+                  :reader middle-score)))
 
 
 (defclass fundamental-splitter (sl.common:proxy-enabled)
