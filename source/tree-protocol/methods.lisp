@@ -254,7 +254,8 @@
                            left-length
                            right-length
                            middle-length)))
-    (assert (= (+ left-length right-length) data-size))
+    (assert (= (+ left-length right-length (or middle-length 0))
+               data-size))
     (let ((result (make 'split-result
                         :split-point point
                         :split-vector split-array
