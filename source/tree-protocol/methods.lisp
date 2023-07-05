@@ -261,7 +261,7 @@
                         :split-vector split-array
                         :left-score left-score
                         :right-score right-score
-                        :middle-score (or middle-score 0.0)
+                        :middle-score (or middle-score 0.0d0)
                         :left-length left-length
                         :right-length right-length
                         :middle-length (or middle-length 0))))
