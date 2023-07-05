@@ -16,6 +16,7 @@
    #:make-split-array
    #:make-split-array
    #:number-of-classes
+   #:middle
    #:response
    #:right
    #:split-array
