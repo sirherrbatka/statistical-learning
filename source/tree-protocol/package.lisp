@@ -43,6 +43,7 @@
    #:parent-state
    #:weight
    #:left-length
+   #:*current-training-state*
    #:right-length
    #:left-score
    #:right-score

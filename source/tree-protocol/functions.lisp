@@ -109,7 +109,8 @@
 
 
 (defun split (training-state)
-  (let* ((parameters (sl.mp:training-parameters training-state))
+  (let* ((*current-training-state* training-state)
+         (parameters (sl.mp:training-parameters training-state))
          (splitter (splitter parameters)))
     (or (when (requires-split-p splitter parameters training-state)
           (split* (sl.mp:training-parameters training-state)

@@ -317,7 +317,7 @@
                                &aux (state (new-state position size loss))))
           (make-tree state))
          ((:flet subtree (position size loss &optional parallel))
-          (if (and parallel (< new-depth 10))
+          (if (and parallel (< new-depth 8))
               (lparallel:future (subtree-impl position size loss))
               (subtree-impl position size loss))))
     (if (null split-result)
