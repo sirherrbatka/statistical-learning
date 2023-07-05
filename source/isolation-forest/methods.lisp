@@ -6,8 +6,9 @@
                                         state
                                         split-array
                                         left-length
-                                        right-length)
-  (values left-length right-length))
+                                        right-length
+                                        middle-length)
+  (values left-length right-length middle-length))
 
 
 (defmethod sl.tp:split-result-accepted-p/proxy (parameters/proxy
