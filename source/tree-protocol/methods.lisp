@@ -323,9 +323,11 @@
                                &aux (state (new-state position size loss))))
           (make-tree state))
          ((:flet subtree (position size loss &optional parallel))
-          (if (and parallel (< new-depth 8))
-              (lparallel:future (subtree-impl position size loss))
-              (subtree-impl position size loss))))
+          (if (zerop size)
+              nil
+              (if (and parallel (< new-depth 8))
+                  (lparallel:future (subtree-impl position size loss))
+                  (subtree-impl position size loss)))))
     (if (null split-result)
         nil
         (make-node (tree-node-class training-parameters)
@@ -336,6 +338,9 @@
                    :right-node (subtree sl.opt:right
                                         (right-length split-result)
                                         (right-score split-result))
+                   :middle-node (subtree sl.opt:middle
+                                         (middle-length split-result)
+                                         (middle-score split-result))
                    :point (split-point split-result)))))
 
 

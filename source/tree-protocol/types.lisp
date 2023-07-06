@@ -65,6 +65,8 @@
                :accessor left-node)
    (%right-node :initarg :right-node
                 :accessor right-node)
+   (%middle-node :initarg :middle-node
+                 :accessor :middle-node)
    (%point :initarg :point
            :accessor point)))
 
