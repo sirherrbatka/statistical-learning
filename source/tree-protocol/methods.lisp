@@ -257,7 +257,6 @@
                            left-length
                            right-length)))
     (ensure middle-length 0)
-    (assert (= (+ left-length right-length middle-length) data-size))
     (let ((result (make 'split-result
                         :split-point point
                         :split-vector split-array
@@ -277,18 +276,13 @@
                                        (training-parameters fundamental-tree-training-parameters)
                                        training-state)
   (iterate
-    (declare (type fixnum attempt left-length right-length
-                   data-size
-                   trials-count))
+    (declare (type fixnum attempt data-size trials-count))
     (with trials-count = (trials-count splitter/proxy))
     (with data-size = (~> training-state sl.mp:train-data sl.data:data-points-count))
     (with optimal-split-result = nil)
     (for attempt from 0 below (min data-size trials-count))
     (for split-result = (call-next-method))
     (when (null split-result) (next-iteration))
-    (for left-length = (left-length split-result))
-    (for right-length = (right-length split-result))
-    (assert (= (+ left-length right-length) data-size))
     (when (and split-result
                (split-result-improved-p training-parameters
                                         training-state
