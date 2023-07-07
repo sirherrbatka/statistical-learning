@@ -761,7 +761,8 @@
                 (when (set-splitter-split-point-side index
                                                      tuple
                                                      split-point)
-                  (in outer (leave t))))))
+                  (in outer (leave sl.opt:right))))
+              (finally (return-from outer sl.opt:left))))
       (switch-direction ((aref split-vector i))
                         (incf left-count)
                         (incf right-count)
