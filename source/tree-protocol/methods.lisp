@@ -765,8 +765,7 @@
               (finally (return-from outer sl.opt:left))))
       (switch-direction ((aref split-vector i))
                         (incf left-count)
-                        (incf right-count)
-                        (incf middle-count))
+                        (incf right-count))
       (finally (return (values left-count right-count middle-count))))))
 
 
