@@ -347,8 +347,8 @@
       (finally (return result-min)))))
 
 
-(-> split (list fixnum split-vector t) list)
-(defun split (data-matrixes length split-array position)
+(-> split (list fixnum split-vector list) list)
+(defun split (data-matrixes length split-array positions)
   (if (endp data-matrixes)
       nil
       (let ((old-index (~> data-matrixes first index))
@@ -356,7 +356,7 @@
         (iterate
           (with j = 0)
           (for i from 0 below (length split-array))
-          (when (eq (aref split-array i) position)
+          (when (member (aref split-array i) positions :test 'eq)
             (setf (aref new-index j) (aref old-index i))
             (incf j))
           (finally (assert (= j length) (j length))))

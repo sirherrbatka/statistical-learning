@@ -130,6 +130,6 @@
          (data (mapcar #'second batches)))
     (iterate
       (for symbol in (mapcar #'first batches))
-      (for datum in (sl.data:split data length split-array position))
+      (for datum in (sl.data:split data length split-array (list position sl.opt:middle)))
       (collecting symbol)
       (collecting datum))))

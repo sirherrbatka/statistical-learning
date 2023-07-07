@@ -10,6 +10,8 @@
                  :reader left-length)
    (%right-length :initarg :right-length
                   :reader right-length)
+   (%middle-length :initarg :middle-length
+                   :reader middle-length)
    (%left-score :initarg :left-score
                 :reader left-score)
    (%right-score :initarg :right-score
@@ -24,10 +26,14 @@
   ())
 
 
+(defclass naive-middle-strategy (fundamental-middle-strategy)
+  ())
+
+
 (defclass fundamental-splitter (sl.common:proxy-enabled)
   ((%middle-strategy :initarg :middle-strategy
                      :reader middle-strategy))
-  (:default-initargs :middle-strategy (make 'proportional-strategy)))
+  (:default-initargs :middle-strategy (make 'naive-middle-strategy)))
 
 
 (defclass data-point-oriented-splitter (fundamental-splitter)

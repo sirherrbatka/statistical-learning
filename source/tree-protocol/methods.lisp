@@ -264,7 +264,8 @@
                         :left-score left-score
                         :right-score right-score
                         :left-length left-length
-                        :right-length right-length)))
+                        :right-length right-length
+                        :middle-length middle-length)))
       (setf (split-point training-state) point)
       (if (split-result-accepted-p training-parameters training-state result)
           result
@@ -313,7 +314,7 @@
            training-state
            (split-vector split-result)
            position
-           size
+           (+ size (middle-length split-result))
            `(:depth ,new-depth :loss ,loss)
            (split-point split-result)))
          ((:flet subtree-impl (position
@@ -821,3 +822,13 @@
                                          (progn (incf new-right-length)
                                                 sl.opt:right)))
         (finally (return (values new-left-length new-right-length 0))))))
+
+
+(defmethod handle-middle/proxy (middle-strategy/proxy
+                                (middle-strategy proportional-middle-strategy)
+                                split-vector
+                                left-length
+                                right-length
+                                middle-length)
+  (ensure middle-length 0)
+  (values left-length right-length middle-length))

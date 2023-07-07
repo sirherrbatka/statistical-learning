@@ -26,6 +26,7 @@
    #:data-point-oriented-splitter
    #:fill-split-vector*
    #:split-result
+   #:naive-middle-strategy
    #:fill-split-vector*/proxy
    #:force-tree
    #:force-tree*
