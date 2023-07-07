@@ -789,7 +789,8 @@
                                              (when (set-splitter-split-point-side attribute
                                                                                   tuple
                                                                                   split-point)
-                                               (in outer (leave t))))))
+                                               (in outer (leave sl.opt:right))))
+                                          (finally (return-from outer sl.opt:left))))
                                        (~> node left-node (impl new-depth))
                                        (~> node right-node (impl new-depth))))
                    (values node depth))))
