@@ -98,20 +98,32 @@
            (root (sl.tp:root model)))
       (sl.data:data-matrix-map
        (lambda (data-point data)
-         (let* ((leaf (~>> (sl.tp:leaf-for splitter root
-                                           data data-point
-                                           model)
-                           (funcall leaf-key)))
-                (predictions (sl.tp:predictions leaf))
-                (attributes-count (array-dimension predictions 1))
+         (let* ((leafs (sl.tp:leaf-for splitter root
+                                       data data-point
+                                       model))
                 (sums (bt:with-lock-held (lock)
                         (ensure (sl.tp:sums state)
                           (sl.data:make-data-matrix data-points-count
                                                     attributes-count)))))
-           (iterate
-             (for i from 0 below attributes-count)
-             (incf (sl.data:mref sums data-point i)
-                   (* weight (aref predictions 0 i))))))
+           (if (vectorp leafs)
+               (iterate
+                 (declare (type fixnum i))
+                 (with length = (length leafs))
+                 (for i from 0 below length)
+                 (for leaf = (funcall leaf-key (aref leafs i)))
+                 (for predictions = (sl.tp:predictions leaf))
+                 (for attributes-count = (array-dimension predictions 1))
+                 (iterate
+                   (for i from 0 below attributes-count)
+                   (incf (sl.data:mref sums data-point i)
+                         (/ (* weight (aref predictions 0 i)) length))))
+               (let* ((predictions (sl.tp:predictions leafs))
+                      (attributes-count (array-dimension predictions 1)))
+                 (iterate
+                   (declare (type fixnum i))
+                   (for i from 0 below attributes-count)
+                   (incf (sl.data:mref sums data-point i)
+                         (* weight (aref predictions 0 i))))))))
        data
        parallel)
       (incf (sl.tp:contributions-count state) weight)
@@ -142,17 +154,29 @@
              (splitter (sl.tp:splitter parameters))
              (root (sl.tp:root model)))
         (sl.data:data-matrix-map
-                 (lambda (data-point data)
-                   (iterate
-                     (declare (type fixnum j))
-                     (with leaf = (~>> (sl.tp:leaf-for splitter root
+                 (lambda (data-point data &aux (leafs (sl.tp:leaf-for splitter root
                                                        data data-point
-                                                       model)
-                                       (funcall leaf-key)))
-                     (with predictions = (sl.tp:predictions leaf))
-                     (for j from 0 below number-of-classes)
-                     (for class-support = (aref predictions 0 j))
-                     (incf (sl.data:mref sums data-point j) (* weight class-support))))
+                                                       model)))
+                   (if (vectorp leafs)
+                       (iterate
+                         (declare (type fixnum i))
+                         (with length = (length leafs))
+                         (for i from 0 below length)
+                         (for l = (aref leafs i))
+                         (for leaf = (funcall leaf-key l))
+                         (for predictions = (sl.tp:predictions leaf))
+                         (iterate
+                           (declare (type fixnum j))
+                           (for j from 0 below number-of-classes)
+                           (for class-support = (aref predictions 0 j))
+                           (incf (sl.data:mref sums data-point j) (/ (* weight class-support) length))))
+                       (iterate
+                         (declare (type fixnum j))
+                         (with leaf = (funcall leaf-key leafs))
+                         (with predictions = (sl.tp:predictions leaf))
+                         (for j from 0 below number-of-classes)
+                         (for class-support = (aref predictions 0 j))
+                         (incf (sl.data:mref sums data-point j) (* weight class-support)))))
                  data
                  parallel))
       (incf (sl.tp:contributions-count state) weight))
