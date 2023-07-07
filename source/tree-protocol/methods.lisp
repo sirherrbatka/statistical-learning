@@ -256,6 +256,7 @@
                            split-array
                            left-length
                            right-length)))
+    (ensure middle-length 0)
     (assert (= (+ left-length right-length middle-length) data-size))
     (let ((result (make 'split-result
                         :split-point point
