@@ -245,26 +245,25 @@
          ((:values left-length right-length middle-length)
           (progn
             (setf (split-point training-state) point)
-            (fill-split-vector training-state
-                               split-array)))
-         ((:values left-score right-score middle-score)
+            (apply #'handle-middle
+                   (middle-strategy splitter)
+                   split-array
+                   (multiple-value-list (fill-split-vector training-state
+                                                           split-array)))))
+         ((:values left-score right-score)
           (calculate-loss* training-parameters
                            training-state
                            split-array
                            left-length
-                           right-length
-                           middle-length)))
-    (assert (= (+ left-length right-length (or middle-length 0))
-               data-size))
+                           right-length)))
+    (assert (= (+ left-length right-length middle-length) data-size))
     (let ((result (make 'split-result
                         :split-point point
                         :split-vector split-array
                         :left-score left-score
                         :right-score right-score
-                        :middle-score (or middle-score 0.0d0)
                         :left-length left-length
-                        :right-length right-length
-                        :middle-length (or middle-length 0))))
+                        :right-length right-length)))
       (setf (split-point training-state) point)
       (if (split-result-accepted-p training-parameters training-state result)
           result
@@ -276,7 +275,7 @@
                                        (training-parameters fundamental-tree-training-parameters)
                                        training-state)
   (iterate
-    (declare (type fixnum attempt left-length right-length middle-length
+    (declare (type fixnum attempt left-length right-length
                    data-size
                    trials-count))
     (with trials-count = (trials-count splitter/proxy))
@@ -287,8 +286,7 @@
     (when (null split-result) (next-iteration))
     (for left-length = (left-length split-result))
     (for right-length = (right-length split-result))
-    (for middle-length = (middle-length split-result))
-    (assert (= (+ left-length right-length middle-length) data-size))
+    (assert (= (+ left-length right-length) data-size))
     (when (and split-result
                (split-result-improved-p training-parameters
                                         training-state
@@ -338,9 +336,6 @@
                    :right-node (subtree sl.opt:right
                                         (right-length split-result)
                                         (right-score split-result))
-                   :middle-node (subtree sl.opt:middle
-                                         (middle-length split-result)
-                                         (middle-score split-result))
                    :point (split-point split-result)))))
 
 
@@ -480,7 +475,7 @@
        (let ((left (the fixnum (+ left-count1 left-count2 left-count3 left-count4)))
              (right (the fixnum (+ right-count1 right-count2 right-count3 right-count4))))
          (assert (= (the fixnum (+ left right)) length))
-         (return (values left right)))))))
+         (return (values left right 0)))))))
 
 
 (defmethod requires-split-p/proxy
@@ -577,7 +572,7 @@
       (if rightp
           (incf right-length)
           (incf left-length))
-      (finally (return (values left-length right-length))))))
+      (finally (return (values left-length right-length 0))))))
 
 
 (defmethod leaf-for/proxy (splitter/proxy
@@ -692,7 +687,7 @@
                        (the double-float dot-product)))
       (setf (aref split-vector i) rightp)
       (if rightp (incf right-count) (incf left-count))
-      (finally (return (values left-count right-count))))))
+      (finally (return (values left-count right-count 0))))))
 
 
 (defmethod leaf-for/proxy (splitter/proxy
@@ -751,6 +746,7 @@
   (bind ((train-data (sl.mp:train-data state))
          (left-count 0)
          (right-count 0)
+         (middle-count 0)
          (attributes-count (sl.data:attributes-count train-data)))
     (iterate
       (for i from 0 below (sl.data:data-points-count train-data))
@@ -764,10 +760,11 @@
                                                      tuple
                                                      split-point)
                   (in outer (leave t))))))
-      (if (aref split-vector i)
-          (incf right-count)
-          (incf left-count))
-      (finally (return (values left-count right-count))))))
+      (switch-direction ((aref split-vector i))
+                        (incf left-count)
+                        (incf right-count)
+                        (incf middle-count))
+      (finally (return (values left-count right-count middle-count))))))
 
 
 (defmethod leaf-for/proxy (splitter/proxy
@@ -776,27 +773,50 @@
                            data
                            index
                            context)
-  (declare (type (simple-array t (* *)) data)
-           (type fixnum index))
+  (declare (type fixnum index))
   (let ((attributes-count (sl.data:attributes-count data)))
     (labels ((impl (node depth &aux (new-depth (the fixnum (1+ depth))))
                (setf node (lparallel:force node))
                (if (treep node)
                    (bind ((split-point (sl.tp:point node)))
-                     (if (iterate outer
-                           (for attribute from 0 below attributes-count)
-                           (for set = (aref data index attribute))
-                           (iterate
-                             (for tuple in-vector set)
-                             (when (set-splitter-split-point-side attribute
-                                                                  tuple
-                                                                  split-point)
-                               (in outer (leave t)))))
-                         (~> node right-node (impl new-depth))
-                         (~> node left-node (impl new-depth))))
+                     (switch-direction ((iterate outer
+                                           (for attribute from 0 below attributes-count)
+                                           (for set = (sl.data:mref data index attribute))
+                                           (iterate
+                                             (for tuple in-vector set)
+                                             (when (set-splitter-split-point-side attribute
+                                                                                  tuple
+                                                                                  split-point)
+                                               (in outer (leave t))))))
+                                       (~> node left-node (impl new-depth))
+                                       (~> node right-node (impl new-depth))))
                    (values node depth))))
       (impl node 0))))
 
 
 (defmethod make-tree (training-state)
   (split training-state))
+
+
+(defmethod handle-middle/proxy (middle-strategy/proxy
+                                (middle-strategy proportional-middle-strategy)
+                                split-vector
+                                left-length
+                                right-length
+                                middle-length)
+  (ensure middle-length 0)
+  (if (zerop middle-length)
+      (values left-length right-length middle-length)
+      (iterate
+        (with sum = (+ left-length right-length))
+        (with new-left-length = left-length)
+        (with new-right-length = right-length)
+        (for i from 0 below (length split-vector))
+        (unless (eq (svref split-vector i) sl.opt:middle)
+          (next-iteration))
+        (setf (svref split-vector i) (if (< (random sum) left-length)
+                                         (progn (incf new-left-length)
+                                                sl.opt:left)
+                                         (progn (incf new-right-length)
+                                                sl.opt:right)))
+        (finally (return (values new-left-length new-right-length 0))))))

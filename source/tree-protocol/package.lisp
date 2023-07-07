@@ -44,6 +44,8 @@
    #:weight
    #:left-length
    #:*current-training-state*
+   #:proportional-middle-strategy
+   #:fundamental-middle-strategy
    #:right-length
    #:left-score
    #:right-score

@@ -42,7 +42,7 @@
     ((splitter) parameters state))
 
 (sl.common:defgeneric/proxy calculate-loss*
-    ((parameters) state split-array left-length right-length middle-length))
+    ((parameters) state split-array left-length right-length))
 
 (sl.common:defgeneric/proxy split-result-accepted-p
     ((parameters)
@@ -54,6 +54,15 @@
      state
      new-result
      old-result))
+
+
+(sl.common:defgeneric/proxy handle-middle
+    ((middle-strategy)
+     split-vector
+     left-length
+     right-length
+     middle-length))
+
 
 (defgeneric root (model))
 (defgeneric treep (node))

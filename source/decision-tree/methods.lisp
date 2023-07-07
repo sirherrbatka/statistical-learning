@@ -7,8 +7,7 @@
      state
      split-array
      left-length
-     right-length
-     middle-length)
+     right-length)
   (sl.opt:loss (optimized-function parameters)
                (sl.mp:target-data state)
                (sl.mp:weights state)
