@@ -245,7 +245,7 @@
          ((:values left-length right-length middle-length)
           (progn
             (setf (split-point training-state) point)
-            (apply #'handle-middle
+            (apply #'handle-split-middle
                    (middle-strategy splitter)
                    split-array
                    (multiple-value-list (fill-split-vector training-state
@@ -801,12 +801,12 @@
   (split training-state))
 
 
-(defmethod handle-middle/proxy (middle-strategy/proxy
-                                (middle-strategy proportional-middle-strategy)
-                                split-vector
-                                left-length
-                                right-length
-                                middle-length)
+(defmethod handle-split-middle/proxy (middle-strategy/proxy
+                                      (middle-strategy proportional-middle-strategy)
+                                      split-vector
+                                      left-length
+                                      right-length
+                                      middle-length)
   (ensure middle-length 0)
   (if (zerop middle-length)
       (values left-length right-length middle-length)
@@ -825,11 +825,11 @@
         (finally (return (values new-left-length new-right-length 0))))))
 
 
-(defmethod handle-middle/proxy (middle-strategy/proxy
-                                (middle-strategy proportional-middle-strategy)
-                                split-vector
-                                left-length
-                                right-length
-                                middle-length)
+(defmethod handle-split-middle/proxy (middle-strategy/proxy
+                                      (middle-strategy proportional-middle-strategy)
+                                      split-vector
+                                      left-length
+                                      right-length
+                                      middle-length)
   (ensure middle-length 0)
   (values left-length right-length middle-length))

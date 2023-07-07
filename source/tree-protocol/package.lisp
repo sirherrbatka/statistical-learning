@@ -53,6 +53,8 @@
    #:leaf-for
    #:leaf-for/proxy
    #:split-result-improved-p
+   #:handle-spit-middle
+   #:handle-spit-middle/proxy
    #:split-result-improved-p/proxy
    #:split-result-accepted-p
    #:split-result-accepted-p/proxy

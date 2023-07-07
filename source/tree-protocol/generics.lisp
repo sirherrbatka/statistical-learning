@@ -56,7 +56,7 @@
      old-result))
 
 
-(sl.common:defgeneric/proxy handle-middle
+(sl.common:defgeneric/proxy handle-split-middle
     ((middle-strategy)
      split-vector
      left-length
