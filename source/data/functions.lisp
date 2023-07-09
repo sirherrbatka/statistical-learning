@@ -67,13 +67,10 @@
 (defun mref (data-matrix data-point attribute)
   (declare (type data-matrix data-matrix) (optimize (speed 3)))
   (check-type data-matrix data-matrix)
-  (values (aref (data data-matrix)
-                (aref (index data-matrix) data-point)
-                attribute)
-          (= (aref (missing-mask data-matrix)
-                   (aref (index data-matrix) data-point)
-                   attribute)
-             1)))
+  (let ((index (aref (index data-matrix) data-point)))
+    (values (aref (data data-matrix) index attribute)
+            (= (aref (missing-mask data-matrix) index attribute)
+               1))))
 
 
 (declaim (inline (setf mref)))
