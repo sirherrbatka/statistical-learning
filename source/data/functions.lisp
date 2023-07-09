@@ -55,12 +55,25 @@
         (array-dimension (data data-matrix) 1)))
 
 
+(declaim (inline missing-mask))
+(defun missing-mask (data-matrix)
+  (declare (type data-matrix data-matrix) (optimize (speed 3)))
+  (if (typep data-matrix 'universal-data-matrix)
+      (universal-data-matrix-missing-mask data-matrix)
+      (double-float-data-matrix-missing-mask data-matrix)))
+
+
 (declaim (inline mref))
 (defun mref (data-matrix data-point attribute)
   (declare (type data-matrix data-matrix) (optimize (speed 3)))
-  (aref (data data-matrix)
-        (aref (index data-matrix) data-point)
-        attribute))
+  (check-type data-matrix data-matrix)
+  (values (aref (data data-matrix)
+                (aref (index data-matrix) data-point)
+                attribute)
+          (= (aref (missing-mask data-matrix)
+                   (aref (index data-matrix) data-point)
+                   attribute)
+             1)))
 
 
 (declaim (inline (setf mref)))
@@ -88,11 +101,12 @@
            ((eq element-type t) #'make-universal-data-matrix))))
 
 
-(-> make-data-matrix (fixnum fixnum &optional t t) data-matrix)
+(-> make-data-matrix (fixnum fixnum &optional t t t) data-matrix)
 (defun make-data-matrix (data-points-count attributes-count
                          &optional
                            (initial-element 0.0d0)
-                           (element-type 'double-float))
+                           (element-type 'double-float)
+                           missing-mask)
   (check-type data-points-count fixnum)
   (check-type attributes-count fixnum)
   (assert (> attributes-count 0))
@@ -102,30 +116,44 @@
            :data (make-array `(,data-points-count ,attributes-count)
                              :initial-element initial-element
                              :element-type 'double-float)
+           :missing-mask (or missing-mask
+                             (make-array `(,data-points-count ,attributes-count)
+                                         :element-type 'bit
+                                         :initial-element 1))
            :index (make-iota-vector data-points-count)))
          ((eq element-type t)
           (make-universal-data-matrix
            :data (make-array `(,data-points-count ,attributes-count)
                              :initial-element initial-element
                              :element-type t)
+           :missing-mask (or missing-mask
+                             (make-array `(,data-points-count ,attributes-count)
+                                         :element-type 'bit
+                                         :initial-element 1))
            :index (make-iota-vector data-points-count)))))
 
 
-(defun wrap (input)
+(defun wrap (input &optiona missing-mask)
   (if (typep input 'data-matrix)
       input
       (progn
         (check-type input (or (simple-array double-float (* *))
                               (simple-array t (* *))))
+        (ensure missing-mask (make-array (array-dimensions input)
+                                         :element-type 'bit
+                                         :initial-element 1))
+        (check-type missing-mask (simple-array bit (* *)))
         (let ((element-type (array-element-type input))
               (data-points-count (array-dimension input 0)))
           (econd ((eq element-type 'double-float)
                   (make-double-float-data-matrix
                    :data input
+                   :missing-mask missing-mask
                    :index (make-iota-vector data-points-count)))
                  ((eq element-type t)
                   (make-universal-data-matrix
                    :data input
+                   :missing-mask missing-mask
                    :index (make-iota-vector data-points-count))))))))
 
 
@@ -152,7 +180,8 @@
         (with result = (make-data-matrix data-points-count
                                          attributes-count
                                          0.0d0
-                                         (data-matrix-element-type data-matrix)))
+                                         (data-matrix-element-type data-matrix)
+                                         (missing-mask data-matrix)))
         (for i from 0 below data-points-count)
         (iterate
           (declare (type fixnum j))
@@ -216,10 +245,12 @@
       (for k = (if (null data-points)
                    j
                    (aref data-points j)))
-      (setf (sl.data:mref result 0 i)
-            (funcall function
-                     (sl.data:mref result 0 i)
-                     (sl.data:mref data k attribute))))
+      (for (values value present) = (sl.data:mref data k attribute))
+      (when present
+        (setf (sl.data:mref result 0 i)
+              (funcall function
+                       (sl.data:mref result 0 i)
+                       value))))
     (finally (return result))))
 
 
@@ -363,29 +394,9 @@
         (mapcar (lambda (data-matrix)
                   (funcall (data-matrix-constructor data-matrix)
                            :data (data data-matrix)
+                           :missing-mask (missing-mask data-matrix)
                            :index new-index))
                 data-matrixes))))
-
-
-(-> data-min/max (sl.data:double-float-data-matrix
-                  fixnum
-                  (simple-array fixnum (*)))
-    (values double-float double-float))
-(defun data-min/max (data attribute data-points)
-  (declare (type statistical-learning.data:data-matrix data)
-           (type fixnum attribute)
-           (optimize (speed 3) (safety 0)))
-  (iterate
-    (declare (type double-float min max element)
-             (type fixnum i))
-    (with min = (sl.data:mref data (aref data-points 0) attribute))
-    (with max = min)
-    (with length = (length data-points))
-    (for i from 1 below length)
-    (for element = (sl.data:mref data (aref data-points i) attribute))
-    (cond ((< max element) (setf max element))
-          ((> min element) (setf min element)))
-    (finally (return (values min max)))))
 
 
 (defun data-transpose (data)

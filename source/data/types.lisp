@@ -3,7 +3,8 @@
 
 (defstruct double-float-data-matrix
   (data (make-array '(0 0) :element-type 'double-float) :type (simple-array double-float (* *)))
-  (index (make-array 0 :element-type 'fixnum) :type (simple-array fixnum (*))))
+  (index (make-array 0 :element-type 'fixnum) :type (simple-array fixnum (*)))
+  (missing-mask (make-array '(0 0) :element-type 'bit :initial-element 1) :type (simple-array bit (* *))))
 
 
 (defstruct universal-data-matrix
