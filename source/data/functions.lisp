@@ -326,12 +326,13 @@
       (iterate
         (declare (type fixnum i1))
         (for i1 from 0 below attributes-count by 1)
-        (let* ((attribute (if (null attributes)
+        (bind ((attribute (if (null attributes)
                                i1
                                (aref attributes i1)))
-               (value (sl.data:mref data k1 attribute)))
-          (minf (sl.data:mref result-min 0 i1) value)
-          (maxf (sl.data:mref result-max 0 i1) value)))
+               ((:values value present) (sl.data:mref data k1 attribute)))
+          (when present
+            (minf (sl.data:mref result-min 0 i1) value)
+            (maxf (sl.data:mref result-max 0 i1) value))))
       (finally (return (cons result-min result-max))))))
 
 
