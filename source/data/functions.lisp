@@ -305,35 +305,30 @@
                                 (data-points-count data)
                                 (length data-points)))
          (result-min (make-data-matrix 1 attributes-count))
-         (result-max (make-data-matrix 1 attributes-count))
-         (first-point (if (null data-points)
-                            0
-                            (aref data-points 0))))
-    (declare (type fixnum attributes-count data-points-count first-point)
+         (result-max (make-data-matrix 1 attributes-count)))
+    (declare (type fixnum attributes-count data-points-count )
              (type sl.data:double-float-data-matrix result-min result-max))
     (iterate
-      (declare (type fixnum i attribute))
+      (declare (type fixnum i))
       (for i from 0 below attributes-count)
-      (for attribute = (if (null attributes)
-                           i
-                           (aref attributes i)))
-      (setf (sl.data:mref result-max 0 i) (sl.data:mref data first-point attribute)
-            (sl.data:mref result-min 0 i) (sl.data:mref data first-point attribute)))
-    (iterate
-      (declare (type fixnum j k1))
-      (for j from 1 below data-points-count)
-      (for k1 = (if (null data-points) j (aref data-points j)))
+      (setf (sl.data:mref result-max 0 i) most-positive-double-float
+            (sl.data:mref result-min 0 i) most-negative-double-float))
+    (cl-ds.utils:cases ((null data-points))
       (iterate
-        (declare (type fixnum i1))
-        (for i1 from 0 below attributes-count by 1)
-        (bind ((attribute (if (null attributes)
-                               i1
-                               (aref attributes i1)))
-               ((:values value present) (sl.data:mref data k1 attribute)))
-          (when present
-            (minf (sl.data:mref result-min 0 i1) value)
-            (maxf (sl.data:mref result-max 0 i1) value))))
-      (finally (return (cons result-min result-max))))))
+        (declare (type fixnum j k1))
+        (for j from 0 below data-points-count)
+        (for k1 = (if (null data-points) j (aref data-points j)))
+        (iterate
+          (declare (type fixnum i1))
+          (for i1 from 0 below attributes-count by 1)
+          (bind ((attribute (if (null attributes)
+                                i1
+                                (aref attributes i1)))
+                 ((:values value present) (sl.data:mref data k1 attribute)))
+            (when present
+              (minf (sl.data:mref result-min 0 i1) value)
+              (maxf (sl.data:mref result-max 0 i1) value))))
+        (finally (return (cons result-min result-max)))))))
 
 
 (-> mins (double-float-data-matrix
