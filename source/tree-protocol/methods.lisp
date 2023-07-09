@@ -435,43 +435,23 @@
              (type fixnum length attribute))
     (assert (< attribute (sl.data:attributes-count data)))
     (iterate
-      (declare (type fixnum
-                     left-count1 left-count2 left-count3 left-count4
-                     right-count1 right-count2 right-count3 right-count4
-                     i1 i2 i3 i4))
-      (with right-count1 = 0)
-      (with right-count2 = 0)
-      (with right-count3 = 0)
-      (with right-count4 = 0)
-      (with left-count1 = 0)
-      (with left-count2 = 0)
-      (with left-count3 = 0)
-      (with left-count4 = 0)
-      (for i1 from 0 below length by 4)
-      (for i2 = (+ i1 1))
-      (for i3 = (+ i1 2))
-      (for i4 = (+ i1 3))
-      (for rightp1 = (> (sl.data:mref data i1 attribute) threshold))
-      (setf (aref split-vector i1) rightp1)
-      (if rightp1 (incf right-count1) (incf left-count1))
-      ;; this code is micro-optimized
-      (cond ((< i4 length)
-             (let* ((rightp4 (> (sl.data:mref data i4 attribute) threshold)))
-               (setf (aref split-vector i4) rightp4)
-               (if rightp4 (incf right-count4) (incf left-count4)))
-             #1=(let* ((rightp3 (> (sl.data:mref data i3 attribute) threshold)))
-                  (setf (aref split-vector i3) rightp3)
-                  (if rightp3 (incf right-count3) (incf left-count3)))
-             #2=(let* ((rightp2 (> (sl.data:mref data i2 attribute) threshold)))
-                  (setf (aref split-vector i2) rightp2)
-                  (if rightp2 (incf right-count2) (incf left-count2))))
-            ((< i3 length) #1# #2#)
-            ((< i2 length) #2#))
-      (finally
-       (let ((left (the fixnum (+ left-count1 left-count2 left-count3 left-count4)))
-             (right (the fixnum (+ right-count1 right-count2 right-count3 right-count4))))
-         (assert (= (the fixnum (+ left right)) length))
-         (return (values left right 0)))))))
+      (declare (type fixnum i left-count right-count middle-count)
+               (type double-float value)
+               (type boolean present))
+      (with left-count = 0)
+      (with right-count = 0)
+      (with middle-count = 0)
+      (for i from 0 below length)
+      (for (values value present) = (sl.data:mref data i attribute))
+      (if present
+          (let ((right (> (sl.data:mref data i attribute) threshold)))
+            (if right
+                (incf right-count)
+                (incf left-count))
+            (setf (aref split-vector i) right))
+          (setf (aref split-vector i) sl.opt:middle
+                middle-count (1+ middle-count)))
+      (finally (return (values left-count right-count middle-count))))))
 
 
 (defmethod requires-split-p/proxy
