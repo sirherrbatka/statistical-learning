@@ -63,9 +63,9 @@
       (double-float-data-matrix-missing-mask data-matrix)))
 
 
-(declaim (inline mref))
+(declaim (notinline mref))
 (defun mref (data-matrix data-point attribute)
-  (declare (type data-matrix data-matrix) (optimize (speed 3)))
+  (declare (type data-matrix data-matrix) (optimize (debug 3)))
   (check-type data-matrix data-matrix)
   (let ((index (aref (index data-matrix) data-point)))
     (values (aref (data data-matrix) index attribute)
@@ -130,7 +130,7 @@
            :index (make-iota-vector data-points-count)))))
 
 
-(defun wrap (input &optiona missing-mask)
+(defun wrap (input &optional missing-mask)
   (if (typep input 'data-matrix)
       input
       (progn
@@ -297,7 +297,7 @@
                (:data-points vector))
     cons)
 (defun mins/maxs (data &key data-points attributes)
-  (declare (optimize (speed 3) (safety 0)))
+  (declare (optimize (debug 3) (safety 3)))
   (let* ((attributes-count (if (null attributes)
                               (attributes-count data)
                               (length attributes)))
@@ -311,8 +311,8 @@
     (iterate
       (declare (type fixnum i))
       (for i from 0 below attributes-count)
-      (setf (sl.data:mref result-max 0 i) most-positive-double-float
-            (sl.data:mref result-min 0 i) most-negative-double-float))
+      (setf (sl.data:mref result-max 0 i) #.(coerce most-negative-single-float 'double-float)
+            (sl.data:mref result-min 0 i) #.(coerce most-positive-single-float 'double-float)))
     (cl-ds.utils:cases ((null data-points))
       (iterate
         (declare (type fixnum j k1))
@@ -320,7 +320,7 @@
         (for k1 = (if (null data-points) j (aref data-points j)))
         (iterate
           (declare (type fixnum i1))
-          (for i1 from 0 below attributes-count by 1)
+          (for i1 from 0 below attributes-count)
           (bind ((attribute (if (null attributes)
                                 i1
                                 (aref attributes i1)))

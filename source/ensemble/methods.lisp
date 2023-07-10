@@ -625,7 +625,7 @@
                                            1
                                            nil
                                            t))
-         (unfolded (cl-ds.utils:unfold-table result)))
+         (unfolded (~> result sl.data:data cl-ds.utils:unfold-table)))
     (iterate
       (for i from 0 below (length unfolded))
       (setf (aref unfolded i) i))

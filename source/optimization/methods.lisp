@@ -32,8 +32,8 @@
   (declare (type (or null weights-data-matrix) weights)
            (type sl.data:double-float-data-matrix target-data)
            (type (or null sl.data:split-vector) split-array)
-           (optimize (speed 3) (safety 0)
-                     (debug 0) (space 0)
+           (optimize (speed 0) (safety 3)
+                     (debug 3) (space 0)
                      (compilation-speed 0)))
   (let* ((target-data-width (sl.data:attributes-count target-data))
          (left-sum (make-array target-data-width :element-type 'double-float
@@ -48,25 +48,33 @@
     (sl.data:dispatch-data-matrix (target-data)
       (cl-ds.utils:cases ((null split-array)
                           (null weights))
-        (iterate
-          (declare (type fixnum i))
-          (for i from 0 below length)
-          (cond ((or (null split-array) (eq left (aref split-array i)))
+        (flet ((update-left (i)
                  (incf left-count)
                  (iterate
-                   (declare (type fixnum ii)
-                            (type double-float value))
-                   (for ii from 0 below target-data-width)
-                   (for value = (sl.data:mref target-data i ii))
-                   (incf (aref left-sum ii) value)))
-                ((eq right (aref split-array i))
+                     (declare (type fixnum ii)
+                              (type double-float value))
+                     (for ii from 0 below target-data-width)
+                     (for value = (sl.data:mref target-data i ii))
+                     (incf (aref left-sum ii) value)))
+               (update-right (i)
                  (incf right-count)
                  (iterate
-                   (declare (type fixnum ii)
-                            (type double-float value))
-                   (for ii from 0 below target-data-width)
-                   (for value = (sl.data:mref target-data i ii))
-                   (incf (aref right-sum ii) value)))))
+                     (declare (type fixnum ii)
+                              (type double-float value))
+                     (for ii from 0 below target-data-width)
+                     (for value = (sl.data:mref target-data i ii))
+                     (incf (aref right-sum ii) value))))
+          (iterate
+            (declare (type fixnum i))
+            (for i from 0 below length)
+            (cond ((or (null split-array)
+                       (eq left (aref split-array i)))
+                   (update-left i))
+                  ((eq right (aref split-array i))
+                   (update-right i))
+                  ((eq middle (aref split-array i))
+                   (update-left i)
+                   (update-right i)))))
         (iterate
           (declare (type double-float
                          left-error right-error)
@@ -87,13 +95,23 @@
                  (incf right-error (data-point-squared-error right-avg
                                                              target-data
                                                              weights
+                                                             i)))
+                ((eq middle (aref split-array i))
+                 (incf left-error (data-point-squared-error left-avg
+                                                            target-data
+                                                            weights
+                                                            i))
+                 (incf right-error (data-point-squared-error right-avg
+                                                             target-data
+                                                             weights
                                                              i))))
-          (finally (return (values (if (zerop left-count)
-                                       0.0d0
-                                       (/ left-error left-count))
-                                   (if (zerop right-count)
-                                       0.0d0
-                                       (/ right-error right-count))))))))))
+          (finally
+           (return (values (if (zerop left-count)
+                               0.0d0
+                               (/ left-error left-count))
+                           (if (zerop right-count)
+                               0.0d0
+                               (/ right-error right-count))))))))))
 
 
 (defmethod response ((function k-logistic-function)
@@ -147,9 +165,13 @@
             (with length = (sl.data:data-points-count target-data))
             (for i from 0 below length)
             (for target1 = (truncate (statistical-learning.data:mref target-data i 0)))
-            (if (and split-array (eql right (aref split-array i)))
-                (incf (aref right-sums target1))
-                (incf (aref left-sums target1)))
+            (cond ((or (null split-array) (eq left (aref split-array i)))
+                   (incf (aref left-sums target1)))
+                  ((eq right (aref split-array i))
+                   (incf (aref right-sums target1)))
+                  ((eq middle (aref split-array i))
+                   (incf (aref left-sums target1))
+                   (incf (aref right-sums target1))))
             (finally
              (return (values (vector-impurity left-sums)
                              (vector-impurity right-sums)))))
@@ -166,9 +188,13 @@
                                            :element-type 'double-float))
             (for i from 0 below (sl.data:data-points-count target-data))
             (for target = (truncate (statistical-learning.data:mref target-data i 0)))
-            (if (and split-array (eql right (aref split-array i)))
-                (incf (aref right-sums target) (weight-at weights i))
-                (incf (aref left-sums target) (weight-at weights i)))
+            (cond ((or (null split-array) (eq left (aref split-array i)))
+                   (incf (aref left-sums target) (weight-at weights i)))
+                  ((eq right (aref split-array i))
+                   (incf (aref right-sums target) (weight-at weights i)))
+                  ((eq middle (aref split-array i))
+                   (incf (aref left-sums target) (weight-at weights i))
+                   (incf (aref right-sums target) (weight-at weights i))))
             (finally
              (return (values (vector-impurity left-sums)
                              (vector-impurity right-sums)))))))))

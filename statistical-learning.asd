@@ -25,6 +25,12 @@
                              (:file "types")
                              (:file "functions")
                              (:file "extras")))
+               (:module "encode"
+                :components ((:file "package")
+                             (:file "generics")
+                             (:file "types")
+                             (:file "functions")
+                             (:file "methods")))
                (:module "random"
                 :components ((:file "package")
                              (:file "randoms")

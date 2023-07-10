@@ -18,7 +18,7 @@
                  :reader right-score)))
 
 
-(defun fundamental-middle-strategy (sl.common:proxy-enabled)
+(defclass fundamental-middle-strategy (sl.common:proxy-enabled)
   ())
 
 

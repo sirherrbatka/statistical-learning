@@ -5,6 +5,7 @@
                               ensemble
                               train-data
                               target-data)
+  (declare (optimize (debug 3)))
   (bind ((parallel (parallel algorithm))
          (epochs (epochs algorithm))
          (data-points-count (sl.data:data-points-count train-data))
@@ -17,7 +18,7 @@
          (leaf-locks (when parallel
                        (~> indexes
                            (cl-ds.alg:flatten-lists :key (lambda (index)
-                                                           (let ((result (aref leafs index 0)))
+                                                           (let ((result (sl.data:mref leafs index 0)))
                                                              (if (vectorp result)
                                                                  (coerce result 'list)
                                                                  result))))
@@ -29,7 +30,7 @@
          (sample-size (sample-size algorithm))
          ((:flet adjust-predictions (data-point column difference))
           (iterate
-            (with leaf-vector = (aref leafs data-point 0))
+            (with leaf-vector = (sl.data:mref leafs data-point 0))
             (with number-of-trees = (length trees))
             (for i from 0 below number-of-trees)
             (for leaf = (aref leaf-vector i))
@@ -39,15 +40,13 @@
                   (for ii from 0 below length)
                   (for l = (aref leaf ii))
                   (for predictions = (sl.tp:predictions l))
-                  (bt:with-lock-held ((cl-ds:at leaf-locks l))
-                    (incf (sl.data:mref predictions 0 column)
-                          (/ (* shrinkage difference)
-                             length))))
+                  (incf (sl.data:mref predictions 0 column)
+                        (/ (* shrinkage difference)
+                           length)))
                 (let ((predictions (sl.tp:predictions leaf)))
-                  (bt:with-lock-held ((cl-ds:at leaf-locks leaf))
-                    (incf (sl.data:mref predictions 0 column)
-                          (* shrinkage difference)))))))
-         ((:flet prediction (data-point &aux (leaf-vector (aref leafs data-point 0))))
+                  (incf (aref predictions 0 column)
+                        (* shrinkage difference))))))
+         ((:flet prediction (data-point &aux (leaf-vector (sl.data:mref leafs data-point 0))))
           (iterate
             (with number-of-trees = (length trees))
             (with sums = (make-array number-of-trees
@@ -63,17 +62,15 @@
                   (for ii from 0 below length)
                   (for l = (aref leaf ii))
                   (for predictions = (sl.tp:predictions l))
-                  (bt:with-lock-held ((cl-ds:at leaf-locks l))
-                    (iterate
-                      (for ii from 0 below (sl.data:attributes-count predictions))
-                      (for pred = (sl.data:mref predictions 0 ii))
-                      (incf (aref sums ii) (/ (* weight pred) length)))))
+                  (iterate
+                    (for ii from 0 below (array-dimension predictions 1))
+                    (for pred = (aref predictions 0 ii))
+                    (incf (aref sums ii) (/ (* weight pred) length))))
                 (let ((predictions (sl.tp:predictions leaf)))
-                  (bt:with-lock-held ((cl-ds:at leaf-locks leaf))
-                    (iterate
-                      (for ii from 0 below (sl.data:attributes-count predictions))
-                      (for pred = (sl.data:mref predictions 0 ii))
-                      (incf (aref sums ii) (* weight pred))))))
+                  (iterate
+                    (for ii from 0 below (array-dimension predictions 1))
+                    (for pred = (aref predictions 0 ii))
+                    (incf (aref sums ii) (* weight pred)))))
             (finally
              (return (cl-ds.utils:transform (rcurry #'/ total-weight)
                                                     sums))))))
@@ -89,11 +86,15 @@
                                           :displaced-to indexes))
       (funcall (if parallel #'lparallel:pmap #'map)
                nil
-               (lambda (data-point &aux (leaf-vector (aref leafs data-point 0)))
+               (lambda (data-point &aux (leaf-vector (sl.data:mref leafs data-point 0)))
                  (when parallel
                    (iterate
                      (for leaf in-vector leaf-vector)
-                     (bt:release-lock (cl-ds:at leaf-locks leaf))))
+                     (if (vectorp leaf)
+                         (iterate
+                           (for l in-vector leaf)
+                           (bt:release-lock (cl-ds:at leaf-locks l)))
+                         (bt:release-lock (cl-ds:at leaf-locks leaf)))))
                  (iterate
                    (with prediction = (prediction data-point))
                    (for column from 0 below (sl.data:attributes-count target-data))
@@ -103,6 +104,10 @@
                  (when parallel
                    (iterate
                      (for leaf in-vector leaf-vector)
-                     (bt:release-lock (cl-ds:at leaf-locks leaf)))))
+                     (if (vectorp leaf)
+                         (iterate
+                           (for l in-vector leaf)
+                           (bt:release-lock (cl-ds:at leaf-locks l)))
+                         (bt:release-lock (cl-ds:at leaf-locks leaf))))))
                batch)
       (finally (return ensemble)))))

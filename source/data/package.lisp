@@ -1,7 +1,4 @@
-(cl:in-package #:cl-user)
-
-
-(defpackage #:statistical-learning.data
+(cl:defpackage #:statistical-learning.data
   (:use #:cl #:statistical-learning.aux-package)
   (:nicknames #:sl.data)
   (:export

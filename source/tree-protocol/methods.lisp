@@ -239,17 +239,20 @@
                                        (splitter fundamental-splitter)
                                        (training-parameters fundamental-tree-training-parameters)
                                        training-state)
+  (declare (optimize (debug 3)))
   (bind ((data-size (~> training-state sl.mp:train-data sl.data:data-points-count))
          (split-array (sl.opt:make-split-array data-size))
          (point (pick-split training-state))
          ((:values left-length right-length middle-length)
           (progn
             (setf (split-point training-state) point)
-            (apply #'handle-split-middle
-                   (middle-strategy splitter)
-                   split-array
-                   (multiple-value-list (fill-split-vector training-state
-                                                           split-array)))))
+            (let ((results (multiple-value-list (fill-split-vector training-state
+                                                                   split-array)))
+                  (middle-strategy (middle-strategy splitter)))
+              (apply #'handle-split-middle
+                     middle-strategy
+                     split-array
+                     results))))
          ((:values left-score right-score)
           (calculate-loss* training-parameters
                            training-state
@@ -371,7 +374,7 @@
                            (splitter random-attribute-splitter)
                            (node fundamental-node)
                            data index context)
-  (declare (type (simple-array double-float (* *)) data)
+  (declare (type sl.data:double-float-data-matrix data)
            (type fixnum index))
   (labels ((impl (node depth &aux (new-depth (the fixnum (1+ depth))))
              (declare (optimize (speed 3) (safety 0)
@@ -383,7 +386,7 @@
                  (bind (((attribute-index attribute-value) (point node)))
                    (declare (type fixnum attribute-index)
                             (type double-float attribute-value))
-                   (if (> (aref data index attribute-index)
+                   (if (> (sl.data:mref data index attribute-index)
                           attribute-value)
                        (~> node right-node (impl new-depth))
                        (~> node left-node (impl new-depth))))
@@ -394,8 +397,8 @@
 (defmethod pick-split*/proxy (splitter/proxy
                               (splitter random-attribute-splitter)
                               parameters state)
-  (declare (optimize (speed 3) (safety 0)
-                     (debug 0) (space 0)
+  (declare (optimize (speed 0) (safety 3)
+                     (debug 3) (space 0)
                      (compilation-speed 0))
            (ignore parameters))
   (bind ((attributes (the (simple-array fixnum (*))
@@ -800,10 +803,9 @@
 
 
 (defmethod handle-split-middle/proxy (middle-strategy/proxy
-                                      (middle-strategy proportional-middle-strategy)
+                                      (middle-strategy naive-middle-strategy)
                                       split-vector
                                       left-length
                                       right-length
                                       middle-length)
-  (ensure middle-length 0)
   (values left-length right-length middle-length))

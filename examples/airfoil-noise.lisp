@@ -2,7 +2,7 @@
 
 (ql:quickload '(:vellum :vellum-csv :statistical-learning))
 
-(defpackage #:airfoil-noise-example
+(cl:defpackage #:airfoil-noise-example
   (:use #:cl #:statistical-learning.aux-package))
 
 (cl:in-package #:airfoil-noise-example)
