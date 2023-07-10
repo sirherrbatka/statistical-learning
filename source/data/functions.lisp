@@ -33,39 +33,45 @@
 
 (declaim (inline data-matrix-element-type))
 (defun data-matrix-element-type (data-matrix)
-  (declare (type data-matrix data-matrix) (optimize (speed 3)))
+  (declare (type data-matrix data-matrix)
+           (optimize (speed 3)))
   (~> data-matrix data array-element-type))
 
 
 (declaim (inline attributes-count))
 (defun attributes-count (data-matrix)
-  (declare (type data-matrix data-matrix) (optimize (speed 3)))
+  (declare (type data-matrix data-matrix)
+           (optimize (speed 3)))
   (array-dimension (data data-matrix) 1))
 
 
 (declaim (inline data-points-count))
 (defun data-points-count (data-matrix)
-  (declare (type data-matrix data-matrix) (optimize (speed 3)))
+  (declare (type data-matrix data-matrix)
+           (optimize (speed 3)))
   (array-dimension (index data-matrix) 0))
 
 
 (defun data-matrix-dimensions (data-matrix)
-  (declare (type data-matrix data-matrix) (optimize (speed 3)))
+  (declare (type data-matrix data-matrix)
+           (optimize (speed 3)))
   (list (array-dimension (index data-matrix) 0)
         (array-dimension (data data-matrix) 1)))
 
 
 (declaim (inline missing-mask))
 (defun missing-mask (data-matrix)
-  (declare (type data-matrix data-matrix) (optimize (speed 3)))
+  (declare (type data-matrix data-matrix)
+           (optimize (speed 3)))
   (if (typep data-matrix 'universal-data-matrix)
       (universal-data-matrix-missing-mask data-matrix)
       (double-float-data-matrix-missing-mask data-matrix)))
 
 
-(declaim (notinline mref))
+(declaim (inline mref))
 (defun mref (data-matrix data-point attribute)
-  (declare (type data-matrix data-matrix) (optimize (debug 3)))
+  (declare (type data-matrix data-matrix)
+           (optimize (speed 3) (safety 0) (debug 0)))
   (check-type data-matrix data-matrix)
   (let ((index (aref (index data-matrix) data-point)))
     (values (aref (data data-matrix) index attribute)
