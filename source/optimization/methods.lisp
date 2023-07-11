@@ -32,8 +32,8 @@
   (declare (type (or null weights-data-matrix) weights)
            (type sl.data:double-float-data-matrix target-data)
            (type (or null sl.data:split-vector) split-array)
-           (optimize (speed 0) (safety 3)
-                     (debug 3) (space 0)
+           (optimize (speed 3) (safety 0)
+                     (debug 0) (space 0)
                      (compilation-speed 0)))
   (let* ((target-data-width (sl.data:attributes-count target-data))
          (left-sum (make-array target-data-width :element-type 'double-float

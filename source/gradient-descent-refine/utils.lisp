@@ -5,15 +5,14 @@
                               ensemble
                               train-data
                               target-data)
-  (declare (optimize (debug 3)))
   (bind ((parallel (parallel algorithm))
          (epochs (epochs algorithm))
          (data-points-count (sl.data:data-points-count train-data))
          (trees (sl.ensemble:trees ensemble))
          (total-weight (reduce #'+ trees :key #'sl.tp:weight))
-         (leafs (sl.ensemble:leafs ensemble
-                                   train-data
-                                   parallel))
+         (leafs (the sl.data:universal-data-matrix (sl.ensemble:leafs ensemble
+                                                                      train-data
+                                                                      parallel)))
          (indexes (sl.data:iota-vector data-points-count))
          (leaf-locks (when parallel
                        (~> indexes
