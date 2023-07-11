@@ -3,8 +3,7 @@
 
 (defmethod performance-metric* :before ((parameters sl.mp:fundamental-model-parameters)
                                         type target predictions weights)
-  (check-type weights (or null sl.data:double-float-data-matrix))
-  (statistical-learning.data:check-data-points target predictions))
+  (check-type weights (or null sl.data:double-float-data-matrix)))
 
 
 (defmethod performance-metric* ((parameters regression)
@@ -14,10 +13,10 @@
                                 weights)
   (iterate
     (with sum = 0.0d0)
-    (with count = (sl.data:data-points-count predictions))
+    (with count = (array-dimension predictions 1))
     (for i from 0 below count)
     (for er = (- (sl.data:mref target i 0)
-                 (sl.data:mref predictions i 0)))
+                 (aref predictions i 0)))
     (incf sum (* (if (null weights) 1.0d0 (sl.data:mref weights i 0))
                  (* er er)))
     (finally (return (/ sum count)))))
@@ -43,12 +42,12 @@
 
 (defmethod errors ((parameters regression) target predictions)
   (iterate
-    (with result = (make-array (sl.data:data-points-count predictions)
+    (with result = (make-array (array-dimension predictions 1)
                                :element-type 'double-float
                                :initial-element 0.0d0))
-    (for i from 0 below (sl.data:data-points-count predictions))
+    (for i from 0 below (array-dimension predictions 1))
     (for er = (- (sl.data:mref target i 0)
-                 (sl.data:mref predictions i 0)))
+                 (aref predictions i 0)))
     (setf (aref result i) (* er er))
     (finally (return result))))
 

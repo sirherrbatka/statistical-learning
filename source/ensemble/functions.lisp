@@ -7,5 +7,6 @@
          (tree-parameters (tree-parameters parameters))
          (state (contribute-trees ensemble tree-parameters trees
                                   data parallel state)))
+    (declare (optimize (debug 3)))
     (values (statistical-learning.tp:extract-predictions state)
             state)))

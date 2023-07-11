@@ -24,6 +24,7 @@
    #:maxs
    #:mins
    #:mins/maxs
+   #:data-matrix-map-data-points
    #:make-data-matrix-like
    #:map-array
    #:reduce-data-points

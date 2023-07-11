@@ -96,15 +96,15 @@
            (lock (bt:make-lock))
            (weight (sl.tp:weight model))
            (root (sl.tp:root model)))
-      (sl.data:data-matrix-map
+      (sl.data:data-matrix-map-data-points
        (lambda (data-point data)
          (let* ((leafs (sl.tp:leaf-for splitter root
                                        data data-point
                                        model))
                 (sums (bt:with-lock-held (lock)
                         (ensure (sl.tp:sums state)
-                          (sl.data:make-data-matrix data-points-count
-                                                    attributes-count)))))
+                          (make-array (list data-points-count attributes-count)
+                                    :element-type 'double-float)))))
            (if (vectorp leafs)
                (iterate
                  (declare (type fixnum i))
@@ -115,14 +115,14 @@
                  (for attributes-count = (array-dimension predictions 1))
                  (iterate
                    (for i from 0 below attributes-count)
-                   (incf (sl.data:mref sums data-point i)
+                   (incf (aref sums data-point i)
                          (/ (* weight (aref predictions 0 i)) length))))
                (let* ((predictions (sl.tp:predictions leafs))
                       (attributes-count (array-dimension predictions 1)))
                  (iterate
                    (declare (type fixnum i))
                    (for i from 0 below attributes-count)
-                   (incf (sl.data:mref sums data-point i)
+                   (incf (aref sums data-point i)
                          (* weight (aref predictions 0 i))))))))
        data
        parallel)
@@ -148,15 +148,15 @@
       (when (null state)
         (setf state (make 'sl.tp:contributed-predictions
                           :training-parameters parameters
-                          :sums (sl.data:make-data-matrix data-points-count
-                                                          number-of-classes))))
+                          :sums (make-array (list data-points-count number-of-classes)
+                                            :element-type 'double-float))))
       (let* ((sums (sl.tp:sums state))
              (splitter (sl.tp:splitter parameters))
              (root (sl.tp:root model)))
         (sl.data:data-matrix-map
                  (lambda (data-point data &aux (leafs (sl.tp:leaf-for splitter root
-                                                       data data-point
-                                                       model)))
+                                                                 data data-point
+                                                                 model)))
                    (if (vectorp leafs)
                        (iterate
                          (declare (type fixnum i))
@@ -169,14 +169,14 @@
                            (declare (type fixnum j))
                            (for j from 0 below number-of-classes)
                            (for class-support = (aref predictions 0 j))
-                           (incf (sl.data:mref sums data-point j) (/ (* weight class-support) length))))
+                           (incf (aref sums data-point j) (/ (* weight class-support) length))))
                        (iterate
                          (declare (type fixnum j))
                          (with leaf = (funcall leaf-key leafs))
                          (with predictions = (sl.tp:predictions leaf))
                          (for j from 0 below number-of-classes)
                          (for class-support = (aref predictions 0 j))
-                         (incf (sl.data:mref sums data-point j) (* weight class-support)))))
+                         (incf (aref sums data-point j) (* weight class-support)))))
                  data
                  parallel))
       (incf (sl.tp:contributions-count state) weight))
@@ -188,12 +188,8 @@
      (parameters fundamental-decision-tree-parameters)
      (state sl.tp:contributed-predictions))
   (let ((count (sl.tp:contributions-count state)))
-    (sl.data:data-matrix-map (lambda (data-point data)
-                               (iterate
-                                 (for i from 0 below (array-dimension data 1))
-                                 (setf #1=(aref data data-point i) (/ #1# count))))
-                             (sl.tp:sums state)
-                             nil)))
+    (sl.data:array-avg (sl.tp:sums state)
+                       count)))
 
 
 (defmethod sl.opt:number-of-classes ((object classification))

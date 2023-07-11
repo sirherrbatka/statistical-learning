@@ -422,6 +422,14 @@
   data-matrix)
 
 
+(defun data-matrix-map-data-points (function data-matrix parallel)
+  (check-type data-matrix data-matrix)
+  (funcall (if parallel #'lparallel:pmap #'map) nil
+           (lambda (data-point) (funcall function data-point data-matrix))
+           (~> data-matrix index length make-iota-vector))
+  data-matrix)
+
+
 (defun data-matrix-quasi-clone (data-matrix &rest args)
   (apply (data-matrix-constructor data-matrix)
          (append args

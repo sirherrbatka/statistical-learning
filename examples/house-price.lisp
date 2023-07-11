@@ -115,42 +115,41 @@
 (defparameter *training-parameters*
   (make 'statistical-learning.dt:regression
         :optimized-function (sl.opt:squared-error)
-        :maximal-depth 7
-        :minimal-difference 0.0000001d0
+        :maximal-depth 30
+        :minimal-difference 0.001d0
         :minimal-size 5
         :splitter (sl.common:lift (make-instance 'sl.tp:random-attribute-splitter)
                                   'sl.tp:random-splitter
-                                  :trials-count 500)
-        :parallel nil))
+                                  :trials-count 50)
+        :parallel t))
 
 (defparameter *forest-parameters*
   (make 'statistical-learning.ensemble:random-forest
-        :trees-count 5
-        :parallel nil
-        :tree-batch-size 5
-        :tree-attributes-count 20
+        :trees-count 1000
+        :parallel t
+        :tree-batch-size 10
+        :tree-attributes-count 50
         :data-points-sampler (make-instance 'sl.ensemble:weights-based-data-points-sampler
-                                            :sampling-rate 0.4)
+                                            :sampling-rate 0.3)
         :tree-parameters *training-parameters*))
 
 (defun refine (model train-data target-data)
-  (~> model
-      (sl.ensemble:refine-trees
-       (make-instance 'statistical-learning.gradient-descent-refine:parameters
-                      :epochs 30
-                      :sample-size 750
-                      :shrinkage 1.0)
-       _
-       train-data
-       target-data)))
+  (sl.ensemble:refine-trees
+   (make-instance 'statistical-learning.gradient-descent-refine:parameters
+                  :epochs 500
+                  :sample-size 750
+                  :shrinkage 0.1)
+   model
+   train-data
+   target-data))
 
-(defparameter *forest*
-  (refine
-   (sl.mp:make-supervised-model *forest-parameters*
-                                *train-data*
-                                *target-data*
-                                :parallel nil)
+(defparameter *mean-error*
+  (statistical-learning.performance:cross-validation
+   *forest-parameters*
+   4
    *train-data*
-   *target-data*))
+   *target-data*
+   :after #'refine
+   :parallel nil))
 
-(cl-user::cinspect *forest*)
+(print (round *mean-error*))
