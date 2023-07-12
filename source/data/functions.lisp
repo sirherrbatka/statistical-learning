@@ -311,7 +311,7 @@
                                 (length data-points)))
          (result-min (make-data-matrix 1 attributes-count))
          (result-max (make-data-matrix 1 attributes-count)))
-    (declare (type fixnum attributes-count data-points-count )
+    (declare (type fixnum attributes-count data-points-count)
              (type sl.data:double-float-data-matrix data result-min result-max))
     (iterate
       (declare (type fixnum i))

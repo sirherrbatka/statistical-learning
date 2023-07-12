@@ -173,17 +173,30 @@
                                  (for i from (~> leafs length 1-) downto 0)
                                  (for tree in-vector prev-trees)
                                  (for leaf = (aref leafs i))
-                                 (incf (aref counts index 0))
-                                 (for predictions = (sl.tp:predictions leaf))
-                                 (for prediction =
-                                      (iterate
-                                        (declare (type fixnum i))
-                                        (for i from 0
-                                             below (array-dimension predictions 1))
-                                        (finding i maximizing
-                                                 (aref predictions 0 i))))
-                                 (when (= prediction expected)
-                                   (incf (aref counts index 1)))))
+                                 (if (vectorp leaf)
+                                     (iterate
+                                       (for l in-vector leaf)
+                                       (for predictions = (sl.tp:predictions l))
+                                       (for prediction = (iterate
+                                                           (declare (type fixnum i))
+                                                           (for i from 0
+                                                                below (array-dimension predictions 1))
+                                                           (finding i maximizing
+                                                                    (aref predictions 0 i))))
+                                       (incf (aref counts index 0))
+                                       (when (= prediction expected)
+                                         (incf (aref counts index 1))))
+                                     (bind ((predictions (sl.tp:predictions leaf))
+                                            (prediction
+                                             (iterate
+                                               (declare (type fixnum i))
+                                               (for i from 0
+                                                    below (array-dimension predictions 1))
+                                               (finding i maximizing
+                                                        (aref predictions 0 i)))))
+                                       (incf (aref counts index 0))
+                                       (when (= prediction expected)
+                                         (incf (aref counts index 1)))))))
                              target-data
                              parallel)
     (funcall (if parallel #'lparallel:pmap #'map)
