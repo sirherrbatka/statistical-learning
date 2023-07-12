@@ -115,30 +115,30 @@
 (defparameter *training-parameters*
   (make 'statistical-learning.dt:regression
         :optimized-function (sl.opt:squared-error)
-        :maximal-depth 30
-        :minimal-difference 0.001d0
+        :maximal-depth 60
+        :minimal-difference 5.0d0
         :minimal-size 5
         :splitter (sl.common:lift (make-instance 'sl.tp:random-attribute-splitter)
                                   'sl.tp:random-splitter
-                                  :trials-count 50)
+                                  :trials-count 500)
         :parallel t))
 
 (defparameter *forest-parameters*
   (make 'statistical-learning.ensemble:random-forest
-        :trees-count 1000
+        :trees-count 250
         :parallel t
         :tree-batch-size 10
-        :tree-attributes-count 50
+        :tree-attributes-count 150
         :data-points-sampler (make-instance 'sl.ensemble:weights-based-data-points-sampler
-                                            :sampling-rate 0.3)
+                                            :sampling-rate 0.2)
         :tree-parameters *training-parameters*))
 
 (defun refine (model train-data target-data)
   (sl.ensemble:refine-trees
    (make-instance 'statistical-learning.gradient-descent-refine:parameters
-                  :epochs 500
-                  :sample-size 750
-                  :shrinkage 0.1)
+                  :epochs 100
+                  :sample-size 1000
+                  :shrinkage 0.25)
    model
    train-data
    target-data))
@@ -152,4 +152,4 @@
    :after #'refine
    :parallel nil))
 
-(print (round *mean-error*))
+(print (round (sqrt *mean-error*)))

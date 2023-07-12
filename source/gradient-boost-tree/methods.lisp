@@ -53,6 +53,7 @@
      context
      parallel
      &optional (leaf-key #'identity))
+  (declare (optimize (debug 3)))
   (ensure leaf-key #'identity)
   (sl.data:bind-data-matrix-dimensions ((data-points-count attributes-count data))
     (when (null state)
@@ -63,20 +64,22 @@
            (shrinkage (shrinkage model))
            (root (sl.tp:root model)))
       (declare (type sl.data:double-float-data-matrix sums))
-      (sl.data:data-matrix-map (lambda (data-point data)
-                                 (let* ((leaf (~>> (sl.tp:leaf-for splitter root
-                                                                   data data-point
-                                                                   model)
-                                                   (funcall leaf-key)))
-                                        (predictions (sl.tp:predictions leaf)))
-                                   (iterate
-                                     (for i from 0 below (sl.data:attributes-count predictions))
-                                     (incf (sl.data:mref sums data-point i)
-                                           (* shrinkage
-                                              (aref predictions 0 i)
-                                              weight)))))
-                               sums
-                               parallel)
+      (sl.data:data-matrix-map-data-points
+       (lambda (data-point d)
+         (declare (ignore d))
+         (let* ((leaf (~>> (sl.tp:leaf-for splitter root
+                                           data data-point
+                                           model)
+                           (funcall leaf-key)))
+                (predictions (sl.tp:predictions leaf)))
+           (iterate
+             (for i from 0 below (array-dimension predictions 0))
+             (incf (sl.data:mref sums data-point i)
+                   (* shrinkage
+                      (aref predictions 0 i)
+                      weight)))))
+       sums
+       parallel)
       (incf (sl.tp:contributions-count state) weight))
     state))
 
@@ -122,7 +125,7 @@
     (parameters/proxy
      (parameters regression)
      (state sl.tp:contributed-predictions))
-  (sl.tp:sums state))
+   (~> state sl.tp:sums))
 
 
 (defmethod sl.tp:extract-predictions*/proxy

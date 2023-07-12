@@ -377,7 +377,7 @@
   (declare (type sl.data:double-float-data-matrix data)
            (type fixnum index))
   (labels ((impl (node depth &aux (new-depth (the fixnum (1+ depth))))
-             (declare (optimize (speed 0) (safety 0)
+             (declare (optimize (speed 0) (safety 3)
                                 (space 0) (debug 3)
                                 (compilation-speed 0)))
              (setf node (lparallel:force node))

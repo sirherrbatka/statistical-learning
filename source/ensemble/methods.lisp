@@ -85,7 +85,7 @@
                                             &optional parallel)
   (let* ((trees (trees model))
          (result (trees-predict model trees (sl.data:wrap data) parallel)))
-    result))
+    (if (arrayp result) result (sl.data:data result))))
 
 
 (defmethod cl-ds.utils:cloning-information append

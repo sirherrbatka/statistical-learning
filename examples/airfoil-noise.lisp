@@ -1,5 +1,3 @@
-(cl:in-package #:cl-user)
-
 (ql:quickload '(:vellum :vellum-csv :statistical-learning))
 
 (cl:defpackage #:airfoil-noise-example
@@ -20,12 +18,12 @@
                                (:name sound :type float))))
 
 (defvar *train-data*
-  (vellum:to-matrix (vellum:select *data* :columns (vellum:s (vellum:between :to 'sound)))
-                    :element-type 'double-float))
+  (sl.data:wrap (vellum:to-matrix (vellum:select *data* :columns (vellum:s (vellum:between :to 'sound)))
+                                  :element-type 'double-float)))
 
 (defvar *target-data*
-  (vellum:to-matrix (vellum:select *data* :columns '(sound))
-                    :element-type 'double-float))
+  (sl.data:wrap (vellum:to-matrix (vellum:select *data* :columns '(sound))
+                                  :element-type 'double-float)))
 
 (defparameter *training-parameters*
   (make 'statistical-learning.dt:regression
@@ -36,12 +34,12 @@
         :splitter (sl.common:lift (make-instance 'sl.tp:random-attribute-splitter)
                                   'sl.tp:random-splitter
                                   :trials-count 80)
-        :parallel t))
+        :parallel nil))
 
 (defparameter *forest-parameters*
   (make 'statistical-learning.ensemble:random-forest
         :trees-count 300
-        :parallel t
+        :parallel nil
         :tree-batch-size 25
         :tree-attributes-count 5
         :data-points-sampler (make-instance 'sl.ensemble:weights-based-data-points-sampler
@@ -109,7 +107,7 @@
         (statistical-learning.performance:cross-validation
          (make 'statistical-learning.ensemble:gradient-boost-ensemble
                :trees-count 500
-               :parallel t
+               :parallel nil
                :tree-batch-size 10
                :shrinkage 0.1d0
                :tree-attributes-count 5
@@ -123,7 +121,7 @@
                                       :splitter (sl.common:lift (make-instance 'sl.tp:random-attribute-splitter)
                                                                 'sl.tp:random-splitter
                                                                 :trials-count 15)
-                                      :parallel t))
+                                      :parallel nil))
          4
          *train-data*
          *target-data*

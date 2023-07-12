@@ -70,8 +70,7 @@
 
 (declaim (inline mref))
 (defun mref (data-matrix data-point attribute)
-  (declare (type data-matrix data-matrix)
-           (optimize (speed 3) (safety 0) (debug 0)))
+  (declare (type data-matrix data-matrix))
   (check-type data-matrix data-matrix)
   (let ((index (aref (index data-matrix) data-point)))
     (values (aref (data data-matrix) index attribute)
