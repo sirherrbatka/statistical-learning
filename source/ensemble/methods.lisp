@@ -157,7 +157,7 @@
          (counts (~> ensemble-state weights-calculator-state counts))
          (assigned-leafs (assigned-leafs ensemble-state))
          (weights (sl.mp:weights ensemble-state)))
-    (declare (type (simple-array fixnum (* *)) counts)
+    (declare (type (simple-array single-float (* *)) counts)
              (type sl.data:double-float-data-matrix target-data))
     (assign-leafs ensemble-state ensemble-model)
     (sl.data:data-matrix-map (lambda (index data)
@@ -173,19 +173,20 @@
                                  (for i from (~> leafs length 1-) downto 0)
                                  (for tree in-vector prev-trees)
                                  (for leaf = (aref leafs i))
+                                 (incf (aref counts index 0))
                                  (if (vectorp leaf)
                                      (iterate
+                                       (with length = (length leaf))
                                        (for l in-vector leaf)
                                        (for predictions = (sl.tp:predictions l))
-                                       (for prediction = (iterate
-                                                           (declare (type fixnum i))
-                                                           (for i from 0
-                                                                below (array-dimension predictions 1))
-                                                           (finding i maximizing
-                                                                    (aref predictions 0 i))))
-                                       (incf (aref counts index 0))
+                                       (for prediction =
+                                            (iterate
+                                              (declare (type fixnum i))
+                                              (for i from 0
+                                                   below (array-dimension predictions 1))
+                                              (finding i maximizing (aref predictions 0 i))))
                                        (when (= prediction expected)
-                                         (incf (aref counts index 1))))
+                                         (incf (aref counts index 1) (/ 1 length))))
                                      (bind ((predictions (sl.tp:predictions leaf))
                                             (prediction
                                              (iterate
@@ -194,7 +195,6 @@
                                                     below (array-dimension predictions 1))
                                                (finding i maximizing
                                                         (aref predictions 0 i)))))
-                                       (incf (aref counts index 0))
                                        (when (= prediction expected)
                                          (incf (aref counts index 1)))))))
                              target-data
@@ -203,10 +203,10 @@
              nil
              (lambda (index &aux (total (aref counts index 0)))
                (declare (type fixnum index)
-                        (type fixnum total))
+                        (type single-float total))
                (unless (zerop total)
                  (setf (sl.data:mref weights index 0)
-                       (+ (- 1.0d0 (/ (the fixnum (aref counts index 1))
+                       (+ (- 1.0d0 (/ (the single-float (aref counts index 1))
                                       total))
                           double-float-epsilon))))
              (sl.data:index target-data))))
@@ -343,8 +343,8 @@
          (data-points-count (sl.data:data-points-count weights)))
     (make 'dynamic-weights-calculator-state
           :counts (make-array `(,data-points-count 2)
-                              :element-type 'fixnum
-                              :initial-element 0))))
+                              :element-type 'single-float
+                              :initial-element 0.0))))
 
 
 (defmethod sl.mp:make-model*/proxy (parameters/proxy
