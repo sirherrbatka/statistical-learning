@@ -151,7 +151,6 @@
                            (tree-parameters sl.perf:classification)
                            ensemble-state
                            ensemble-model)
-  (declare (optimize (safety 3) (debug 3)))
   (let* ((parallel (~> ensemble-state sl.mp:parameters parallel))
          (target-data (sl.mp:target-data ensemble-state))
          (prev-trees (trees-view ensemble-state))
@@ -411,7 +410,6 @@
 (defmethod sl.mp:make-model*/proxy (parameters/proxy
                                     (parameters isolation-forest)
                                     state)
-  (declare (optimize (debug 3)))
   (bind ((train-data (sl.mp:train-data state))
          (train-data-attributes (sl.data:attributes-count train-data))
          (tree-batch-size (tree-batch-size parameters))

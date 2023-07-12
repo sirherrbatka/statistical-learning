@@ -53,7 +53,6 @@
      context
      parallel
      &optional (leaf-key #'identity))
-  (declare (optimize (debug 3)))
   (ensure leaf-key #'identity)
   (sl.data:bind-data-matrix-dimensions ((data-points-count attributes-count data))
     (when (null state)

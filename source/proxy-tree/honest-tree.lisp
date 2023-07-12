@@ -39,7 +39,6 @@
 (defmethod sl.mp:make-model*/proxy ((proxy honest-tree)
                                     parameters
                                     state)
-  (declare (optimize (debug 3)))
   (bind ((inner-state (inner state))
          (training-data (sl.mp:train-data inner-state))
          (data-points-count (sl.data:data-points-count training-data))

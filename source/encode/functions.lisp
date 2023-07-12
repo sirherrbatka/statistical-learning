@@ -10,7 +10,6 @@
 
 
 (defun encode (encoders data-frame)
-  (declare (optimize (debug 3)))
   (assert encoders)
   (bind ((offsets (serapeum:scan #'+ encoders :key #'size-required :initial-value 0))
          (number-of-columns (reduce #'+ encoders :key #'size-required))

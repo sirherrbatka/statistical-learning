@@ -302,7 +302,7 @@
                (:data-points vector))
     cons)
 (defun mins/maxs (data &key data-points attributes)
-  (declare (optimize (debug 3) (safety 3)))
+  (declare (optimize (debug 0) (safety 0) (speed 3)))
   (let* ((attributes-count (if (null attributes)
                               (attributes-count data)
                               (length attributes)))
