@@ -20,7 +20,8 @@
          (data-points-count (sl.data:data-points-count target-data))
          (result (sl.data:make-data-matrix data-points-count
                                            number-of-classes)))
-    (check-type train-data sl.data:double-float-data-matrix)
+    (check-type target-data sl.data:double-float-data-matrix)
+    (check-type train-data sl.data:data-matrix)
     (check-type result sl.data:double-float-data-matrix)
     (iterate
       (declare (optimize (speed 3) (safety 0))

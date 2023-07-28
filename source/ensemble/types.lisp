@@ -111,7 +111,7 @@
 
 (defclass supervised-ensemble-state (ensemble-state)
   ((%target-data :initarg :target-data
-                 :reader sl.mp:target-data)
+                 :accessor sl.mp:target-data)
    (%leafs-assigned-p :initarg :leafs-assigned-p
                       :accessor leafs-assigned-p
                       :documentation "For the weights calculator.")

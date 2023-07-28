@@ -684,6 +684,7 @@
 
 
 (defmethod assign-leafs ((state supervised-ensemble-state) model)
+  (declare (optimize (debug 3)))
   (when (leafs-assigned-p state)
     (return-from assign-leafs nil))
   (bind ((parallel (~> state sl.mp:parameters parallel))
@@ -693,18 +694,20 @@
          (assigned-leafs (assigned-leafs state))
          (train-data (sl.mp:train-data state))
          (trees (trees-view state)))
+    (check-type train-data sl.data:data-matrix)
     (map nil #'sl.tp:force-tree trees)
-    (sl.data:data-matrix-map (lambda (index train-data)
-                               (declare (type fixnum index))
-                               (iterate
-                                 (with leafs = (aref assigned-leafs index))
-                                 (for tree in-vector trees)
-                                 (for leaf = (sl.tp:leaf-for splitter
-                                                             (sl.tp:root tree)
-                                                             train-data
-                                                             index
-                                                             model))
-                                 (vector-push-extend leaf leafs)))
+    (sl.data:data-matrix-map-data-points
+     (lambda (index train-data)
+       (declare (type fixnum index))
+       (iterate
+         (with leafs = (aref assigned-leafs index))
+         (for tree in-vector trees)
+         (for leaf = (sl.tp:leaf-for splitter
+                                     (sl.tp:root tree)
+                                     train-data
+                                     index
+                                     model))
+         (vector-push-extend leaf leafs)))
                              train-data
                              parallel)
     (setf (leafs-assigned-p state) t)

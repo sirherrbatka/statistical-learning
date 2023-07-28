@@ -153,7 +153,7 @@
       (let* ((sums (sl.tp:sums state))
              (splitter (sl.tp:splitter parameters))
              (root (sl.tp:root model)))
-        (sl.data:data-matrix-map
+        (sl.data:data-matrix-map-data-points
                  (lambda (data-point data &aux (leafs (sl.tp:leaf-for splitter root
                                                                  data data-point
                                                                  model)))

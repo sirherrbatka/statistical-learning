@@ -71,3 +71,15 @@
                                (state fundamental-training-state)
                                key)
   (setf (gethash key (model-cached state)) new-value))
+
+
+(defmethod train-data :around ((object fundamental-training-state))
+  (let ((result (sl.data:wrap (call-next-method))))
+    (setf (train-data object) result)
+    result))
+
+
+(defmethod target-data :around ((object fundamental-training-state))
+  (let ((result (sl.data:wrap (call-next-method))))
+    (setf (target-data object) result)
+    result))

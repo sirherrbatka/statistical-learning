@@ -39,7 +39,7 @@
                   (for ii from 0 below length)
                   (for l = (aref leaf ii))
                   (for predictions = (sl.tp:predictions l))
-                  (incf (sl.data:mref predictions 0 column)
+                  (incf (aref predictions 0 column)
                         (/ (* shrinkage difference)
                            length)))
                 (let ((predictions (sl.tp:predictions leaf)))

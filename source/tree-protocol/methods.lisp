@@ -213,12 +213,13 @@
                                           (parameters standard-tree-training-parameters)
                                           state
                                           result)
+  (declare (optimize (debug 3)))
   (let ((minimal-size (minimal-size parameters))
         (left-length (left-length result))
         (right-length (right-length result)))
     (if (or (< left-length minimal-size)
             (< right-length  minimal-size)
-            (< (- (loss state) (split-result-loss result state))
+            (< (abs (- (loss state) (split-result-loss result state)))
                (minimal-difference parameters)))
         nil
         t)))
@@ -493,8 +494,7 @@
                          (for r = (random length))
                          (while (= r first-index))
                          (finally (return (or r 0))))))
-    (declare
-             (type sl.data:universal-data-matrix train-data)
+    (declare (type sl.data:universal-data-matrix train-data)
              (type fixnum repeats first-index second-index))
     (iterate
       (declare (type fixnum iterations))
@@ -612,10 +612,10 @@
     (:splitter splitter)))
 
 
-(defmethod sl.tp:pick-split*/proxy (splitter/proxy
-                                    (splitter hyperplane-splitter)
-                                    parameters
-                                    state)
+(defmethod pick-split*/proxy (splitter/proxy
+                               (splitter hyperplane-splitter)
+                               parameters
+                               state)
   (declare (optimize (speed 3) (safety 0)
                      (debug 0) (space 0)
                      (compilation-speed 0)))
@@ -807,4 +807,6 @@
                                       left-length
                                       right-length
                                       middle-length)
-  (values left-length right-length middle-length))
+  (values (+ left-length middle-length)
+          (+ right-length middle-length)
+          0))

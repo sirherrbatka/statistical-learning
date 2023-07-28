@@ -385,7 +385,7 @@
         (iterate
           (with j = 0)
           (for i from 0 below (length split-array))
-          (when (member (aref split-array i) positions :test 'eq)
+          (when (member (aref split-array i) positions :test 'eql)
             (setf (aref new-index j) (aref old-index i))
             (incf j))
           (finally (assert (= j length) (j length))))
