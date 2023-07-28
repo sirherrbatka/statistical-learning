@@ -83,3 +83,8 @@
   (let ((result (sl.data:wrap (call-next-method))))
     (setf (target-data object) result)
     result))
+
+
+(defmethod predict :around ((model fundamental-model) data &optional parallel)
+  (declare (ignore parallel))
+  (sl.data:wrap (call-next-method)))
