@@ -166,11 +166,16 @@
 (defmethod sl.tp:extract-predictions*/proxy ((proxy causal-tree)
                                              parameters
                                              state)
-  (map 'vector
-       (curry #'sl.tp:extract-predictions*/proxy
-              (sl.common:next-proxy proxy)
-              parameters)
-       (results state)))
+  (iterate
+    (with source = (results state))
+    (with results = (copy-array source))
+    (for i from 0 below (array-total-size results))
+    (setf (row-major-aref results i) (sl.tp:extract-predictions*/proxy
+                                      (sl.common:next-proxy proxy)
+                                      (row-major-aref source i)
+                                      (sl.common:next-proxy proxy)
+                                      parameters))
+    (finally (return results))))
 
 
 ;; this is simple, but slow

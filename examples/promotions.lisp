@@ -73,11 +73,11 @@
 
 (defparameter *gains*
   (iterate
-    (with result = (sl.data:make-data-matrix-like (aref *predictions* 0)))
-    (for i from 0 below (~> (aref *predictions* 0) sl.data:data array-total-size))
-    (setf (row-major-aref (sl.data:data result) i)
-          (- (row-major-aref (sl.data:data (aref *predictions* 1)) i)
-             (row-major-aref (sl.data:data (aref *predictions* 0)) i)))
+    (with result = (copy-array (sl.data:mref *predictions* 0 0)))
+    (for i from 0 below (~> (sl.data:mref *predictions* 0 0) array-total-size))
+    (setf (row-major-aref result i)
+          (- (row-major-aref (sl.data:mref *predictions* 1 0) i)
+             (row-major-aref (sl.data:mref *predictions* 0 0) i)))
     (finally (return result))))
 
 (defparameter *purchase-profit* 10.0d0)
@@ -91,6 +91,6 @@
                                :element-type 'double-float))
     (for i from 0 below data-points-count)
     (setf (aref result i) (- (* *purchase-profit*
-                                (sl.data:mref *gains* i 1))
+                                (aref *gains* i 1))
                              *promotion-cost*))
     (finally (return result))))
