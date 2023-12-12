@@ -5,12 +5,24 @@
   (sl.mp:train-data (inner state)))
 
 
+(defmethod (setf sl.mp:train-data) (new-value (state proxy-state))
+  (setf (sl.mp:train-data (inner state)) new-value))
+
+
 (defmethod sl.mp:target-data ((state proxy-state))
   (sl.mp:target-data (inner state)))
 
 
+(defmethod (setf sl.mp:target-data) (new-value (state proxy-state))
+  (setf (sl.mp:target-data (inner state)) new-value))
+
+
 (defmethod sl.mp:weights ((state proxy-state))
   (sl.mp:weights (inner state)))
+
+
+(defmethod (setf sl.mp:weights) (new-value (state proxy-state))
+  (setf (sl.mp:weights (inner state)) new-value))
 
 
 (defmethod sl.tp:attribute-indexes ((state proxy-state))

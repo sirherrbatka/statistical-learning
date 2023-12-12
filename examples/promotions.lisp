@@ -28,7 +28,8 @@
 
 (defvar *train-data*
   (~> (vellum:select *data* :columns (vellum:s (vellum:between :from 'v1)))
-      (vellum:to-matrix :element-type 'double-float)))
+      (vellum:to-matrix :element-type 'double-float)
+      sl.data:wrap))
 
 
 (defvar *target-data*
@@ -38,7 +39,8 @@
 
 (defvar *treatment-data*
   (~> (vellum:select *data* :columns '(promotion))
-      (vellum:to-matrix :element-type 'double-float)))
+      (vellum:to-matrix :element-type 'double-float)
+      sl.data:wrap))
 
 
 (defparameter *training-parameters*
@@ -65,7 +67,7 @@
   (sl.mp:make-supervised-model *forest-parameters*
                                *train-data*
                                *target-data*
-                               :treatment (sl.data:wrap *treatment-data*)))
+                               :treatment *treatment-data*))
 
 (defparameter *predictions* (sl.mp:predict *model* *train-data* nil))
 

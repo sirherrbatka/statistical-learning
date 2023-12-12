@@ -63,13 +63,12 @@
                  size
                  initargs
                  point)))
-    (cl-ds.utils:quasi-clone*
-     state
-     :inner inner
-     :treatment (sl.data:data-matrix-quasi-clone (treatment state)
-                                                 :index (~> inner
-                                                            sl.mp:train-data
-                                                            sl.data:index)))))
+    (cl-ds.utils:quasi-clone* state
+      :inner inner
+      :treatment (sl.data:data-matrix-quasi-clone (treatment state)
+                                                  :index (~> inner
+                                                             sl.mp:train-data
+                                                             sl.data:index)))))
 
 
 (defmethod sl.tp:make-leaf*/proxy ((proxy causal-tree)

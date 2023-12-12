@@ -111,6 +111,8 @@
                            missing-mask)
   (check-type data-points-count fixnum)
   (check-type attributes-count fixnum)
+  (check-type missing-mask (or null (simple-array bit (* *))))
+  (check-type attributes-count fixnum)
   (assert (> attributes-count 0))
   (assert (> data-points-count 0))
   (econd ((eq element-type 'double-float)
@@ -433,4 +435,5 @@
   (apply (data-matrix-constructor data-matrix)
          (append args
                  (list :data (data data-matrix)
+                       :missing-mask (missing-mask data-matrix)
                        :index (index data-matrix)))))
