@@ -172,9 +172,8 @@
     (for i from 0 below (array-total-size results))
     (setf (row-major-aref results i) (sl.tp:extract-predictions*/proxy
                                       (sl.common:next-proxy proxy)
-                                      (row-major-aref source i)
-                                      (sl.common:next-proxy proxy)
-                                      parameters))
+                                      parameters
+                                      (row-major-aref source i)))
     (finally (return results))))
 
 

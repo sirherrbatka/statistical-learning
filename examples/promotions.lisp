@@ -86,11 +86,9 @@
 ;; and here are the results. If profit from the purchase is $10 and the cost of the promotion is $0.10 we need to have at least 1% increase probability of purchase (1% of $10 is $0.10) to break even.
 (defparameter *expected-promotion-gain*
   (iterate
-    (with data-points-count = (sl.data:data-points-count *gains*))
+    (with data-points-count = (array-dimension *gains* 0))
     (with result = (make-array data-points-count
                                :element-type 'double-float))
     (for i from 0 below data-points-count)
-    (setf (aref result i) (- (* *purchase-profit*
-                                (aref *gains* i 1))
-                             *promotion-cost*))
+    (setf (aref result i) (- (* *purchase-profit* (aref *gains* i 1)) *promotion-cost*))
     (finally (return result))))
