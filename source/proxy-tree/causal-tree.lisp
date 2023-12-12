@@ -188,23 +188,23 @@
         (next-proxy (sl.common:next-proxy proxy)))
     (when (null state)
       (setf state (make 'causal-contributed-predictions
-                        :results (make-array treatment-types-count
+                        :results (make-array (list treatment-types-count 1)
                                              :initial-element nil)
                         :training-parameters parameters)))
     (iterate
       (with results = (results state))
       (for i from 0 below treatment-types-count)
-      (setf (aref results i) (sl.tp:contribute-predictions*/proxy
-                              next-proxy
-                              parameters
-                              model
-                              data
-                              (aref results i)
-                              context
-                              parallel
-                              (compose (rcurry #'aref i)
-                                       #'leafs
-                                       leaf-key)))))
+      (setf (aref results i 0) (sl.tp:contribute-predictions*/proxy
+                                next-proxy
+                                parameters
+                                model
+                                data
+                                (aref results i 0)
+                                context
+                                parallel
+                                (compose (rcurry #'aref i)
+                                         #'leafs
+                                         leaf-key)))))
   state)
 
 

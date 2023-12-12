@@ -69,7 +69,7 @@
                                *target-data*
                                :treatment *treatment-data*))
 
-(defparameter *predictions* (sl.mp:predict *model* *train-data* nil))
+(defparameter *predictions* (sl.mp:predict *model* (sl.data:wrap *train-data*) nil))
 
 (defparameter *gains*
   (iterate
