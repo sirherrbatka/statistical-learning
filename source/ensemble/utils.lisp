@@ -56,3 +56,39 @@
 (defun treep (tree)
   (and (not (null tree))
        (~> tree sl.tp:root sl.tp:treep)))
+
+
+(defun regression-errors (result prev-trees target-data assigned-leafs parallel)
+  (sl.data:data-matrix-map-into result
+                                (lambda (index data)
+                                  (declare (type fixnum index))
+                                  (iterate outer
+                                    (declare (type vector leafs)
+                                             (type vector assigned-leafs)
+                                             (type fixnum index)
+                                             (ignorable tree))
+                                    (with leafs = (aref assigned-leafs index))
+                                    (for i from (~> leafs length 1-) downto 0)
+                                    (for tree in-vector prev-trees)
+                                    (for leaf = (aref leafs i))
+                                    (if (vectorp leaf)
+                                        (iterate outer
+                                          (for l in-vector leaf)
+                                          (for predictions = (sl.tp:predictions l))
+                                          (iterate
+                                            (declare (type fixnum i))
+                                            (for i from 0
+                                                 below (array-dimension predictions 1))
+                                            (in outer
+                                                (summing (abs (- (aref predictions 0 i)
+                                                                 (aref data index i)))))))
+                                        (bind ((predictions (sl.tp:predictions leaf)))
+                                          (iterate
+                                            (declare (type fixnum i))
+                                            (for i from 0
+                                                 below (array-dimension predictions 1))
+                                            (in outer
+                                                (summing (abs (- (aref predictions 0 i)
+                                                                 (aref data index i))))))))))
+                                        target-data
+                                        parallel))

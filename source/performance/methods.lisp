@@ -13,10 +13,10 @@
                                 weights)
   (iterate
     (with sum = 0.0d0)
-    (with count = (array-dimension predictions 1))
+    (with count = (sl.data:attributes-count predictions))
     (for i from 0 below count)
     (for er = (- (sl.data:mref target i 0)
-                 (aref predictions i 0)))
+                 (sl.data:mref predictions i 0)))
     (incf sum (* (if (null weights) 1.0d0 (sl.data:mref weights i 0))
                  (* er er)))
     (finally (return (/ sum count)))))

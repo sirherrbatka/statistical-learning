@@ -148,6 +148,24 @@
 
 
 (defmethod update-weights ((calculator dynamic-weights-calculator)
+                           (tree-parameters sl.perf:regression)
+                           ensemble-state
+                           ensemble-model)
+  (assign-leafs ensemble-state ensemble-model)
+  (bind ((parallel (~> ensemble-state sl.mp:parameters parallel))
+         (target-data (sl.mp:target-data ensemble-state))
+         (prev-trees (trees-view ensemble-state))
+         (assigned-leafs (assigned-leafs ensemble-state))
+         (weights (sl.mp:weights ensemble-state)))
+    (declare (type sl.data:double-float-data-matrix target-data))
+    (regression-errors weights
+                       prev-trees
+                       target-data
+                       assigned-leafs
+                       parallel)))
+
+
+(defmethod update-weights ((calculator dynamic-weights-calculator)
                            (tree-parameters sl.perf:classification)
                            ensemble-state
                            ensemble-model)

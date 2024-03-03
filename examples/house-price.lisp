@@ -129,6 +129,7 @@
         :parallel t
         :tree-batch-size 10
         :tree-attributes-count 150
+        :weights-calculator (make-instance 'sl.ensemble:dynamic-weights-calculator)
         :data-points-sampler (make-instance 'sl.ensemble:weights-based-data-points-sampler
                                             :sampling-rate 0.2)
         :tree-parameters *training-parameters*))
@@ -153,3 +154,4 @@
    :parallel nil))
 
 (print (round (sqrt *mean-error*)))
+

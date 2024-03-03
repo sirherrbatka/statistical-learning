@@ -417,10 +417,34 @@
 
 (defun data-matrix-map (function data-matrix parallel &aux (data (data data-matrix)))
   (check-type data-matrix data-matrix)
-  (funcall (if parallel #'lparallel:pmap #'map) nil
+  (funcall (if parallel #'lparallel:pmap #'map)
+           nil
            (lambda (data-point) (funcall function data-point data))
            (index data-matrix))
   data-matrix)
+
+
+(defun data-matrix-map-double-float (function data-matrix parallel &aux (data (data data-matrix)))
+  (check-type data-matrix data-matrix)
+  (let* ((result (make-data-matrix (data-points-count data-matrix) 1)))
+    (funcall (if parallel #'lparallel:pmap-into #'map-into)
+             (make-array (data-points-count data-matrix)
+                         :element-type 'double-float
+                         :displaced-to (double-float-data-matrix-data result))
+             (lambda (data-point) (funcall function data-point data))
+             (index data-matrix))
+    result))
+
+
+(defun data-matrix-map-into (result function data-matrix parallel &aux (data (data data-matrix)) (result-data (data result)))
+  (check-type data-matrix data-matrix)
+  (funcall (if parallel #'lparallel:pmap #'map)
+           nil
+           (lambda (data-point result-data-point) (setf (aref result-data result-data-point 0)
+                                                   (funcall function data-point data)))
+           (index data-matrix)
+           (index result))
+  result)
 
 
 (defun data-matrix-map-data-points (function data-matrix parallel)
