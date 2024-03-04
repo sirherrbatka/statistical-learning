@@ -103,7 +103,8 @@
            (shrinkage (shrinkage model))
            (root (sl.tp:root model)))
       (sl.data:data-matrix-map-data-points
-       (lambda (data-point data)
+       (lambda (data-point d)
+         (declare (ignore d))
          (iterate
            (declare (type fixnum j))
            (with leaf = (~>> (sl.tp:leaf-for splitter root
@@ -134,6 +135,7 @@
      (state sl.tp:contributed-predictions))
   (iterate
     (declare (type fixnum i number-of-classes)
+             (optimize (speed 3) (safety 0))
              (type double-float maximum sum)
              (type sl.data:double-float-data-matrix sums result))
     (with optimized-function = (optimized-function parameters))
@@ -189,7 +191,9 @@
 (defmethod target ((parameters classification)
                    target-data expected-value)
   (declare (type sl.data:double-float-data-matrix target-data expected-value)
-           (optimize (speed 3) (safety 0)))
+           (optimize (speed 3) (safety 0)
+                     (space 0) (debug 0)
+                     (compilation-speed 0)))
   (iterate
     (declare (type sl.data:double-float-data-matrix result)
              (type fixnum i number-of-classes
@@ -257,7 +261,9 @@
 (defmethod calculate-expected-value ((parameters classification)
                                      data)
   (declare (type sl.data:double-float-data-matrix data)
-           (optimize (speed 3)))
+           (optimize (speed 3) (safety 0)
+                     (space 0) (debug 0)
+                     (compilation-speed 0)))
   (iterate
     (declare (type fixnum i)
              (type (simple-array double-float (* *)) result))
@@ -281,6 +287,9 @@
 (defmethod calculate-expected-value ((parameters regression) data)
   (iterate
     (declare (type fixnum i)
+             (optimize (speed 3) (safety 0)
+                       (space 0) (debug 0)
+                       (compilation-speed 0))
              (type sl.data:double-float-data-matrix result))
     (with number-of-attributes = (sl.data:attributes-count data))
     (with result = (sl.data:make-data-matrix 1 number-of-attributes))
@@ -296,7 +305,7 @@
        (for avg = (/ #1=(sl.data:mref result 0 j)
                      (sl.data:data-points-count data)))
        (setf #1# avg))
-     (return (sl.data:wrap result)))))
+     (return result))))
 
 
 (defmethod calculate-response ((parameters regression)
