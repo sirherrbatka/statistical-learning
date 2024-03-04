@@ -126,17 +126,14 @@
 (~> (make 'statistical-learning.ensemble:gradient-boost-ensemble
           :trees-count 250
           :parallel t
-          :tree-batch-size 5
+          :tree-batch-size 10
           :tree-attributes-count 50
-          :shrinkage 0.35d0
-          :data-points-sampler (make 'sl.ensemble:gradient-based-one-side-sampler
-                                     :small-gradient-sampling-rate 0.1
-                                     :large-gradient-sampling-rate 0.1)
+          :shrinkage 0.01d0
           :tree-parameters (make 'sl.gbt:classification
                                  :optimized-function (sl.opt:k-logistic *cover-types*)
                                  :maximal-depth 25
                                  :minimal-size 20
-                                 :minimal-difference 0.00001d0
+                                 :minimal-difference 0.001d0
                                  :parallel t
                                  :splitter (sl.common:lift (make-instance 'sl.tp:random-attribute-splitter)
                                                            'sl.tp:random-splitter
