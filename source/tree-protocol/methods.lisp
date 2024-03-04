@@ -213,7 +213,6 @@
                                           (parameters standard-tree-training-parameters)
                                           state
                                           result)
-  (declare (optimize (debug 3)))
   (let ((minimal-size (minimal-size parameters))
         (left-length (left-length result))
         (right-length (right-length result)))

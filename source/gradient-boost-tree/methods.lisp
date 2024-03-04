@@ -15,11 +15,11 @@
                    :shrinkage shrinkage
                    :expected-value expected-value)
    :data-points data-points
-   :train-data train-data
+   :train-data (sl.data:wrap train-data)
    :target-data (if (null response)
                     (target parameters
-                            target-data
-                            expected-value)
+                            (sl.data:wrap target-data)
+                            (sl.data:wrap expected-value))
                     response)
    :attributes attributes
    :weights weights))
@@ -102,20 +102,21 @@
            (number-of-classes (sl.opt:number-of-classes parameters))
            (shrinkage (shrinkage model))
            (root (sl.tp:root model)))
-      (sl.data:data-matrix-map (lambda (data-point data)
-                                 (iterate
-                                   (declare (type fixnum j))
-                                   (with leaf = (~>> (sl.tp:leaf-for splitter root
-                                                                     data data-point
-                                                                     model)
-                                                     (funcall leaf-key)))
-                                   (with predictions = (sl.tp:predictions leaf))
-                                   (for j from 0 below number-of-classes)
-                                   (for gradient = (aref predictions 0 j))
-                                   (incf (sl.data:mref sums data-point j)
-                                         (* weight shrinkage gradient))))
-                               sums
-                               parallel)
+      (sl.data:data-matrix-map-data-points
+       (lambda (data-point data)
+         (iterate
+           (declare (type fixnum j))
+           (with leaf = (~>> (sl.tp:leaf-for splitter root
+                                             data data-point
+                                             model)
+                             (funcall leaf-key)))
+           (with predictions = (sl.tp:predictions leaf))
+           (for j from 0 below number-of-classes)
+           (for gradient = (aref predictions 0 j))
+           (incf (sl.data:mref sums data-point j)
+                 (* weight shrinkage gradient))))
+       sums
+       parallel)
       (incf (sl.tp:contributions-count state) weight))
     state))
 
@@ -274,7 +275,7 @@
        (for avg = (/ #1=(aref result 0 j)
                      (sl.data:data-points-count data)))
        (setf #1# avg))
-     (return result))))
+     (return (sl.data:wrap result)))))
 
 
 (defmethod calculate-expected-value ((parameters regression) data)
@@ -295,7 +296,7 @@
        (for avg = (/ #1=(sl.data:mref result 0 j)
                      (sl.data:data-points-count data)))
        (setf #1# avg))
-     (return result))))
+     (return (sl.data:wrap result)))))
 
 
 (defmethod calculate-response ((parameters regression)
@@ -303,7 +304,8 @@
                                expected)
   (~>> (sl.tp:extract-predictions gathered-predictions)
        (sl.opt:response (optimized-function parameters)
-                        expected)))
+                        expected)
+       sl.data:wrap))
 
 
 (defmethod calculate-response ((parameters classification)
@@ -311,7 +313,8 @@
                                expected)
   (~>> (sl.tp:sums gathered-predictions)
        (sl.opt:response (optimized-function parameters)
-                        expected)))
+                        expected)
+       sl.data:wrap))
 
 
 (defmethod sl.opt:number-of-classes ((object classification))

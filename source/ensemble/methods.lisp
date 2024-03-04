@@ -702,7 +702,6 @@
 
 
 (defmethod assign-leafs ((state supervised-ensemble-state) model)
-  (declare (optimize (debug 3)))
   (when (leafs-assigned-p state)
     (return-from assign-leafs nil))
   (bind ((parallel (~> state sl.mp:parameters parallel))
