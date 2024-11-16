@@ -559,8 +559,8 @@
                            index
                            context)
   (declare (type fixnum index)
-           (type (simple-array t (* *)) data))
-  (let ((object (aref data index 0))
+           (type sl.data:universal-data-matrix data))
+  (let ((object (sl.data:mref data index 0))
         (distance-function (ensure-function (distance-function splitter))))
     (labels ((impl (node depth &aux (new-depth (the fixnum (1+ depth))))
                (declare (optimize (speed 3) (safety 0)
