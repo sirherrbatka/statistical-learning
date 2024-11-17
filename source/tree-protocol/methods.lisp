@@ -503,11 +503,13 @@
       (for object = (sl.data:mref train-data first-data-point 0))
       (for result =
            (iterate
-             (repeat repeats)
+             (with repeat = 0)
              (for i = (random length))
              (when (= i first-index) (next-iteration))
              (for other = (sl.data:mref train-data i 0))
              (for distance = (funcall distance-function object other))
+             (incf repeat)
+             (until (= repeat repeats))
              (finding i maximizing distance)))
       (when (= result second-index) (finish))
       (setf second-index result)
