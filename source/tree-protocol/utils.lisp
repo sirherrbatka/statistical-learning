@@ -3,24 +3,24 @@
 (defstruct set-splitter-split-point
   (matrix-index 0 :type fixnum)
   (attribute 0 :type fixnum)
-  (value 0.0d0 :type double-float)
+  (value 0.0 :type single-float)
   (sides #() :type simple-vector))
 
 
-(-> wdot (sl.data:double-float-data-matrix
-          (simple-array double-float (* *))
+(-> wdot (sl.data:single-float-data-matrix
+          (simple-array single-float (* *))
           fixnum
           fixnum
           (simple-array fixnum (*)))
-    double-float)
+    single-float)
 (defun wdot (first second first-point second-point attributes)
   (declare (optimize (speed 3) (safety 0)
                      (debug 0) (space 0)
                      (compilation-speed 0)))
   (iterate
     (declare (type fixnum i)
-             (type double-float result))
-    (with result = 0.0d0)
+             (type single-float result))
+    (with result = 0.0)
     (for i from 0 below (length attributes))
     (for attribute = (aref attributes i))
     (incf result

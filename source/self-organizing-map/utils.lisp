@@ -9,22 +9,22 @@
     result))
 
 
-(-> manhattan-distance (t t) double-float)
+(-> manhattan-distance (t t) single-float)
 (defun manhattan-distance (a b)
   (iterate
-    (declare (type double-float result))
-    (with result = 0.0d0)
+    (declare (type single-float result))
+    (with result = 0.0)
     (for ea in a)
     (for eb in b)
     (incf result (abs (- ea eb)) )
-    (finally (return (the double-float result)))))
+    (finally (return (the single-float result)))))
 
 
 (defun all-manhattan-distances (grid)
-  (cl-ds.utils:make-distance-matrix-from-vector 'double-float
+  (cl-ds.utils:make-distance-matrix-from-vector 'single-float
                                                 #'manhattan-distance
                                                 (subscripts grid)
-                                                :initial-element 0.0d0))
+                                                :initial-element 0.0))
 
 
 (defun units-data-matrix (units)
@@ -71,7 +71,7 @@
          (units (units units-container))
          (all-indexes (all-indexes state)))
     (declare (type sl.data:data-matrix training-data)
-             (type double-float alpha sigma weight)
+             (type single-float alpha sigma weight)
              (type fixnum best-matching-unit)
              (type grid units))
     (flet ((update-weight (unit-index)
@@ -79,9 +79,9 @@
              (iterate
                (declare (type fixnum i)
                         (type unit unit)
-                        (type double-float h distance))
+                        (type single-float h distance))
                (with distance = (if (= unit-index best-matching-unit)
-                                    0.0d0
+                                    0.0
                                     (cl-ds.utils:mref distances
                                                       unit-index
                                                       best-matching-unit)))
@@ -104,11 +104,11 @@
 
 (defun make-unit (attributes-count random-ranges)
   (lret ((result (make-array attributes-count
-                             :element-type 'double-float)))
-    (map-into result (curry #'random-in-range -1.0d0 1.0d0))
+                             :element-type 'single-float)))
+    (map-into result (curry #'random-in-range -1.0 1.0))
     (unless (null random-ranges)
       (map-into result
-                (compose (rcurry #'coerce 'double-float)
+                (compose (rcurry #'coerce 'single-float)
                          (curry #'apply #'random-in-range))
                 random-ranges))
     result))

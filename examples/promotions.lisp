@@ -28,18 +28,18 @@
 
 (defvar *train-data*
   (~> (vellum:select *data* :columns (vellum:s (vellum:between :from 'v1)))
-      (vellum:to-matrix :element-type 'double-float)
+      (vellum:to-matrix :element-type 'single-float)
       sl.data:wrap))
 
 
 (defvar *target-data*
   (~> (vellum:select *data* :columns '(purchase))
-      (vellum:to-matrix :element-type 'double-float)))
+      (vellum:to-matrix :element-type 'single-float)))
 
 
 (defvar *treatment-data*
   (~> (vellum:select *data* :columns '(promotion))
-      (vellum:to-matrix :element-type 'double-float)
+      (vellum:to-matrix :element-type 'single-float)
       sl.data:wrap))
 
 
@@ -47,7 +47,7 @@
   (~> (make 'statistical-learning.dt:classification
             :optimized-function (sl.opt:gini-impurity 2)
             :maximal-depth 3
-            :minimal-difference 0.0d0
+            :minimal-difference 0.0
             :minimal-size 50
             :parallel nil)
       (sl.pt:causal 10 2) ; 10 data points for promotion + 10 data points for no promotions required, 0 designates no promotion, 1 designates promotion
@@ -80,15 +80,15 @@
              (row-major-aref (sl.data:mref *predictions* 0 0) i)))
     (finally (return result))))
 
-(defparameter *purchase-profit* 10.0d0)
-(defparameter *promotion-cost* 0.10d0)
+(defparameter *purchase-profit* 10.0)
+(defparameter *promotion-cost* 0.10)
 
 ;; and here are the results. If profit from the purchase is $10 and the cost of the promotion is $0.10 we need to have at least 1% increase probability of purchase (1% of $10 is $0.10) to break even.
 (defparameter *expected-promotion-gain*
   (iterate
     (with data-points-count = (array-dimension *gains* 0))
     (with result = (make-array data-points-count
-                               :element-type 'double-float))
+                               :element-type 'single-float))
     (for i from 0 below data-points-count)
     (setf (aref result i) (- (* *purchase-profit* (aref *gains* i 1)) *promotion-cost*))
     (finally (return result))))

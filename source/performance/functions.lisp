@@ -22,7 +22,7 @@
                 ((:flet sampled-weights (sample))
                  (if (null weights)
                      nil
-                     (map '(vector double-float)
+                     (map '(vector single-float)
                           (lambda (i) (aref weights i))
                           sample)))
                 (fold-train-data (statistical-learning.data:sample
@@ -104,7 +104,7 @@
 
 (defun make-confusion-matrix (number-of-classes)
   (make-array (list number-of-classes number-of-classes)
-              :element-type 'double-float))
+              :element-type 'single-float))
 
 
 (defun number-of-classes (confusion-matrix)
@@ -159,7 +159,7 @@
                (for i from 0 below (array-dimension confusion-matrix 0))
                (sum (at-confusion-matrix confusion-matrix i i)))
              (total confusion-matrix))
-          'double-float))
+          'single-float))
 
 
 (defun recall (confusion-matrix)
@@ -167,7 +167,7 @@
     (coerce (/ (aref folded 1 1)
                (+ (aref folded 0 1)
                   (aref folded 1 1)))
-            'double-float)))
+            'single-float)))
 
 
 (defun specificity (confusion-matrix)
@@ -175,7 +175,7 @@
     (coerce (/ (aref folded 0 0)
                (+ (aref folded 0 0)
                   (aref folded 0 1)))
-            'double-float)))
+            'single-float)))
 
 
 (defun precision (confusion-matrix)
@@ -183,7 +183,7 @@
     (coerce (/ (aref folded 1 1)
                (+ (aref folded 1 0)
                   (aref folded 1 1)))
-            'double-float)))
+            'single-float)))
 
 
 (defun f1-score (confusion-matrix)
@@ -191,7 +191,7 @@
         (recall (recall confusion-matrix)))
     (coerce (/ (* 2 precision recall)
                (+ precision recall))
-            'double-float)))
+            'single-float)))
 
 
 (defun performance-metric (parameters target predictions &key weights (type :default))

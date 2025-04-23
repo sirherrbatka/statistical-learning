@@ -14,7 +14,7 @@
   (bind ((offsets (serapeum:scan #'+ encoders :key #'size-required :initial-value 0))
          (number-of-columns (reduce #'+ encoders :key #'size-required))
          (array (make-array (list (vellum:row-count data-frame) number-of-columns)
-                            :element-type 'double-float))
+                            :element-type 'single-float))
          (bitmask (make-array (list (vellum:row-count data-frame) number-of-columns)
                               :element-type 'bit)))
     (vellum:transform data-frame

@@ -24,7 +24,7 @@
         (alpha (initial-alpha object))
         (random-ranges (random-ranges object)))
     (declare (ignore parallel decay))
-    (check-type alpha double-float)
+    (check-type alpha single-float)
     (check-type random-ranges (or null sequence))
     (when (emptyp grid-dimensions)
       (error 'cl-ds:invalid-argument-value
@@ -69,7 +69,7 @@
                           random-ranges)))
     (make 'self-organizing-map-training-state
           :data data
-          :initial-sigma (~> parameters grid-dimensions first (/ 2.0d0))
+          :initial-sigma (~> parameters grid-dimensions first (/ 2.0))
           :training-parameters parameters
           :units grid
           :all-indexes (~> grid array-total-size sl.data:iota-vector)
@@ -146,7 +146,7 @@
                  (for value in (~>> (cl-ds.utils:quasi-clone units-container :index i)
                                     (find-best-matching-unit parameters)
                                     (serapeum:array-index-row-major units)))
-                 (setf (sl.data:mref result i j) (coerce value 'double-float))))
+                 (setf (sl.data:mref result i j) (coerce value 'single-float))))
              all-indexes)
     result))
 
@@ -154,7 +154,7 @@
 (defmethod alpha ((decay linear-decay) initial iteration iterations)
   (check-type iterations positive-integer)
   (check-type iteration non-negative-integer)
-  (check-type initial double-float)
+  (check-type initial single-float)
   (+ initial
      (* (/ iteration iterations)
         (- initial +linear-decay-final-alpha+))))
@@ -163,7 +163,7 @@
 (defmethod sigma ((decay linear-decay) initial iteration iterations)
   (check-type iterations positive-integer)
   (check-type iteration non-negative-integer)
-  (check-type initial double-float)
+  (check-type initial single-float)
   (+ initial
      (* (/ iteration iterations)
         (- initial +linear-decay-final-sigma+))))
@@ -172,17 +172,17 @@
 (defmethod alpha ((decay hill-decay) initial iteration iterations)
   (check-type iterations positive-integer)
   (check-type iteration non-negative-integer)
-  (check-type initial double-float)
+  (check-type initial single-float)
   (/ initial
-     (1+ (expt (* (/ iteration iterations) 2.0d0) 4))))
+     (1+ (expt (* (/ iteration iterations) 2.0) 4))))
 
 
 (defmethod sigma ((decay hill-decay) initial iteration iterations)
   (check-type iterations positive-integer)
   (check-type iteration non-negative-integer)
-  (check-type initial double-float)
+  (check-type initial single-float)
   (/ initial
-     (1+ (expt (* (/ iteration iterations) 2.0d0) 4))))
+     (1+ (expt (* (/ iteration iterations) 2.0) 4))))
 
 
 (defmethod unit-at ((model self-organizing-map-model) location)
@@ -211,8 +211,8 @@
     (for unit = (row-major-aref units i))
     (for distance = (iterate
                       (declare (type fixnum i)
-                               (type double-float result))
-                      (with result = 0.0d0)
+                               (type single-float result))
+                      (with result = 0.0)
                       (for i from 0 below (length unit))
                       (incf result (~> (- (sl.data:mref data sample i)
                                           (aref unit i))

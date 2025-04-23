@@ -98,7 +98,7 @@
              #:make-gensym-list
              #:make-keyword
              #:string-designator
-             #:negative-double-float
+             #:negative-single-float
              #:negative-fixnum-p
              #:negative-float
              #:negative-float-p
@@ -108,8 +108,8 @@
              #:negative-rational-p
              #:negative-real
              #:negative-single-float-p
-             #:non-negative-double-float
-             #:non-negative-double-float-p
+             #:non-negative-single-float
+             #:non-negative-single-float-p
              #:non-negative-fixnum
              #:non-negative-fixnum-p
              #:non-negative-float
@@ -121,8 +121,8 @@
              #:non-negative-short-float-p
              #:non-negative-single-float
              #:non-negative-single-float-p
-             #:non-positive-double-float
-             #:non-positive-double-float-p
+             #:non-positive-single-float
+             #:non-positive-single-float-p
              #:non-positive-fixnum
              #:non-positive-fixnum-p
              #:non-positive-float
@@ -134,8 +134,8 @@
              #:non-positive-short-float
              #:non-positive-short-float-p
              #:non-positive-single-float-p
-             #:positive-double-float
-             #:positive-double-float-p
+             #:positive-single-float
+             #:positive-single-float-p
              #:positive-fixnum
              #:positive-fixnum-p
              #:positive-float
@@ -149,7 +149,7 @@
              #:positive-single-float
              #:positive-single-float-p
              #:coercef
-             #:negative-double-float-p
+             #:negative-single-float-p
              #:negative-fixnum
              #:negative-integer
              #:negative-integer-p

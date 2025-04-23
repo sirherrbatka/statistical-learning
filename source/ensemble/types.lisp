@@ -78,7 +78,7 @@
    :pruning nil
    :refinement nil
    :weights-calculator (make 'static-weights-calculator)
-   :data-points-sampler (make 'weights-based-data-points-sampler :sampling-rate 0.1d0)))
+   :data-points-sampler (make 'weights-based-data-points-sampler :sampling-rate 0.1)))
 
 
 (defclass ensemble-state (sl.mp:fundamental-training-state)
@@ -161,8 +161,8 @@
                          :reader data-points-sampler))
   (:default-initargs
    :pruning nil
-   :shrinkage 0.01d0
-   :data-points-sampler (make 'weights-based-data-points-sampler :sampling-rate 0.1d0)))
+   :shrinkage 0.01
+   :data-points-sampler (make 'weights-based-data-points-sampler :sampling-rate 0.1)))
 
 
 (defclass ensemble-model (sl.mp:fundamental-model)

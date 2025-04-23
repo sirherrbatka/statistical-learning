@@ -99,8 +99,8 @@
                             :fold (1+ fold)))))))
 
 
-(-> vector-avg ((simple-array double-float (*)) fixnum)
-    (simple-array double-float (*)))
+(-> vector-avg ((simple-array single-float (*)) fixnum)
+    (simple-array single-float (*)))
 (defun vector-avg (vector count)
   (if (zerop count)
       vector
@@ -118,8 +118,8 @@
     (finally (return result))))
 
 
-(-> data-matrix-avg (double-float-data-matrix fixnum)
-    double-float-data-matrix)
+(-> data-matrix-avg (single-float-data-matrix fixnum)
+    single-float-data-matrix)
 (defun array-avg (matrix count)
   (if (zerop count)
       matrix

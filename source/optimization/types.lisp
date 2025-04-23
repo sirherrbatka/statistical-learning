@@ -20,4 +20,4 @@
 
 
 (deftype weights-data-matrix ()
-  `sl.data:double-float-data-matrix)
+  `sl.data:single-float-data-matrix)

@@ -8,7 +8,7 @@
   (check-type data-matrix data-matrix)
   (if (typep data-matrix 'universal-data-matrix)
       (universal-data-matrix-data data-matrix)
-      (double-float-data-matrix-data data-matrix)))
+      (single-float-data-matrix-data data-matrix)))
 
 
 (defun copy (data-matrix)
@@ -17,7 +17,7 @@
       (make-universal-data-matrix
        :data (~> data-matrix data copy-array)
        :index (~> data-matrix index))
-      (make-double-float-data-matrix
+      (make-single-float-data-matrix
        :data (~> data-matrix data copy-array)
        :index (~> data-matrix index))))
 
@@ -28,7 +28,7 @@
            (optimize (speed 3)))
   (if (typep data-matrix 'universal-data-matrix)
       (universal-data-matrix-index data-matrix)
-      (double-float-data-matrix-index data-matrix)))
+      (single-float-data-matrix-index data-matrix)))
 
 
 (declaim (inline data-matrix-element-type))
@@ -65,7 +65,7 @@
            (optimize (speed 3)))
   (if (typep data-matrix 'universal-data-matrix)
       (universal-data-matrix-missing-mask data-matrix)
-      (double-float-data-matrix-missing-mask data-matrix)))
+      (single-float-data-matrix-missing-mask data-matrix)))
 
 
 (declaim (inline mref))
@@ -99,15 +99,15 @@
 (defun data-matrix-constructor (data-matrix)
   (check-type data-matrix data-matrix)
   (let ((element-type (data-matrix-element-type data-matrix)))
-    (econd ((eq element-type 'double-float) #'make-double-float-data-matrix)
+    (econd ((eq element-type 'single-float) #'make-single-float-data-matrix)
            ((eq element-type t) #'make-universal-data-matrix))))
 
 
 (-> make-data-matrix (fixnum fixnum &optional t t t) data-matrix)
 (defun make-data-matrix (data-points-count attributes-count
                          &optional
-                           (initial-element 0.0d0)
-                           (element-type 'double-float)
+                           (initial-element 0.0)
+                           (element-type 'single-float)
                            missing-mask)
   (check-type data-points-count fixnum)
   (check-type attributes-count fixnum)
@@ -115,11 +115,11 @@
   (check-type attributes-count fixnum)
   (assert (> attributes-count 0))
   (assert (> data-points-count 0))
-  (econd ((eq element-type 'double-float)
-          (make-double-float-data-matrix
+  (econd ((eq element-type 'single-float)
+          (make-single-float-data-matrix
            :data (make-array `(,data-points-count ,attributes-count)
                              :initial-element initial-element
-                             :element-type 'double-float)
+                             :element-type 'single-float)
            :missing-mask (or missing-mask
                              (make-array `(,data-points-count ,attributes-count)
                                          :element-type 'bit
@@ -141,7 +141,7 @@
   (if (typep input 'data-matrix)
       input
       (progn
-        (check-type input (or (simple-array double-float (* *))
+        (check-type input (or (simple-array single-float (* *))
                               (simple-array t (* *))))
         (ensure missing-mask (make-array (array-dimensions input)
                                          :element-type 'bit
@@ -149,8 +149,8 @@
         (check-type missing-mask (simple-array bit (* *)))
         (let ((element-type (array-element-type input))
               (data-points-count (array-dimension input 0)))
-          (econd ((eq element-type 'double-float)
-                  (make-double-float-data-matrix
+          (econd ((eq element-type 'single-float)
+                  (make-single-float-data-matrix
                    :data input
                    :missing-mask missing-mask
                    :index (make-iota-vector data-points-count)))
@@ -183,7 +183,7 @@
                                       (length data-points)))
         (with result = (make-data-matrix data-points-count
                                          attributes-count
-                                         0.0d0
+                                         0.0
                                          (data-matrix-element-type data-matrix)
                                          (missing-mask data-matrix)))
         (for i from 0 below data-points-count)
@@ -209,7 +209,7 @@
         (mapcar #'impl (cons data-matrix rest)))))
 
 
-(defun make-data-matrix-like (data-matrix &optional (initial-element 0.0d0))
+(defun make-data-matrix-like (data-matrix &optional (initial-element 0.0))
   (check-type data-matrix data-matrix)
   (make-data-matrix (data-points-count data-matrix)
                     (attributes-count data-matrix)
@@ -217,16 +217,16 @@
                     (data-matrix-element-type data-matrix)))
 
 
-(-> reduce-data-points (t double-float-data-matrix
+(-> reduce-data-points (t single-float-data-matrix
                           &key
                           (:attributes (or null (simple-array fixnum (*))))
                           (:data-points (or null (simple-array fixnum (*)))))
-    double-float-data-matrix)
+    single-float-data-matrix)
 (defun reduce-data-points (function data &key attributes data-points)
   (declare (optimize (speed 3) (safety 0)))
   (iterate
     (declare (type fixnum i first-point attributes-count data-points-count)
-             (type double-float-data-matrix result))
+             (type single-float-data-matrix result))
     (with data-points-count = (if (null data-points)
                                   (data-points-count data)
                                   (length data-points)))
@@ -258,11 +258,11 @@
     (finally (return result))))
 
 
-(-> maxs (double-float-data-matrix
+(-> maxs (single-float-data-matrix
            &key
            (:attributes (or null (simple-array fixnum (*))))
            (:data-points vector))
-    double-float-data-matrix)
+    single-float-data-matrix)
 (defun maxs (data &key data-points attributes)
   (declare (optimize (speed 3) (safety 0)))
   (let* ((attributes-count (if (null attributes)
@@ -276,7 +276,7 @@
                           0
                           (aref data-points 0))))
     (declare (type fixnum attributes-count data-points-count first-point)
-             (type sl.data:double-float-data-matrix result-max))
+             (type sl.data:single-float-data-matrix result-max))
     (iterate
       (declare (type fixnum i attribute))
       (for i from 0 below attributes-count)
@@ -298,7 +298,7 @@
       (finally (return result-max)))))
 
 
-(-> mins/maxs (double-float-data-matrix
+(-> mins/maxs (single-float-data-matrix
                &key
                (:attributes (or null (simple-array fixnum (*))))
                (:data-points vector))
@@ -314,12 +314,12 @@
          (result-min (make-data-matrix 1 attributes-count))
          (result-max (make-data-matrix 1 attributes-count)))
     (declare (type fixnum attributes-count data-points-count)
-             (type sl.data:double-float-data-matrix data result-min result-max))
+             (type sl.data:single-float-data-matrix data result-min result-max))
     (iterate
       (declare (type fixnum i))
       (for i from 0 below attributes-count)
-      (setf (sl.data:mref result-max 0 i) #.(coerce most-negative-single-float 'double-float)
-            (sl.data:mref result-min 0 i) #.(coerce most-positive-single-float 'double-float)))
+      (setf (sl.data:mref result-max 0 i) #.(coerce most-negative-single-float 'single-float)
+            (sl.data:mref result-min 0 i) #.(coerce most-positive-single-float 'single-float)))
     (cl-ds.utils:cases ((null data-points))
       (iterate
         (declare (type fixnum j k1))
@@ -338,11 +338,11 @@
         (finally (return (cons result-min result-max)))))))
 
 
-(-> mins (double-float-data-matrix
+(-> mins (single-float-data-matrix
            &key
            (:attributes (or null (simple-array fixnum (*))))
            (:data-points vector))
-    double-float-data-matrix)
+    single-float-data-matrix)
 (defun mins (data &key data-points attributes)
   (declare (optimize (speed 3) (debug 0) (safety 0)))
   (let* ((attributes-count (if (null attributes)
@@ -356,7 +356,7 @@
                           0
                           (aref data-points 0))))
     (declare (type fixnum attributes-count data-points-count first-point)
-             (type sl.data:double-float-data-matrix result-min))
+             (type sl.data:single-float-data-matrix result-min))
     (iterate
       (declare (type fixnum i attribute))
       (for i from 0 below attributes-count)
@@ -424,13 +424,13 @@
   data-matrix)
 
 
-(defun data-matrix-map-double-float (function data-matrix parallel &aux (data (data data-matrix)))
+(defun data-matrix-map-single-float (function data-matrix parallel &aux (data (data data-matrix)))
   (check-type data-matrix data-matrix)
   (let* ((result (make-data-matrix (data-points-count data-matrix) 1)))
     (funcall (if parallel #'lparallel:pmap-into #'map-into)
              (make-array (data-points-count data-matrix)
-                         :element-type 'double-float
-                         :displaced-to (double-float-data-matrix-data result))
+                         :element-type 'single-float
+                         :displaced-to (single-float-data-matrix-data result))
              (lambda (data-point) (funcall function data-point data))
              (index data-matrix))
     result))

@@ -43,10 +43,10 @@
                                 sl.opt:number-of-classes))
          (data-points-count (sl.data:data-points-count target-data))
          (predictions (make-array `(1 ,number-of-classes)
-                                  :element-type 'double-float
-                                  :initial-element 0.0d0)))
+                                  :element-type 'single-float
+                                  :initial-element 0.0)))
     (declare (type fixnum number-of-classes data-points-count)
-             (type sl.data:double-float-data-matrix target-data))
+             (type sl.data:single-float-data-matrix target-data))
     (iterate
       (declare (type fixnum i index))
       (for i from 0 below data-points-count)
@@ -63,7 +63,7 @@
      leaf)
   (let* ((target-data (sl.mp:target-data training-state))
          (attributes-count (sl.data:attributes-count target-data))
-         (result (make-array `(1 ,attributes-count) :element-type 'double-float :initial-element 0.0d0))
+         (result (make-array `(1 ,attributes-count) :element-type 'single-float :initial-element 0.0))
          (data-points-count (sl.data:data-points-count target-data)))
     (declare (type fixnum data-points-count))
     (iterate
@@ -104,7 +104,7 @@
                 (sums (bt:with-lock-held (lock)
                         (ensure (sl.tp:sums state)
                           (make-array (list data-points-count attributes-count)
-                                    :element-type 'double-float)))))
+                                    :element-type 'single-float)))))
            (if (vectorp leafs)
                (iterate
                  (declare (type fixnum i))
@@ -149,7 +149,7 @@
         (setf state (make 'sl.tp:contributed-predictions
                           :training-parameters parameters
                           :sums (make-array (list data-points-count number-of-classes)
-                                            :element-type 'double-float))))
+                                            :element-type 'single-float))))
       (let* ((sums (sl.tp:sums state))
              (splitter (sl.tp:splitter parameters))
              (root (sl.tp:root model)))

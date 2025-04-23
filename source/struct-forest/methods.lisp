@@ -15,7 +15,7 @@
   (lret ((result
           (apply #'make 'struct-state
                  :training-parameters (training-implementation parameters)
-                 :loss 0.0d0
+                 :loss 0.0
                  initargs)))
     (setf (relabaled result) (relable (relabeler parameters)
                                       parameters
@@ -31,7 +31,7 @@
                                         leaf)
   (let* ((target-data (struct-target-data training-state))
          (attributes-count (sl.data:attributes-count target-data))
-         (result (make-array `(1 ,attributes-count) :element-type 'double-float :initial-element 0.0d0))
+         (result (make-array `(1 ,attributes-count) :element-type 'single-float :initial-element 0.0))
          (data-points-count (sl.data:data-points-count target-data)))
     (declare (type fixnum data-points-count))
     (iterate

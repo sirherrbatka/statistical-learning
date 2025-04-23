@@ -20,16 +20,16 @@
          (data-points-count (sl.data:data-points-count target-data))
          (result (sl.data:make-data-matrix data-points-count
                                            number-of-classes)))
-    (check-type target-data sl.data:double-float-data-matrix)
+    (check-type target-data sl.data:single-float-data-matrix)
     (check-type train-data sl.data:data-matrix)
-    (check-type result sl.data:double-float-data-matrix)
+    (check-type result sl.data:single-float-data-matrix)
     (iterate
       (declare (optimize (speed 3) (safety 0))
                (type fixnum i))
       (for i from 0 below data-points-count)
       (setf (sl.data:mref result i
                           (the fixnum (truncate (sl.data:mref target-data i 0))))
-            1.0d0))
+            1.0))
     (refine-implementation algorithm ensemble
                            train-data result)))
 

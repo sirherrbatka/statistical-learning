@@ -76,18 +76,18 @@
 (defvar *train-data*
   (vellum:to-matrix (vellum:select *data*
                       :columns (vellum:s (vellum:between :to 'cover_type)))
-                    :element-type 'double-float))
+                    :element-type 'single-float))
 
 (defvar *target-data*
   (vellum:to-matrix (vellum:select *data*
                       :columns '(cover_type))
-                    :element-type 'double-float))
+                    :element-type 'single-float))
 
 (defparameter *training-parameters*
   (make 'statistical-learning.dt:classification
         :optimized-function (sl.opt:gini-impurity *cover-types*)
         :maximal-depth 30
-        :minimal-difference 0.0001d0
+        :minimal-difference 0.0001
         :minimal-size 10
         :splitter (sl.common:lift (make-instance 'sl.tp:random-attribute-splitter)
                                   'sl.tp:random-splitter
@@ -122,28 +122,28 @@
 
 (format t "~3$~%" (statistical-learning.performance:accuracy *confusion-matrix*)) ; ~0.90
 
-
-(~> (make 'statistical-learning.ensemble:gradient-boost-ensemble
-          :trees-count 250
-          :parallel t
-          :tree-batch-size 10
-          :tree-attributes-count 50
-          :shrinkage 0.035d0
-          :data-points-sampler (make 'sl.ensemble:gradient-based-one-side-sampler
-                                     :small-gradient-sampling-rate 0.1
-                                     :large-gradient-sampling-rate 0.1)
-          :tree-parameters (make 'sl.gbt:classification
-                                 :optimized-function (sl.opt:k-logistic *cover-types*)
-                                 :maximal-depth 30
-                                 :minimal-size 10
-                                 :minimal-difference 0.0001d0
-                                 :parallel t
-                                 :splitter (sl.common:lift (make-instance 'sl.tp:random-attribute-splitter)
-                                                           'sl.tp:random-splitter
-                                                           :trials-count 50)))
-    (statistical-learning.performance:cross-validation 2
-                                                       (sl.data:wrap *train-data*)
-                                                       (sl.data:wrap *target-data*)
-                                                       :parallel t)
-    statistical-learning.performance:accuracy
-    (format t "~3$~%" _)) ; ~0.85
+(time
+ (~> (make 'statistical-learning.ensemble:gradient-boost-ensemble
+           :trees-count 250
+           :parallel t
+           :tree-batch-size 10
+           :tree-attributes-count 50
+           :shrinkage 0.035
+           :data-points-sampler (make 'sl.ensemble:gradient-based-one-side-sampler
+                                      :small-gradient-sampling-rate 0.1
+                                      :large-gradient-sampling-rate 0.1)
+           :tree-parameters (make 'sl.gbt:classification
+                                  :optimized-function (sl.opt:k-logistic *cover-types*)
+                                  :maximal-depth 30
+                                  :minimal-size 10
+                                  :minimal-difference 0.0001
+                                  :parallel t
+                                  :splitter (sl.common:lift (make-instance 'sl.tp:random-attribute-splitter)
+                                                            'sl.tp:random-splitter
+                                                            :trials-count 50)))
+     (statistical-learning.performance:cross-validation 2
+                                                        (sl.data:wrap *train-data*)
+                                                        (sl.data:wrap *target-data*)
+                                                        :parallel t)
+     statistical-learning.performance:accuracy
+     (format t "~3$~%" _))) ; ~0.85

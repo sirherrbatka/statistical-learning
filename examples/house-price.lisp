@@ -116,7 +116,7 @@
   (make 'statistical-learning.dt:regression
         :optimized-function (sl.opt:squared-error)
         :maximal-depth 60
-        :minimal-difference 5.0d0
+        :minimal-difference 5.0
         :minimal-size 5
         :splitter (sl.common:lift (make-instance 'sl.tp:random-attribute-splitter)
                                   'sl.tp:random-splitter
@@ -154,4 +154,3 @@
    :parallel nil))
 
 (print (round (sqrt *mean-error*)))
-

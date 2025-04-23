@@ -18,7 +18,7 @@
 (defmacro dispatch-data-matrix (datums &body body)
   `(cl-ds.utils:cases ,(mapcar (lambda (x)
                                  `(:variant (typep ,x 'universal-data-matrix)
-                                            (typep ,x 'double-float-data-matrix)))
+                                            (typep ,x 'single-float-data-matrix)))
                                datums)
      ,@body))
 

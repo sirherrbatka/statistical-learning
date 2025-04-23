@@ -60,5 +60,5 @@
 
 (defstruct split-point
   (normals (sl.data:make-data-matrix 0 0)
-   :type sl.data:double-float-data-matrix)
-  (dot-product 0.0d0 :type double-float))
+   :type sl.data:single-float-data-matrix)
+  (dot-product 0.0 :type single-float))

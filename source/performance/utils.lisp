@@ -20,10 +20,10 @@
   (statistical-learning.data:check-data-points test-train-data test-target-data)
   (let* ((attributes-count (statistical-learning.data:attributes-count test-train-data))
          (error-differences (make-array (array-dimensions errors)
-                                        :element-type 'double-float))
+                                        :element-type 'single-float))
          (result (make-array attributes-count
-                             :initial-element 0.0d0
-                             :element-type 'double-float)))
+                             :initial-element 0.0
+                             :element-type 'single-float)))
     (iterate
       (with indexes = (~> test-train-data
                           statistical-learning.data:data-points-count
@@ -36,17 +36,17 @@
                                        predictions))
       (if (null weights)
           (map-into error-differences
-                    (lambda (a b) (max 0.0d0 (- a b)))
+                    (lambda (a b) (max 0.0 (- a b)))
                     permutated-errors
                     errors)
           (map-into error-differences
-                    (lambda (a b w) (~> (- a b) (max 0.0d0) (* w)))
+                    (lambda (a b w) (~> (- a b) (max 0.0) (* w)))
                     permutated-errors
                     errors
                     weights))
       (for mean-change = (mean error-differences))
       (for sd = (alexandria:standard-deviation error-differences :biased nil))
-      (for feature-importance = (if (zerop sd) 0.0d0 (/ mean-change sd)))
+      (for feature-importance = (if (zerop sd) 0.0 (/ mean-change sd)))
       (setf (aref result i) feature-importance)
       (finally (return result)))))
 

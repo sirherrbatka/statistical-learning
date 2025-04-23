@@ -45,7 +45,7 @@
          (array-dimension mat2 0))
       (let ((result (make-array (list (array-dimension mat1 0)
                                       (array-dimension mat2 1))
-                                :element-type 'double-float)))
+                                :element-type 'single-float)))
         (dotimes (row (array-dimension result 0))
           (dotimes (column (array-dimension result 1))
             (let ((terms 0))
@@ -69,7 +69,7 @@
 (defun matrix-difference (a b)
   (iterate
     (with result = (make-array (array-dimensions a)
-                               :element-type 'double-float))
+                               :element-type 'single-float))
     (for i from 0 below (array-total-size a))
     (setf (row-major-aref result i)
           (- (row-major-aref a i)
@@ -112,7 +112,7 @@
                (for dictionary in-vector dictionaries)
                (iterate
                  (declare (type fixnum d)
-                          (type double-float d-val))
+                          (type single-float d-val))
                  (for d from 0 below atoms-count)
                  (when (find d selected-indexes)
                    (next-iteration))
@@ -122,7 +122,7 @@
                                            (for residual in-vector residuals)
                                            (iterate
                                              (declare (type fixnum r)
-                                                      (type double-float r-val))
+                                                      (type single-float r-val))
                                              (for r from 0 below (sl.data:data-points-count residual))
                                              (for r-val = (sl.data:mref residual r 0))
                                              (in inner (summing (* d-val r-val)))))))))))

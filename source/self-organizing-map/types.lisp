@@ -116,7 +116,7 @@
 
 
 (deftype unit ()
-  '(simple-array double-float (*)))
+  '(simple-array single-float (*)))
 
 
 (deftype grid ()

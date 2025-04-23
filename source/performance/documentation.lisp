@@ -41,12 +41,12 @@
   (function
    f1-score
    (:description "Calculates F1-SCORE from the CONFUSION-MATRIX."
-    :returns "DOUBLE-FLOAT representing F1-SCORE."))
+    :returns "SINGLE-FLOAT representing F1-SCORE."))
 
   (function
    precision
    (:description "Calculates precsion from the confusion-matrix."
-    :returns "DOUBLE-FLOAT representing precsion value."))
+    :returns "SINGLE-FLOAT representing precsion value."))
 
   (function
    recall

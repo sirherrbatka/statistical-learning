@@ -9,7 +9,7 @@
   (let ((value (vellum:rr column)))
     (if (eq value :null)
         (setf (aref bitmask row offset) 0)
-        (setf (aref array row offset) (coerce value 'double-float)
+        (setf (aref array row offset) (coerce value 'single-float)
               (aref bitmask row offset) 1))))
 
 
@@ -32,10 +32,10 @@
           (for i from offset)
           (repeat (size-required encoder))
           (setf (aref bitmask row i) 1
-                (aref array row i) 0.0d0)
+                (aref array row i) 0.0)
           (finally
            (setf (aref array row (+ offset (gethash value (content encoder))))
-                 1.0d0))))))
+                 1.0))))))
 
 
 (defmethod make-encoder-for-type ((type (eql 'string)) data-frame column)
@@ -48,7 +48,7 @@
                    (cl-ds.alg:enumerate :test 'equal))))
 
 
-(defmethod make-encoder-for-type ((type (eql 'double-float)) data-frame column)
+(defmethod make-encoder-for-type ((type (eql 'single-float)) data-frame column)
   (make 'identity-enocder))
 
 
@@ -64,5 +64,5 @@
   (let ((value (vellum:rr column)))
     (if (eq value :null)
         (setf (aref bitmask row offset) 0)
-        (setf (aref array row offset) (if value 1.0d0 0.d0)
+        (setf (aref array row offset) (if value 1.0 0.)
               (aref bitmask row offset) 1))))

@@ -73,7 +73,7 @@
                           (for hash-table in hash-tables)
                           (for v = (vellum:rr i))
                           (for encoded = (gethash v hash-table))
-                          (setf (statistical-learning.data:mref result index (+ offset encoded)) 1.0d0))
+                          (setf (statistical-learning.data:mref result index (+ offset encoded)) 1.0))
                         (incf index)))
     result))
 
@@ -86,14 +86,14 @@
       (for i from 0 below (vellum:row-count *data*))
       (setf (statistical-learning.data:mref result i 0)
             (eswitch ((vellum:at *data* i 'class) :test 'equal)
-              ("p" 1.0d0)
-              ("e" 0.0d0))))))
+              ("p" 1.0)
+              ("e" 0.0))))))
 
 (defparameter *training-parameters*
   (make 'statistical-learning.dt:classification
         :optimized-function (sl.opt:gini-impurity 2)
         :maximal-depth 5
-        :minimal-difference 0.0001d0
+        :minimal-difference 0.0001
         :minimal-size 10
         :parallel nil
         :splitter (sl.common:lift (make-instance 'sl.tp:random-attribute-splitter)

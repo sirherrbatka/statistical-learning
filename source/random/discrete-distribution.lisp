@@ -2,7 +2,7 @@
 
 
 (defun discrete-distribution (weights)
-  (declare (type sl.data:double-float-data-matrix weights))
+  (declare (type sl.data:single-float-data-matrix weights))
   (let* ((data-points-count (iterate outer
                               (for i from 0 below (sl.data:data-points-count weights))
                               (iterate
@@ -12,7 +12,7 @@
          (probs (make-array data-points-count)))
     (iterate
       (declare (type fixnum i j))
-      (with ac = 0.0d0)
+      (with ac = 0.0)
       (with j = 0)
       (for i from 0 below (sl.data:data-points-count weights))
       (for weight = (statistical-learning.data:mref weights i 0))
@@ -22,7 +22,7 @@
                                  i))
       (incf j))
     (let ((max (car (last-elt probs))))
-      (declare (type double-float max))
+      (declare (type single-float max))
       (lambda ()
         (declare (optimize (speed 3) (safety 0)))
         (~>> (cl-ds.utils:lower-bound probs (random max) #'< :key #'car)

@@ -62,7 +62,7 @@
            (splitter (sl.tp:splitter parameters))
            (shrinkage (shrinkage model))
            (root (sl.tp:root model)))
-      (declare (type sl.data:double-float-data-matrix sums))
+      (declare (type sl.data:single-float-data-matrix sums))
       (sl.data:data-matrix-map-data-points
        (lambda (data-point d)
          (declare (ignore d))
@@ -136,22 +136,22 @@
   (iterate
     (declare (type fixnum i number-of-classes)
              (optimize (speed 3) (safety 0))
-             (type double-float maximum sum)
-             (type sl.data:double-float-data-matrix sums result))
+             (type single-float maximum sum)
+             (type sl.data:single-float-data-matrix sums result))
     (with optimized-function = (optimized-function parameters))
     (with number-of-classes = (sl.opt:number-of-classes optimized-function))
     (with sums = (sl.tp:sums state))
     (with result = (sl.data:make-data-matrix-like sums))
     (for i from 0 below (sl.data:data-points-count sums))
-    (for maximum = most-negative-double-float)
-    (for sum = 0.0d0)
+    (for maximum = most-negative-single-float)
+    (for sum = 0.0)
     (iterate
       (declare (type fixnum j))
       (for j from 0 below number-of-classes)
       (maxf maximum (sl.data:mref sums i j)))
     (iterate
       (declare (type fixnum j)
-               (type double-float out))
+               (type single-float out))
       (for j from 0 below number-of-classes)
       (for out = (exp (- (sl.data:mref sums i j) maximum)))
       (setf (sl.data:mref result i j) out)
@@ -190,12 +190,12 @@
 
 (defmethod target ((parameters classification)
                    target-data expected-value)
-  (declare (type sl.data:double-float-data-matrix target-data expected-value)
+  (declare (type sl.data:single-float-data-matrix target-data expected-value)
            (optimize (speed 3) (safety 0)
                      (space 0) (debug 0)
                      (compilation-speed 0)))
   (iterate
-    (declare (type sl.data:double-float-data-matrix result)
+    (declare (type sl.data:single-float-data-matrix result)
              (type fixnum i number-of-classes
                    data-points-count target))
     (with optimized-function = (optimized-function parameters))
@@ -219,9 +219,9 @@
   (declare (optimize (speed 3) (safety 0)
                      (space 0) (debug 0)
                      (compilation-speed 0))
-           (type sl.data:double-float-data-matrix target-data expected-value))
+           (type sl.data:single-float-data-matrix target-data expected-value))
   (iterate
-    (declare (type sl.data:double-float-data-matrix result)
+    (declare (type sl.data:single-float-data-matrix result)
              (type fixnum i))
     (with result = (sl.data:make-data-matrix-like target-data))
     (for i from 0 below (sl.data:data-points-count result))
@@ -229,8 +229,8 @@
       (declare (type fixnum ii))
       (for ii from 0 below (sl.data:attributes-count result))
       (setf (sl.data:mref result i ii)
-            (- (the double-float (sl.data:mref target-data i ii))
-               (the double-float (sl.data:mref expected-value 0 ii)))))
+            (- (the single-float (sl.data:mref target-data i ii))
+               (the single-float (sl.data:mref expected-value 0 ii)))))
     (finally (return result))))
 
 
@@ -241,12 +241,12 @@
      leaf)
   (iterate
     (declare (type fixnum length number-of-classes)
-             (type sl.data:double-float-data-matrix target-data)
-             (type (simple-array double-float (1 *)) result))
+             (type sl.data:single-float-data-matrix target-data)
+             (type (simple-array single-float (1 *)) result))
     (with target-data = (sl.mp:target-data training-state))
     (with length = (sl.data:data-points-count target-data))
     (with number-of-classes = (sl.data:attributes-count target-data))
-    (with result = (make-array `(1 ,number-of-classes) :element-type 'double-float))
+    (with result = (make-array `(1 ,number-of-classes) :element-type 'single-float))
     (for j from 0 below length)
     (iterate
       (declare (type fixnum j))
@@ -260,17 +260,17 @@
 
 (defmethod calculate-expected-value ((parameters classification)
                                      data)
-  (declare (type sl.data:double-float-data-matrix data)
+  (declare (type sl.data:single-float-data-matrix data)
            (optimize (speed 3) (safety 0)
                      (space 0) (debug 0)
                      (compilation-speed 0)))
   (iterate
     (declare (type fixnum i)
-             (type (simple-array double-float (* *)) result))
+             (type (simple-array single-float (* *)) result))
     (with number-of-classes = (~>> parameters
                                    optimized-function
                                    sl.opt:number-of-classes))
-    (with result = (make-array `(1 ,number-of-classes) :element-type 'double-float))
+    (with result = (make-array `(1 ,number-of-classes) :element-type 'single-float))
     (for i from 0 below (sl.data:data-points-count data))
     (incf (aref result 0
                 (truncate (sl.data:mref data i 0))))
@@ -290,7 +290,7 @@
              (optimize (speed 3) (safety 0)
                        (space 0) (debug 0)
                        (compilation-speed 0))
-             (type sl.data:double-float-data-matrix result))
+             (type sl.data:single-float-data-matrix result))
     (with number-of-attributes = (sl.data:attributes-count data))
     (with result = (sl.data:make-data-matrix 1 number-of-attributes))
     (for i from 0 below (sl.data:data-points-count data))
@@ -355,7 +355,7 @@
   (make 'sl.tp:contributed-predictions
         :training-parameters parameters
         :sums (iterate
-                (declare (type sl.data:double-float-data-matrix result))
+                (declare (type sl.data:single-float-data-matrix result))
                 (with number-of-classes = (sl.opt:number-of-classes parameters))
                 (with result = (sl.data:make-data-matrix data-points-count
                                                          number-of-classes))

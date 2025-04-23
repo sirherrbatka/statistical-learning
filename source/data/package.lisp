@@ -14,7 +14,7 @@
    #:data-matrix-map
    #:attributes-count
    #:universal-data-matrix
-   #:double-float-data-matrix
+   #:single-float-data-matrix
    #:dispatch-data-matrix
    #:bind-data-matrix-dimensions
    #:data-matrix
@@ -27,7 +27,7 @@
    #:data-matrix-map-data-points
    #:make-data-matrix-like
    #:map-array
-   #:data-matrix-map-double-float
+   #:data-matrix-map-single-float
    #:data-matrix-map-into
    #:reduce-data-points
    #:iota-vector

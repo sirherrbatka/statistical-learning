@@ -9,8 +9,8 @@
 
 (defparameter *data*
   (lret ((data (vellum:make-table
-                :columns '((:name x :type double-float)
-                           (:name y :type double-float)))))
+                :columns '((:name x :type single-float)
+                           (:name y :type single-float)))))
     ;; build normal population
     (vellum:transform data
                       (vellum:bind-row (x y)
@@ -21,8 +21,8 @@
                       :in-place t)
     (vellum:transform data
                       (vellum:bind-row (x y)
-                        (setf x (random-in-range -1.5d0 1.5d0)
-                              y (random-in-range -1.5d0 1.5d0)))
+                        (setf x (random-in-range -1.5 1.5)
+                              y (random-in-range -1.5 1.5)))
                       :start 500
                       :end 520
                       :in-place t)))
@@ -45,9 +45,9 @@
 (defparameter *model*
   (sl.mp:make-unsupervised-model *isolation-forest*
                                  (vellum:to-matrix *data*
-                                                   :element-type 'double-float)))
+                                                   :element-type 'single-float)))
 
 (defparameter *anomaly-scores*
   (sl.mp:predict *model*
                  (vellum:to-matrix *data*
-                                   :element-type 'double-float)))
+                                   :element-type 'single-float)))

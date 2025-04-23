@@ -32,14 +32,14 @@
 (defvar *training-data*
   (~> *data*
       (vellum:select :columns (vellum:s (vellum:between :to 'class)))
-      (vellum:to-matrix :element-type 'double-float)))
+      (vellum:to-matrix :element-type 'single-float)))
 
 (defparameter *training-parameters*
   (make 'sl.som:self-organizing-map
         :grid-dimensions '(4 4)
         :random-ranges *ranges*
         :number-of-iterations 1000
-        :initial-alpha 1.0d0
+        :initial-alpha 1.0
         :decay sl.som:<hill-decay>
         :parallel nil))
 

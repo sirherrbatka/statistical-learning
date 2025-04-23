@@ -3,7 +3,7 @@
 
 (defmethod performance-metric* :before ((parameters sl.mp:fundamental-model-parameters)
                                         type target predictions weights)
-  (check-type weights (or null sl.data:double-float-data-matrix)))
+  (check-type weights (or null sl.data:single-float-data-matrix)))
 
 
 (defmethod performance-metric* ((parameters regression)
@@ -12,12 +12,12 @@
                                 predictions
                                 weights)
   (iterate
-    (with sum = 0.0d0)
+    (with sum = 0.0)
     (with count = (sl.data:attributes-count predictions))
     (for i from 0 below count)
     (for er = (- (sl.data:mref target i 0)
                  (sl.data:mref predictions i 0)))
-    (incf sum (* (if (null weights) 1.0d0 (sl.data:mref weights i 0))
+    (incf sum (* (if (null weights) 1.0 (sl.data:mref weights i 0))
                  (* er er)))
     (finally (return (/ sum count)))))
 
@@ -43,8 +43,8 @@
 (defmethod errors ((parameters regression) target predictions)
   (iterate
     (with result = (make-array (array-dimension predictions 1)
-                               :element-type 'double-float
-                               :initial-element 0.0d0))
+                               :element-type 'single-float
+                               :initial-element 0.0))
     (for i from 0 below (array-dimension predictions 1))
     (for er = (- (sl.data:mref target i 0)
                  (aref predictions i 0)))
@@ -84,15 +84,15 @@
                    target
                    predictions)
   (declare (optimize (speed 3) (safety 0))
-           (type sl.data:double-float-data-matrix target predictions))
+           (type sl.data:single-float-data-matrix target predictions))
   (let* ((data-points-count (sl.data:data-points-count target))
-         (result (make-array data-points-count :element-type 'double-float)))
-    (declare (type (simple-array double-float (*)) result))
+         (result (make-array data-points-count :element-type 'single-float)))
+    (declare (type (simple-array single-float (*)) result))
     (iterate
       (declare (type fixnum i))
       (for i from 0 below data-points-count)
       (for expected = (truncate (sl.data:mref target i 0)))
-      (setf (aref result i) (- 1.0d0 (sl.data:mref predictions
+      (setf (aref result i) (- 1.0 (sl.data:mref predictions
                                                    i
                                                    expected))))
     result))
@@ -134,7 +134,7 @@
       (for predicted = (prediction i))
       (incf (sl.perf:at-confusion-matrix result expected predicted)
             (if (null weights)
-                1.0d0
+                1.0
                 (sl.data:mref weights i 0))))
     result))
 
@@ -171,8 +171,8 @@
                          (list (sl.data:mref predictions i 1)
                                truep))
                    (finally (return (sort result #'> :key #'first)))))
-         (last-field (list 0.0d0 0.0d0))
-         (field 0.0d0)
+         (last-field (list 0.0 0.0))
+         (field 0.0)
          ((:flet update-field (fpr tpr))
           (bind (((p-fpr p-tpr) last-field)
                  (tpr-span (- tpr p-tpr))
@@ -184,11 +184,11 @@
                               2)))
             (setf last-field (list fpr tpr))))
          (roc-table (vellum.table:make-table
-                     :columns '((:name threshold :type double-float)
-                                (:name fpr :type double-float)
-                                (:name tpr :type double-float)
-                                (:name npv :type double-float)
-                                (:name ppv :type double-float))))
+                     :columns '((:name threshold :type single-float)
+                                (:name fpr :type single-float)
+                                (:name tpr :type single-float)
+                                (:name npv :type single-float)
+                                (:name ppv :type single-float))))
          (fp 0)
          (tp 0))
     (vellum:transform
@@ -199,26 +199,26 @@
                         (second (aref points current-point))))
               (previous-point (1- current-point))
               (p-threshold (if (< previous-point 0)
-                               1.0d0
+                               1.0
                                (first (aref points previous-point))))
               (tp+fp (+ fp tp))
               (tn (- negative fp))
               (tn+fn (- total tp+fp)))
-         (setf fpr (coerce (/ fp negative) 'double-float)
-               tpr (coerce (/ tp positive) 'double-float)
+         (setf fpr (coerce (/ fp negative) 'single-float)
+               tpr (coerce (/ tp positive) 'single-float)
                npv (if (zerop tn+fn)
-                       1.0d0
-                       (coerce (/ tn tn+fn) 'double-float))
-               ppv (cond ((zerop tp) 1.0d0)
-                         ((zerop tp+fp) 0.0d0)
-                         (t (coerce (/ tp tp+fp) 'double-float)))
+                       1.0
+                       (coerce (/ tn tn+fn) 'single-float))
+               ppv (cond ((zerop tp) 1.0)
+                         ((zerop tp+fp) 0.0)
+                         (t (coerce (/ tp tp+fp) 'single-float)))
                threshold p-threshold)
          (if target (incf tp) (incf fp))
          (update-field fpr tpr)))
      :start 0
      :end (1+ total)
      :in-place t)
-    (update-field 1.0d0 1.0d0)
+    (update-field 1.0 1.0)
     (list field (list roc-table))))
 
 

@@ -49,8 +49,8 @@
           (iterate
             (with number-of-trees = (length trees))
             (with sums = (make-array number-of-trees
-                                     :element-type 'double-float
-                                     :initial-element 0.0d0))
+                                     :element-type 'single-float
+                                     :initial-element 0.0))
             (for i from 0 below number-of-trees)
             (for tree = (aref trees i))
             (for weight = (sl.tp:weight tree))

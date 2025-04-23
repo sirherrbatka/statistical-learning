@@ -19,17 +19,17 @@
 
 (defvar *train-data*
   (sl.data:wrap (vellum:to-matrix (vellum:select *data* :columns (vellum:s (vellum:between :to 'sound)))
-                                  :element-type 'double-float)))
+                                  :element-type 'single-float)))
 
 (defvar *target-data*
   (sl.data:wrap (vellum:to-matrix (vellum:select *data* :columns '(sound))
-                                  :element-type 'double-float)))
+                                  :element-type 'single-float)))
 
 (defparameter *training-parameters*
   (make 'statistical-learning.dt:regression
         :optimized-function (sl.opt:squared-error)
         :maximal-depth 7
-        :minimal-difference 0.0001d0
+        :minimal-difference 0.0001
         :minimal-size 5
         :splitter (sl.common:lift (make-instance 'sl.tp:random-attribute-splitter)
                                   'sl.tp:random-splitter
@@ -97,7 +97,7 @@
                                    (cl-ds.alg:to-list :key (lambda (x) (list (car x) (cdr x)))))
                   :grid-dimensions '(10 10)
                   :number-of-iterations 1000
-                  :initial-alpha 1.0d0
+                  :initial-alpha 1.0
                   :decay sl.som:<hill-decay>)
    *train-data*))
 
@@ -109,7 +109,7 @@
                :trees-count 500
                :parallel nil
                :tree-batch-size 10
-               :shrinkage 0.1d0
+               :shrinkage 0.1
                :tree-attributes-count 5
                :data-points-sampler (make 'sl.ensemble:weights-based-data-points-sampler
                                           :sampling-rate 0.5)
@@ -117,7 +117,7 @@
                                       :optimized-function (sl.opt:squared-error)
                                       :maximal-depth 5
                                       :minimal-size 5
-                                      :minimal-difference 0.00001d0
+                                      :minimal-difference 0.00001
                                       :splitter (sl.common:lift (make-instance 'sl.tp:random-attribute-splitter)
                                                                 'sl.tp:random-splitter
                                                                 :trials-count 15)

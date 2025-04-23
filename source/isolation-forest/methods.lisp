@@ -109,7 +109,7 @@
   (when (null state)
     (let ((c (c tree-model))
           (data-points-count (sl.data:data-points-count data)))
-      (check-type c double-float)
+      (check-type c single-float)
       (setf state (make 'isolation-prediction
                         :trees-sum (sl.data:make-data-matrix
                                     data-points-count

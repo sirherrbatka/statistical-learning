@@ -77,7 +77,7 @@
                                        &rest initargs)
   (declare (ignore initargs))
   (let ((shrinkage (shrinkage instance)))
-    (check-type shrinkage positive-double-float)))
+    (check-type shrinkage positive-single-float)))
 
 
 (defmethod statistical-learning.mp:predict ((model ensemble-model)
@@ -157,7 +157,7 @@
          (prev-trees (trees-view ensemble-state))
          (assigned-leafs (assigned-leafs ensemble-state))
          (weights (sl.mp:weights ensemble-state)))
-    (declare (type sl.data:double-float-data-matrix target-data))
+    (declare (type sl.data:single-float-data-matrix target-data))
     (regression-errors weights
                        prev-trees
                        target-data
@@ -176,12 +176,12 @@
          (assigned-leafs (assigned-leafs ensemble-state))
          (weights (sl.mp:weights ensemble-state)))
     (declare (type (simple-array single-float (* *)) counts)
-             (type sl.data:double-float-data-matrix target-data))
+             (type sl.data:single-float-data-matrix target-data))
     (assign-leafs ensemble-state ensemble-model)
     (sl.data:data-matrix-map (lambda (index data)
                                (declare (type fixnum index))
                                (iterate
-                                 (declare (type double-float expected)
+                                 (declare (type single-float expected)
                                           (type vector leafs)
                                           (type vector assigned-leafs)
                                           (type fixnum index)
@@ -224,9 +224,9 @@
                         (type single-float total))
                (unless (zerop total)
                  (setf (sl.data:mref weights index 0)
-                       (+ (- 1.0d0 (/ (the single-float (aref counts index 1))
+                       (+ (- 1.0 (/ (the single-float (aref counts index 1))
                                       total))
-                          double-float-epsilon))))
+                          single-float-epsilon))))
              (sl.data:index target-data))))
 
 
@@ -264,10 +264,10 @@
             (declare (optimize (speed 3) (safety 0)))
             (iterate
               (declare (type fixnum i)
-                       (type double-float result))
-              (with result = 0.0d0)
+                       (type single-float result))
+              (with result = 0.0)
               (for i from 0 below attributes-count)
-              (incf result (sl.data:mref (the sl.data:double-float-data-matrix response)
+              (incf result (sl.data:mref (the sl.data:single-float-data-matrix response)
                                          point i))
               (finally (return result))))
            ((:flet >gradient (point-a point-b))
@@ -283,7 +283,7 @@
            (small-gradient-count (min (floor (* small-gradient-sampling-rate data-points-count))
                                       (- data-points-count large-gradient-count)))
            (total-count (+ large-gradient-count small-gradient-count))
-           ;; (normalization (/ (- 1.0d0 large-gradient-sampling-rate) small-gradient-sampling-rate))
+           ;; (normalization (/ (- 1.0 large-gradient-sampling-rate) small-gradient-sampling-rate))
            ((:flet generate-sample (&aux (r (make-array total-count
                                                         :element-type 'fixnum))))
             (declare (optimize (speed 3) (safety 0) (debug 0))
@@ -395,7 +395,7 @@
       (setf weights (if (null weights)
                         (sl.data:make-data-matrix train-data-data-points
                                                   1
-                                                  1.0d0)
+                                                  1.0)
                         (copy-array weights)))
       (setf (weights-calculator-state state)
             (~> parameters
