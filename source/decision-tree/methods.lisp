@@ -103,7 +103,11 @@
                                        model))
                 (sums (bt:with-lock-held (lock)
                         (ensure (sl.tp:sums state)
-                          (make-array (list data-points-count attributes-count)
+                          (make-array (list data-points-count (~> (if (vectorp leafs)
+                                                                      (~> leafs first-elt)
+                                                                      leafs)
+                                                                  sl.tp:predictions
+                                                                  (array-dimension 1)))
                                     :element-type 'single-float)))))
            (if (vectorp leafs)
                (iterate
