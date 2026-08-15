@@ -137,4 +137,9 @@
                              (:file "generics")
                              (:file "types")
                              (:file "utils")
-                             (:file "methods")))))
+                             (:file "methods")))
+               (:module "htm"
+                :components ((:file "package")
+                             (:file "types")
+                             (:file "utils")
+                             (:file "functions")))))
