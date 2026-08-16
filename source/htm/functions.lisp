@@ -76,7 +76,7 @@ Returns the number of leaves that burst during this time step."
     (loop for leaf being the hash-keys of active-leafs do
       (let* ((neurons (column-neurons leaf))
              ;; 1. qualifiers: predicted cells only (below threshold can't win)
-             (cands (make-array (length neurons) :fill-pointer 0)))
+             (cands (make-array (length neurons) :fill-pointer 0 :element-type t)))
         (loop for n across neurons
               when (> (gethash n activity-hash-table 0.0) threshold)
                 collect (vector-push-extend n cands))
@@ -86,11 +86,10 @@ Returns the number of leaves that burst during this time step."
               (incf bursting-count)
               (burst-column neurons currently-active-neurons))
             ;; 3. competition: k strongest qualifiers win, in place
-            (let ((winners (select-top-n cands k
-                                         :key (lambda (n)
-                                                (gethash n activity-hash-table 0.0)))))
-              (dotimes (i k)
-                (setf (gethash (aref winners i) currently-active-neurons) t))))))
+            (progn
+              (select-top-n cands k :key (lambda (n) (gethash n activity-hash-table 0.0)))
+              (dotimes (i (min (length cands) k))
+                (setf (gethash (aref cands i) currently-active-neurons) t))))))
     bursting-count))
 
 (defun decay-false-positive-weights (weights previously-active-neurons currently-active-neurons parameters)
@@ -174,7 +173,7 @@ and then delegates to LEARN-DISTAL-WEIGHTS to reinforce or form connections."
 (defun ensure-column-initialization (column cells-per-column)
   (unless (typep column 'column-leaf)
     (change-class column 'column-leaf
-                  :neurons (map-into (make-array cells-per-column) #'make-neuron))))
+                  :neurons (map-into (make-array cells-per-column :element-type t) #'make-neuron))))
 
 (defun surprise-factor (leafs-count bursting-leafs-count)
   "Calculates surprise-factor based on the ratio of leafs not predicted by neurons to all active leafs."
