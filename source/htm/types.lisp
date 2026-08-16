@@ -16,6 +16,9 @@
    (%decay-rate
     :initarg :decay-rate
     :accessor decay-rate)
+   (%winners-per-column
+    :initarg :winners-per-column
+    :reader winners-per-column)
    (%drop-out-threshold
     :initarg :drop-out-threshold
     :accessor drop-out-threshold))

@@ -51,31 +51,46 @@ filtering against ACTIVE-LEAFS happens later in RESOLVE-COLUMN-ACTIVATION."
                                                           activity-hash-table)))
                 previously-active-neurons))
 
-(defun resolve-column-activation (active-leafs activity-hash-table currently-active-neurons parameters)
+(defun resolve-column-activation (active-leafs activity-hash-table
+                                   currently-active-neurons parameters)
   "Resolve column activation based on distal prediction activity.
 
-For each spatially active leaf, checks whether any of its neurons have
-accumulated distal activity (in ACTIVITY-HASH-TABLE) exceeding the
-ACTIVATION-THRESHOLD from PARAMETERS. If at least one neuron exceeds the
-threshold, those predicted neurons are activated by setting them in
-CURRENTLY-ACTIVE-NEURONS. If no neuron meets the threshold, the entire
-column bursts via BURST-COLUMN to signal a prediction error (surprise).
+For each spatially active leaf, collects the cells whose accumulated
+distal activity (in ACTIVITY-HASH-TABLE) exceeds ACTIVATION-THRESHOLD
+from PARAMETERS. If at least one cell qualifies, intra-column
+competition selects the WINNERS-PER-COLUMN (k) strongest qualifiers via
+SELECT-TOP-N; only those winners are activated in CURRENTLY-ACTIVE-NEURONS.
+All other cells -- including predicted ones that lost the competition --
+stay silent this step and decay via DECAY-FALSE-POSITIVE-WEIGHTS.
+
+If no cell meets the threshold, the entire column bursts via BURST-COLUMN
+to signal a prediction error (surprise).
+
+Ties in distal activity break deterministically in favor of the earlier
+cell in column-vector order.
 
 Returns the number of leaves that burst during this time step."
   (let ((bursting-count 0)
-        (threshold (activation-threshold parameters)))
+        (threshold (activation-threshold parameters))
+        (k (winners-per-column parameters)))
     (loop for leaf being the hash-keys of active-leafs do
       (let* ((neurons (column-neurons leaf))
-             (predicted-p nil))
-        (declare (type simple-vector neurons))
-        (iterate
-          (for n in-vector neurons)
-          (when (> (gethash n activity-hash-table 0.0) threshold)
-            (setf predicted-p t
-                  (gethash n currently-active-neurons) t)))
-        (unless predicted-p
-          (incf bursting-count)
-          (burst-column neurons currently-active-neurons))))
+             ;; 1. qualifiers: predicted cells only (below threshold can't win)
+             (cands (make-array (length neurons) :fill-pointer 0)))
+        (loop for n across neurons
+              when (> (gethash n activity-hash-table 0.0) threshold)
+                collect (vector-push-extend n cands))
+        (if (emptyp cands)
+            ;; 2. surprise: burst unchanged
+            (progn
+              (incf bursting-count)
+              (burst-column neurons currently-active-neurons))
+            ;; 3. competition: k strongest qualifiers win, in place
+            (let ((winners (select-top-n cands k
+                                         :key (lambda (n)
+                                                (gethash n activity-hash-table 0.0)))))
+              (dotimes (i k)
+                (setf (gethash (aref winners i) currently-active-neurons) t))))))
     bursting-count))
 
 (defun decay-false-positive-weights (weights previously-active-neurons currently-active-neurons parameters)
