@@ -131,7 +131,7 @@ a table is spec-compliant (CLHS 3.2.2.5)."
                         (remhash source-neuron weights))))
                   previously-active-neurons)))
 
-(defun learn-distal-weights (leaf-weights active-neurons column-neurons learning-rate)
+(defun learn-distal-weights (leaf-weights active-neurons column-neurons learning-rate drop-out-threshold)
   "Update distal weights for one (source, leaf) context. Only targets that are
 both in COLUMN-NEURONS and currently in ACTIVE-NEURONS are reinforced
 (true positives) or newly formed (false negatives), keeping each synapse
@@ -142,7 +142,7 @@ scoped to its own spatial context."
       (if-let ((old-weight (gethash target leaf-weights)))
         (setf (gethash target leaf-weights)
               (min 1.0 (+ old-weight (* learning-rate (- 1.0 old-weight)))))
-        (setf (gethash target leaf-weights) learning-rate)))))
+        (setf (gethash target leaf-weights) (min 1.0 (+ drop-out-threshold (random learning-rate))))))))
 
 (defun reinforce-active-synapses (previously-active-neurons active-neurons active-leafs weights parameters)
   "Update distal synapses for all neurons in PREVIOUSLY-ACTIVE-NEURONS.
@@ -150,7 +150,8 @@ scoped to its own spatial context."
 For each previously-active source neuron, lazily initializes the intermediate 
 hash-tables mapping source -> leaf (skipping inactive leaves) -> target, 
 and then delegates to LEARN-DISTAL-WEIGHTS to reinforce or form connections."
-  (let ((learning-rate (learning-rate parameters)))
+  (let ((learning-rate (learning-rate parameters))
+        (drop-out-threshold (drop-out-threshold parameters)))
     (maphash-keys (lambda (source-neuron)
                     ;; Level 1: Ensure target-level table exists
                     (let ((neuron-weights (ensure (gethash source-neuron weights)
@@ -163,7 +164,8 @@ and then delegates to LEARN-DISTAL-WEIGHTS to reinforce or form connections."
                                         (learn-distal-weights leaf-weights
                                                               active-neurons
                                                               (column-neurons leaf)
-                                                              learning-rate)))
+                                                              learning-rate
+                                                              drop-out-threshold)))
                                     active-leafs)))
                   previously-active-neurons)))
 
