@@ -77,9 +77,10 @@ Returns the number of leaves that burst during this time step."
       (let* ((neurons (column-neurons leaf))
              ;; 1. qualifiers: predicted cells only (below threshold can't win)
              (cands (make-array (length neurons) :fill-pointer 0 :element-type t)))
-        (loop for n across neurons
-              when (> (gethash n activity-hash-table 0.0) threshold)
-                collect (vector-push-extend n cands))
+        (iterate
+          (for n in-vector neurons)
+          (when (> (gethash n activity-hash-table 0.0) threshold)
+            (vector-push-extend n cands)))
         (if (emptyp cands)
             ;; 2. surprise: burst unchanged
             (progn
