@@ -8,6 +8,7 @@
    #:array-avg
    #:index
    #:data
+   #:unwrap
    #:wrap
    #:copy
    #:data-matrix-quasi-clone

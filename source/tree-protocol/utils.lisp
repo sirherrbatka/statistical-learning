@@ -7,15 +7,15 @@
   (sides #() :type simple-vector))
 
 
-(-> wdot (sl.data:single-float-data-matrix
+(-> wdot ((simple-array single-float (* *))
           (simple-array single-float (* *))
           fixnum
           fixnum
           (simple-array fixnum (*)))
     single-float)
 (defun wdot (first second first-point second-point attributes)
-  (declare (optimize (speed 3) (safety 0)
-                     (debug 0) (space 0)
+  (declare (optimize (speed 0) (safety 0)
+                     (debug 3) (space 0)
                      (compilation-speed 0)))
   (iterate
     (declare (type fixnum i)
@@ -24,7 +24,7 @@
     (for i from 0 below (length attributes))
     (for attribute = (aref attributes i))
     (incf result
-          (* (sl.data:mref first first-point attribute)
+          (* (aref first first-point attribute)
              (aref second second-point i)))
     (finally (return result))))
 

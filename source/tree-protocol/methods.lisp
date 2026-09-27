@@ -97,7 +97,22 @@
 (defmethod split-training-state-info/proxy append
     (parameters/proxy
      (splitter fundamental-splitter)
-     (parameters basic-tree-training-parameters)
+     (parameters unsupervised)
+     state
+     split-array
+     position
+     size
+     point)
+  (data-matrix-split-list size
+                          split-array
+                          position
+                          :train-data (sl.mp:train-data state)))
+
+
+(defmethod split-training-state-info/proxy append
+    (parameters/proxy
+     (splitter fundamental-splitter)
+     (parameters supervised)
      state
      split-array
      position
@@ -652,7 +667,8 @@
      state
      point
      split-vector)
-  (declare (type sl.data:split-vector split-vector))
+  (declare (type sl.data:split-vector split-vector)
+           (optimize (debug 3)))
   (bind ((data (sl.mp:train-data state))
          ((normals . dot-product) point)
          (attributes (sl.tp:attribute-indexes state)))
@@ -662,7 +678,7 @@
       (with right-count = 0)
       (with left-count = 0)
       (for i from 0 below (sl.data:data-points-count data))
-      (for rightp = (< (wdot data normals i 0 attributes)
+      (for rightp = (< (wdot (sl.data:data data) (sl.data:data normals) i 0 attributes)
                        (the single-float dot-product)))
       (setf (aref split-vector i) rightp)
       (if rightp (incf right-count) (incf left-count))
@@ -680,12 +696,12 @@
   (bind ((attributes (attribute-indexes context))
          ((:labels impl (node depth
                               &aux (next-depth (the fixnum (1+ depth)))))
-          (declare (optimize (speed 3) (safety 0)
-                             (debug 0) (space 0)
+          (declare (optimize (speed 0) (safety 3)
+                             (debug 3) (space 0)
                              (compilation-speed 0)))
           (if (sl.tp:treep node)
               (bind (((normals . dot-product) (point node)))
-                (if (< (wdot data normals index 0 attributes)
+                (if (< (wdot (sl.data:unwrap data) (sl.data:unwrap normals) index 0 attributes)
                        (the single-float dot-product))
                     (~> node right-node (impl next-depth))
                     (~> node left-node (impl next-depth))))

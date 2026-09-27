@@ -8,13 +8,13 @@
                         :reader optimized-function)))
 
 
-(defclass classification (sl.perf:classification
-                          fundamental-gradient-boost-tree-parameters)
+(defclass classification (fundamental-gradient-boost-tree-parameters
+                          sl.perf:classification)
   ())
 
 
-(defclass regression (sl.perf:regression
-                      fundamental-gradient-boost-tree-parameters)
+(defclass regression (fundamental-gradient-boost-tree-parameters
+                      sl.perf:regression)
   ())
 
 

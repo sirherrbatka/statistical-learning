@@ -122,7 +122,7 @@
     (sl.data:data-matrix-map (lambda (data-point data)
                                (bind (((:values leaf depth)
                                        (sl.tp:leaf-for splitter root
-                                                       data data-point
+                                                       (sl.data:unwrap data) data-point
                                                        tree-model)))
                                  (assert depth)
                                  (assert leaf)

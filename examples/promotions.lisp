@@ -42,7 +42,6 @@
       (vellum:to-matrix :element-type 'single-float)
       sl.data:wrap))
 
-
 (defparameter *training-parameters*
   (~> (make 'statistical-learning.dt:classification
             :optimized-function (sl.opt:gini-impurity 2)

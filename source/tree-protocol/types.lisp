@@ -107,7 +107,15 @@
    :leaf-node-class 'fundamental-leaf-node))
 
 
-(defclass standard-tree-training-parameters (basic-tree-training-parameters)
+(defclass supervised ()
+  ())
+
+
+(defclass unsupervised ()
+  ())
+
+
+(defclass standard-tree-training-parameters (basic-tree-training-parameters supervised)
   ((%maximal-depth :initarg :maximal-depth
                    :reader maximal-depth)
    (%minimal-difference :initarg :minimal-difference

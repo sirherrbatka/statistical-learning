@@ -1,7 +1,7 @@
 (cl:in-package #:statistical-learning.isolation-forest)
 
 
-(defclass isolation (sl.tp:basic-tree-training-parameters)
+(defclass isolation (sl.tp:unsupervised sl.tp:basic-tree-training-parameters)
   ((%maximal-depth :initarg :maximal-depth
                    :reader sl.tp:maximal-depth
                    :accessor access-maximal-depth)
@@ -34,13 +34,15 @@
 (defclass isolation-training-state (sl.mp:fundamental-training-state)
   ((%split-point :initarg :split-point
                  :accessor sl.tp:split-point)
+   (%parent-state :initarg :parent-state
+                  :accessor sl.tp:parent-state)
    (%loss :initarg :loss) ;; this is purely for the compatibility with the tree protocol
    (%depth :initarg :depth
            :reader sl.tp:depth)
    (%c :initarg :c
        :reader c)
    (%train-data :initarg :train-data
-          :reader sl.mp:train-data)
+                :accessor sl.mp:train-data)
    (%attributes :initarg :attributes
                 :reader sl.tp:attribute-indexes)))
 

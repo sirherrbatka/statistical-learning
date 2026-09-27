@@ -161,9 +161,15 @@
                    :index (make-iota-vector data-points-count))))))))
 
 
+(defun unwrap (input)
+  (if (typep input 'data-matrix)
+      (sl.data:data input)
+      input))
+
+
 (-> sample (data-matrix &key
-                        (:data-points (or null vector))
-                        (:attributes (or null vector)))
+            (:data-points (or null vector))
+            (:attributes (or null vector)))
     data-matrix)
 (defun sample (data-matrix &key data-points attributes)
   (declare (optimize (speed 3) (debug 0) (safety 0)))

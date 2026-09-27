@@ -86,5 +86,4 @@
 
 
 (defmethod predict :around ((model fundamental-model) data &optional parallel)
-  (declare (ignore parallel))
-  (sl.data:wrap (call-next-method)))
+  (sl.data:wrap (call-next-method model (sl.data:wrap data) parallel)))

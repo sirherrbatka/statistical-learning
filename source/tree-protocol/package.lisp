@@ -52,6 +52,8 @@
    #:right-score
    #:leaf-for
    #:leaf-for/proxy
+   #:supervised
+   #:unsupervised
    #:split-result-improved-p
    #:handle-spit-middle
    #:handle-spit-middle/proxy
