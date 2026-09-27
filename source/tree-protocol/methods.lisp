@@ -667,8 +667,7 @@
      state
      point
      split-vector)
-  (declare (type sl.data:split-vector split-vector)
-           (optimize (debug 3)))
+  (declare (type sl.data:split-vector split-vector))
   (bind ((data (sl.mp:train-data state))
          ((normals . dot-product) point)
          (attributes (sl.tp:attribute-indexes state)))
@@ -696,8 +695,8 @@
   (bind ((attributes (attribute-indexes context))
          ((:labels impl (node depth
                               &aux (next-depth (the fixnum (1+ depth)))))
-          (declare (optimize (speed 0) (safety 3)
-                             (debug 3) (space 0)
+          (declare (optimize (speed 3) (safety 3)
+                             (debug 0) (space 0)
                              (compilation-speed 0)))
           (if (sl.tp:treep node)
               (bind (((normals . dot-product) (point node)))

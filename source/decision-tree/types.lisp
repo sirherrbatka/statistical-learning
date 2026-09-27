@@ -8,9 +8,9 @@
                         :reader optimized-function)))
 
 
-(defclass classification (sl.perf:classification sl.tp:supervised)
+(defclass classification (sl.perf:classification sl.tp:supervised fundamental-decision-tree-parameters)
   ())
 
 
-(defclass regression (sl.perf:regression sl.tp:supervised)
+(defclass regression (sl.perf:regression sl.tp:supervised fundamental-decision-tree-parameters)
   ())

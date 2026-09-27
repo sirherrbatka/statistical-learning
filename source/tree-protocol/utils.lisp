@@ -14,8 +14,8 @@
           (simple-array fixnum (*)))
     single-float)
 (defun wdot (first second first-point second-point attributes)
-  (declare (optimize (speed 0) (safety 0)
-                     (debug 3) (space 0)
+  (declare (optimize (speed 3) (safety 0)
+                     (debug 0) (space 0)
                      (compilation-speed 0)))
   (iterate
     (declare (type fixnum i)
