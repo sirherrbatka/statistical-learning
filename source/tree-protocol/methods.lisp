@@ -690,8 +690,7 @@
                            data
                            index
                            context)
-  (declare (type (simple-array single-float (* *)) data)
-           (type fixnum index))
+  (declare (type fixnum index))
   (bind ((attributes (attribute-indexes context))
          ((:labels impl (node depth
                               &aux (next-depth (the fixnum (1+ depth)))))
