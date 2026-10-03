@@ -101,6 +101,9 @@
   ((%neurons :initarg :neurons :reader column-neurons))
   (:documentation "HTM column containing neurons with segments"))
 
+(defmethod sl.tp:treep ((leaf column-leaf))
+  nil)
+
 (defclass neuron ()
   ()
   (:documentation "Neuron with synaptic segments for temporal pooling"))
